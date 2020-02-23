@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@openzeppelin/contracts": "^2.3.0",
+    "@uniswap/sdk": "^1.0.0-beta.4",
+    "bancor-sdk": "^0.1.8",
+    "dotenv": "^8.1.0",
+    "ethereumjs-tx": "^2.1.1",
+    "openzeppelin-solidity": "^2.4.0",
+    "react-autocomplete": "^1.8.1",
+    "table": "^5.4.6",
+    "truffle-assertions": "^0.9.1",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.2.1"
+  }
+}
