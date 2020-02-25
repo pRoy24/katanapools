@@ -24,7 +24,8 @@ export default class PoolTokens extends Component {
     getContractAddress('BancorConverterRegistry').then(function(converterContractRegistryAddress){
       getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
         
-
+        console.log(smartTokenList);
+        
         let poolData = 
           smartTokenList.map(function(smartToken){
             

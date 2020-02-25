@@ -81,12 +81,7 @@ class AppHome extends Component {
     this.web3 = window.web3;
   }
   
-  
 
-  
-  
-
-  
   render() {
     const {tokenData, toAmount} = this.state;
     let tokenDataSwap = <div>Loading</div>

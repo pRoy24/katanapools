@@ -27,6 +27,32 @@ module.exports = {
       });
   },
   
+  
+  getTokenList: function(registryAddress, tokenFetchFlag) {
+    const web3 = window.web3;
+    var BancorConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, registryAddress)
+    
+    if (tokenFetchFlag === 'alltokens') {
+      return BancorConverterRegistryContract.methods.getConvertibleTokens().call().then(function(convertibleTokenList){
+        return  BancorConverterRegistryContract.methods.getSmartTokens().call().then(function(smartTokenList){
+          return convertibleTokenList.concat(smartTokenList);
+        });
+      });
+    } else if (tokenFetchFlag === 'smarttokens') {
+        return  BancorConverterRegistryContract.methods.getSmartTokens().call().then(function(smartTokenList){
+        return smartTokenList;
+      });      
+    } else if (tokenFetchFlag === 'convertibletokens') {
+      return BancorConverterRegistryContract.methods.getConvertibleTokens().call().then(function(convertibleTokenList){
+        return convertibleTokenList;
+      });      
+    } else {
+      return new Promise((resolve, reject) => {
+        resolve([]);
+      })
+    }
+  },
+  
   getConvertibleTokenList: function( converterRegistryAddress) {
         const web3 = window.web3;
     var BancorConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress)
@@ -36,24 +62,27 @@ module.exports = {
     });
   },
   
-  getConvertibleTokenData: function(tokenList) {
+  getTokenData: function(tokenList) {
     const web3 = window.web3;
     
     let convertibleTokenDataList = tokenList.map(function(tokenAddress){
     let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
     return CurrentToken.methods.name().call().then(function(tokenName){
-      
       return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
-    
         return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
           return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
+
             const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
             const [name, ext] = imgFile.split(".");
             let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
 
             return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,
                                 decimals: tokenDecimals, imageURI: imgURI, meta: tokenApiMeta.data.data});
-          });
+          }).catch(function(err){
+                        return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,
+                                decimals: tokenDecimals, imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'
+                                , meta: {}});
+          })
         })
       });
     }).catch(function(err){
@@ -83,7 +112,6 @@ module.exports = {
   getNetworkPath: function( from, to, networkPathContractAddress) {
     const web3 = window.web3;
     var BancorConverterRegistryContract = new web3.eth.Contract(BancorNetworkPathFinder, networkPathContractAddress)
-    
     return BancorConverterRegistryContract.methods.generatePath(from, to).call().then(function(convertibleTokenList){
       return convertibleTokenList;
     });
@@ -176,8 +204,7 @@ module.exports = {
     return converterRegistry.methods.getConvertibleTokenSmartTokens(smartTokenAddress).call().then(function(smartData){
         return smartData;
       });   
-  }
+  },
   
-  
-  
+
 }

@@ -40,6 +40,12 @@ export const getAmountInTokenWei = async (token: string, amount: string, web3) =
 };
 
 export const getConversionReturn = async (converterPair: ConversionPathStep, amount: string, ABI, web3) => {
+    
+    console.log("Converter pair ");
+    console.log(converterPair);
+    
+    console.log(amount);
+    
     let converterContract = new web3.eth.Contract(ABI, converterPair.converterBlockchainId);
     const returnAmount = await converterContract.methods.getReturn(converterPair.fromToken, converterPair.toToken, amount).call();
     return returnAmount;
