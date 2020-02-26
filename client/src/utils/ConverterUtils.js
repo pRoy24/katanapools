@@ -3,8 +3,7 @@ const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.js
 const BancorConverter = require('../contracts/BancorConverter');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
-const AFFILIATE_FEE = 1000 ; // Affiliate fees ppm
-const AFFILIATE_ACCOUNT = process.env.REACT_APP_AFFILIATE_ACCOUNT;
+const SwapActions = require('../actions/swap');
 
 module.exports = {
   getConvertibleTokensInRegistry: function() {
@@ -125,34 +124,40 @@ module.exports = {
   submitSwapToken(path, amount, fromAddress, isEth) {
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
+    const affiliate_account_address = '0x0000000000000000000000000000000000000000';
+    const affiliate_fee = '0';
 
+    
     return RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
       const bancorNetworkContract = new web3.eth.Contract(BancorNetwork, bnAddress);
       if (isEth) {
-      return bancorNetworkContract.methods.convert2(path, amount, 1, '0x0000000000000000000000000000000000000000', '0')
-      .send({
-        'from': senderAddress,
-        value: amount
-      }).then(function(pathDataResponse){
-        return pathDataResponse;
-      });
-      } else {
-        
-        let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
+      return bancorNetworkContract.methods.convert2(path, amount, 1, affiliate_account_address, affiliate_fee)
+        .send({
+          'from': senderAddress,
+          value: amount
+        }).then(function(pathDataResponse){
 
-       return erc20Contract.methods.approve(bnAddress, amount).send({
+          return pathDataResponse;
+        }).catch(function(err){
+
+        });
+      } else {
+        let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
+        return erc20Contract.methods.approve(bnAddress, amount).send({
                  'from': senderAddress,
-       }).then(function(approveResponse){
-          
-      return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, '0x0000000000000000000000000000000000000000', '0')
-      .send({
-        'from': senderAddress,
-        value: undefined
-      }).then(function(pathDataResponse){
-        return pathDataResponse;
-      }).catch(function(err){
-        console.log(err);
-      });   
+        }).then(function(approveResponse){
+          return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, affiliate_account_address, affiliate_fee)
+            .send({
+              'from': senderAddress,
+              value: undefined
+            }).catch(function(err){
+              // Handle error
+            }).then(function(pathDataResponse){
+              return pathDataResponse;
+            }).catch(function(err){
+      
+      
+            });   
         }) 
       }
     });

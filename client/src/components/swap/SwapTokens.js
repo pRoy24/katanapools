@@ -10,10 +10,6 @@ getTokenData,
 } from '../../utils/RegistryUtils';
 import {toDecimals, fromDecimals} from '../../utils/eth';
 
-import {getBancorConversionRate} from '../../utils/BancorUtils';
-import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
-  getExpectedReturn, submitSwapToken,getNetworkPathMeta
-} from '../../utils/ConverterUtils';
 
 export default class SwapToken extends Component {
   constructor(props) {
@@ -64,7 +60,7 @@ export default class SwapToken extends Component {
   }
   render() {
     return (
-      <div>
+      <div className="swap-token-app">
  
         <SwapTokenToolbar refetchTokenList={this.refetchTokenList}/>
   

@@ -121,8 +121,6 @@ export default class SwapTokenWidget extends Component {
     const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
     
     getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-      console.log(fromDecimals(balanceResponse,selectedTransferToken.decimals));
-      console.log(transferAmount);
       let availableBalance = fromDecimals(balanceResponse,selectedTransferToken.decimals);
       if (availableBalance >= transferAmount) {
           self.setState({'widgetError': ''});

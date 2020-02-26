@@ -5,8 +5,16 @@ import {getContractAddress, getLiquidityPools, getERC20DData, getConverterData, 
 } from '../../utils/RegistryUtils';
 import CurrentSelectedPool from './CurrentSelectedPool';
 import PoolTokenToolbar from './PoolTokenToolbar';
-import CreateNewPool from './CreateNewPool';
+import CreateNewPoolContainer from './create_pool/CreateNewPoolContainer';
 import './pool.scss';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import ViewPools from './ViewPools';
+import MyPools from './MyPools';
 
 export default class PoolTokens extends Component {
   constructor(props) {
@@ -24,7 +32,7 @@ export default class PoolTokens extends Component {
     getContractAddress('BancorConverterRegistry').then(function(converterContractRegistryAddress){
       getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
         
-        console.log(smartTokenList);
+
         
         let poolData = 
           smartTokenList.map(function(smartToken){
@@ -40,7 +48,6 @@ export default class PoolTokens extends Component {
 
         Promise.all(poolData).then(function(poolDataResponse){
           poolDataResponse = poolDataResponse.filter(Boolean);
-          
           self.setState({poolData: poolDataResponse, currentSelectedPool: poolDataResponse[0]})
         });
       });
@@ -55,21 +62,22 @@ export default class PoolTokens extends Component {
   const {poolData, currentSelectedPool, currentView} = this.state;
 
   let cardView = <span/>;
-  if (currentView === 'select') {
-    cardView = <CurrentSelectedPool selectedPool={currentSelectedPool}/>;
-  } else if (currentView === 'create') {
-    cardView = <CreateNewPool/>;
-  }
+
   
   return (
     <div>
       <Container>
-        <div>
-          <PoolTokenToolbar poolData={poolData} setCurrentView={this.setCurrentView}/>
-        </div>
-       <div>
-        {cardView}
-       </div>
+          <Switch>
+          <Route path="/pool/create">
+            <CreateNewPoolContainer/>
+          </Route>
+          <Route path="/pool/view">
+            <ViewPools poolData={poolData}/>
+          </Route>
+          <Route path="/pool/user">
+            <MyPools />
+          </Route>
+        </Switch>  
        </Container>
     </div>
     )

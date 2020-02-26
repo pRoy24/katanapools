@@ -14,15 +14,15 @@ export default class TopNav extends Component {
   <Navbar.Collapse id="basic-navbar-nav">
     <Nav className="mr-auto">
       <LinkContainer to="/swap">
-    <NavItem key={1}>Swap tokens</NavItem>
-  </LinkContainer>
-        <LinkContainer to="/pool">
+        <NavItem key={1}>Swap tokens</NavItem>
+      </LinkContainer>
+    <LinkContainer to="/pool/view">
     <NavItem key={2}>View pools</NavItem>
   </LinkContainer>
-        <LinkContainer to="/swap">
+        <LinkContainer to="/pool/create">
     <NavItem key={3}>Create pool</NavItem>
   </LinkContainer>
-        <LinkContainer to="/swap">
+        <LinkContainer to="/pool/user">
     <NavItem key={4}> My pools</NavItem>
   </LinkContainer>
     </Nav>

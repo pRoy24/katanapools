@@ -88,7 +88,6 @@ class AppHome extends Component {
 
     return (
       <div>
-
           <Switch>
           <Route path="/swap">
             <SwapTokens/>
