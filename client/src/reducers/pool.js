@@ -1,5 +1,6 @@
 import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN_RECEIPT, DEPLOY_SMART_TOKEN_CONFIRMATION
-,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_TOKEN_STATUS, SET_CONVERTER_CONTRACT_RECEIPT, SET_POOL_FUNDED_STATUS} from '../actions/pool';
+,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_CONVERTER_STATUS, SET_CONVERTER_CONTRACT_RECEIPT,
+SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT} from '../actions/pool';
 
 const initialState = {
   smartTokenStatus: {},
@@ -7,9 +8,11 @@ const initialState = {
   isError: false,
   isFetching: false,
   tokenSymbol: '',
-  relayTokenStatus: {},
+  relayConverterStatus: {},
   converterContractReceipt: {},
-  poolFundedStatus: {}
+  poolFundedStatus: {},
+  activationStatus: {},
+  poolCreationReceipt: {},
 }
 
 export default function poolReducer (state = initialState, action) {
@@ -17,7 +20,8 @@ export default function poolReducer (state = initialState, action) {
     case DEPLOY_SMART_TOKEN_INIT:
       return {
         ...state,
-        smartTokenStatus: {'message': action.payload.message, tokenSymbol: action.payload.symbol},
+        smartTokenStatus: {'message': action.payload.message},
+         tokenSymbol: action.payload.symbol,
         isError: false,
         isFetching: true
       }
@@ -60,17 +64,20 @@ export default function poolReducer (state = initialState, action) {
         isError: false,
         isFetching: false,
       }
-    case DEPLOY_RELAY_TOKEN_STATUS:
+    case DEPLOY_RELAY_CONVERTER_STATUS:
       return {
         ...state,
-        relayTokenStatus: action.payload
+        relayConverterStatus: action.payload
       }
     case SET_CONVERTER_CONTRACT_RECEIPT:
       return {...state, converterContractReceipt: action.payload}
       
     case SET_POOL_FUNDED_STATUS:
       return {...state, poolFundedStatus: action.payload}
-      
+    case SET_ACTIVATION_STATUS:
+      return {...state, activationStatus: action.payload}
+    case SET_POOL_CREATION_RECEIPT:
+      return {...state, poolCreationReceipt: action.payload}
     default:
       return state
   }

@@ -10,11 +10,22 @@ export const DEPLOY_SMART_TOKEN_ERROR = 'DEPLOY_SMART_TOKEN_ERROR';
 
 export const DEPLOY_SMART_TOKEN_SUCCESS = 'DEPLOY_SMART_TOKEN_SUCCESS';
 
-export const DEPLOY_RELAY_TOKEN_STATUS = 'DEPLOY_RELAY_TOKEN_STATUS';
+export const DEPLOY_RELAY_CONVERTER_STATUS = 'DEPLOY_RELAY_CONVERTER_STATUS';
 
 export const SET_CONVERTER_CONTRACT_RECEIPT = 'SET_CONVERTER_CONTRACT_RECEIPT';
 
 export const SET_POOL_FUNDED_STATUS = 'SET_POOL_FUNDED_STATUS';
+
+export const SET_ACTIVATION_STATUS = 'SET_ACTIVATION_STATUS';
+
+export const SET_POOL_CREATION_RECEIPT = 'SET_POOL_CREATION_RECEIPT';
+
+export function setPoolCreationReceipt(receipt) {
+  return {
+    type: SET_POOL_CREATION_RECEIPT,
+    payload: receipt
+  }
+}
 
 export function setPoolFundedStatus(payload) {
   return {
@@ -75,9 +86,16 @@ export function deploySmartTokenSuccess(payload) {
   }
 }
 
-export function deployRelayTokenStatus(payload) {
+export function deployRelayConverterStatus(payload) {
   return {
-    type: DEPLOY_RELAY_TOKEN_STATUS,
+    type: DEPLOY_RELAY_CONVERTER_STATUS,
+    payload: payload
+  }
+}
+
+export function setActivationStatus(payload) {
+  return {
+    type: SET_ACTIVATION_STATUS,
     payload: payload
   }
 }

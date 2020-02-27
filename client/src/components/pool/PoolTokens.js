@@ -13,7 +13,7 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import ViewPools from './ViewPools';
+import ViewPools from './view_pools/ViewPools';
 import MyPools from './MyPools';
 
 export default class PoolTokens extends Component {

@@ -16,9 +16,13 @@ export default class ViewPool extends Component {
 }
 
 class ViewPoolList extends Component {
+  
+  setSelectedPool (selectedPool) {
+    console.log(selectedPool);
+  }
   render() {
     const {poolData} = this.props;
-
+    const self = this;
     let poolDataList = <span/>;
     
     if (poolData.length === 0) {
@@ -26,56 +30,14 @@ class ViewPoolList extends Component {
     } else {
       poolDataList = <ListGroup>
         <ListGroupItem>
-          <Row>
-            <Col lg={2}>
               Symbol
-            </Col>
-            <Col lg={2}>
-              Name
-            </Col>
-            <Col lg={1}>
-              24hr volume
-            </Col>
-            <Col lg={1}>
-              Latest price
-            </Col>
-            <Col lg={2}>
-             Holdings
-            </Col>
-            <Col lg={1}>
-              Add liquidity
-            </Col>
-            <Col lg={1}>
-              Remove liquidity
-            </Col>
-          </Row>
         </ListGroupItem>
        {
          poolData.map(function(poolRow){
-           return <ListGroupItem>
-           <Row>
-            <Col lg={2}>
+           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow)}>
+
               {poolRow.symbol}
-            </Col>
-            <Col lg={2}>
-             {poolRow.name}
-            </Col> 
-            <Col lg={1}>
-              
-            </Col>
-            <Col lg={1}>
-             
-            </Col>
-            <Col lg={2}>
-            
-            </Col>
-            <Col lg={2}>
-            
-            </Col>
-            <Col lg={2}>
-             <Button>Add liquidity</Button>
-            </Col>
-           </Row>
+
            </ListGroupItem>
          })
        }
@@ -83,7 +45,17 @@ class ViewPoolList extends Component {
     }
     return (
       <div className="app-toolbar-container ">
+        
+        <Row>
+        <Col lg={2}>
         {poolDataList}
+        </Col>
+        <Col lg={10}>
+          
+        </Col>
+        
+        
+        </Row>
       </div>
       )
   }

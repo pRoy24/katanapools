@@ -2,7 +2,8 @@ import CreateNewPool from './CreateNewPool';
 
 import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
-  deploySmartTokenError, deploySmartTokenSuccess, deployRelayTokenStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
+  deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
+  setActivationStatus, setPoolCreationReceipt,
 } from '../../../actions/pool';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 const SmartToken = require('../../../contracts/SmartToken.json');
@@ -96,10 +97,10 @@ const mapDispatchToProps = (dispatch) => {
 
        })
       .on('error', function(error){ 
-        dispatch(deployRelayTokenStatus({type: 'error', message: error.message}))
+        dispatch(deployRelayConverterStatus({type: 'error', message: error.message}))
       })
       .on('transactionHash', function(transactionHash){ 
-          dispatch(deployRelayTokenStatus({type: 'pending',
+          dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Deploying Bancor converter contract hash ${transactionHash}`}));
       })
       .on('receipt', function(receipt){
@@ -107,24 +108,23 @@ const mapDispatchToProps = (dispatch) => {
    
       })
       .on('confirmation', function(confirmationNumber, receipt){
-          dispatch(deployRelayTokenStatus({type: 'pending',
+          dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Finished deplying Bancor converter contract `}));
 
           dispatch(setRelayTokenContractReceipt(receipt))        
       })
       .then(function(deployerContractInstance){
-          dispatch(deployRelayTokenStatus({type: 'pending',
+          dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding network connector`}));
-        
-        console.log(deployerContractInstance);
+
         
         deployerContractInstance.methods.addConnector(args.convertibleTokenAddress, convertibleWeight, false).call()
         .then(function(data){
-          dispatch(deployRelayTokenStatus({type: 'pending',
+          dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Setting conversion fees`}));
           deployerContractInstance.methods.setConversionFee(conversionFee).call().then(function(dataRes){
 
-          dispatch(deployRelayTokenStatus({type: 'success',
+          dispatch(deployRelayConverterStatus({type: 'success',
           message: `Relay token is ready to be used`}));
     
             
@@ -180,8 +180,7 @@ const mapDispatchToProps = (dispatch) => {
           from: senderAddress
         }).then(function(txResponse){
           dispatch(setPoolFundedStatus({type: 'success', message:'finished funding pool with initial liquidity'}));
-                      console.log(txResponse);
-                      console.log(rsResponse);
+
             })
           })
         })
@@ -201,17 +200,56 @@ const mapDispatchToProps = (dispatch) => {
             
       const smartTokenContract = new web3.eth.Contract(SmartToken, args.smartTokenAddress);
       const converterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
-      
-      console.log(smartTokenContract);
-      
+      dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval'}));
       smartTokenContract.methods.transferOwnership(args.converterAddress).send({
         from: senderAddress
       }).then(function(transferOwnershipResponse){
+        dispatch(setActivationStatus({'type': 'pending', 'message': 'Transferring ownership of pool to converter'}));
         converterContract.methods.acceptTokenOwnership().send({
           from: senderAddress 
         }).then(function(senderAcceptResponse){
-          console.log(senderAcceptResponse);
+          dispatch(setActivationStatus({'type': 'success', 'message': 'Finished activating pool'}));
         })
+      })
+      
+    },
+    
+    getConverterAndPoolDetails: (args) => {
+      const web3 = window.web3;
+      
+      const poolTokenAddress = args.poolTokenAddress;
+      const converterAddress = args.converterAddress;
+      
+      const BancorConverterContract =  new web3.eth.Contract(BancorConverter, converterAddress);
+      const PoolTokenContract = new web3.eth.Contract(SmartToken, poolTokenAddress);
+
+      
+      PoolTokenContract.methods.name().call().then(function(poolName){
+        PoolTokenContract.methods.symbol().call().then(function(poolSymbol){
+          PoolTokenContract.methods.totalSupply().call().then(function(poolSupply){
+            
+    
+          BancorConverterContract.methods.connectorTokenCount().call().then(function(connectorTokenCount){
+            BancorConverterContract.methods.connectorTokens(0).call().then(function(token1){
+              
+              BancorConverterContract.methods.getReserveRatio(token1).call().then(function(connectorReserveRatio){
+                
+              BancorConverterContract.methods.getReserveBalance(token1).call()
+              .then(function(connectorReserveBalance){
+
+                const payload = {connectorBalance: fromDecimals(connectorReserveBalance, 18),
+                  connectorWeight: connectorReserveRatio / 10000, poolName: poolName, poolSymbol: poolSymbol,
+                  poolSupply: fromDecimals(poolSupply, 18), numConnectors: connectorTokenCount,
+                  connectorAdress: token1,
+                };
+
+                dispatch(setPoolCreationReceipt(payload));
+            })
+          })
+        })
+          })
+          })  
+      })
       })
       
     }

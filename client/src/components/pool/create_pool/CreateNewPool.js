@@ -17,21 +17,26 @@ export default class CreateNewPool extends Component {
   static contextType = StepperContext;
   constructor(props) {
     super(props);
-    this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: ''};
+    this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: '',
+                  poolName: '', poolSymbol: '', showReceiptPage: false};
     this.appStepper = React.createRef();
   }
   setStepOneReceipt = (val) => {
     this.setState({stepOneReceipt: val});
   }
+  deployPoolContract = (vals) => {
+    this.setState({poolName: vals.poolName, poolSymbol: vals.poolSymbol});
+    this.props.deployPoolContract(vals);
+  }
   
   deployConverterContract = (vals) => {
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
     this.setState({convertibleTokenAddress: vals.convertibleTokenAddress, relayTokenAddress: smartTokenStatus.contractAddress});
-    
+
     const args = {
       maxFee: 3,
-      reserveWeight: 50,
-      convertibleWeight: 50,
+      reserveWeight: vals.weightValue,
+      convertibleWeight: vals.weightValue,
       smartTokenAddress: smartTokenStatus.contractAddress,
       convertibleTokenAddress: vals.convertibleTokenAddress,
       conversionFee: 1000
@@ -55,8 +60,7 @@ export default class CreateNewPool extends Component {
   fundRelayWithSupply = (vals) => {
     const {pool, pool: {relayContractReceipt, converterContractReceipt}} = this.props;
     const {relayTokenAddress, convertibleTokenAddress} = this.state;
-    console.log(this.state);
-    
+
     const args = {
       convertibleTokenAmount: vals.tokenAmount,
       reserveTokenAmount: vals.connectorAmount,
@@ -69,29 +73,36 @@ export default class CreateNewPool extends Component {
   }
   
   componentWillReceiveProps(nextProps) {
-    const {pool: {smartTokenContract, relayTokenStatus, poolFundedStatus}} = nextProps;
-
+    const {pool: {smartTokenContract, relayConverterStatus, poolFundedStatus, activationStatus}} = nextProps;
+    
     if (!isEmptyObject(smartTokenContract) && isEmptyObject(this.props.pool.smartTokenContract)) {
       this.appStepper.current.resolve();
     }
 
-    if (relayTokenStatus && relayTokenStatus.type === 'success' && this.props.pool.relayTokenStatus.type === 'pending') {
+    if (isNonEmptyObject(relayConverterStatus) && relayConverterStatus.type === 'success' && this.props.pool.relayConverterStatus.type === 'pending') {
       this.appStepper.current.resolve();    
     }
     
     if (isNonEmptyObject(poolFundedStatus) && poolFundedStatus.type === 'success' && this.props.pool.poolFundedStatus.type === 'pending') {
       this.appStepper.current.resolve();          
     }
-    
+
+    if (isNonEmptyObject(this.props.pool.activationStatus) && activationStatus.type === 'success' &&
+    this.props.pool.activationStatus.type === 'pending') {
+      this.setState({showReceiptPage: true});
+    }
   }
+  
+
   render() {
     const STEP1 = "step-one";
     const STEP2 = "step-two";
     const STEP3 = "step-three";
     const STEP4 = "step-four";
     
-    const {tokenName, isResolved} = this.state;
-    const {pool: {isFetching, smartTokenStatus, symbol}, pool, deployPoolContract} = this.props;
+    const {poolSymbol, isResolved, showReceiptPage} = this.state;
+
+    const {pool: {isFetching, smartTokenStatus, relayConverterStatus}, pool,} = this.props;
     let transactionStatusMessage = <span/>;
     if (isFetching) {
       let message = <span/>;
@@ -99,7 +110,7 @@ export default class CreateNewPool extends Component {
         message = smartTokenStatus.message;
       }
       if (smartTokenStatus.transactionHash) {
-        message = "Transaction broadcast" + smartTokenStatus.transactionHash;
+        message = "Transaction broadcast " + smartTokenStatus.transactionHash;
       }
       transactionStatusMessage = (
           <Alert  variant={"info"}>
@@ -108,14 +119,24 @@ export default class CreateNewPool extends Component {
           </Alert>
         )
     } else {
-      
+      transactionStatusMessage = <span/>;
     }
     
-    return (
-      <div>
-        <CreateNewPoolToolbar/>
-        <div className="">
-           {transactionStatusMessage}
+    if (isNonEmptyObject(relayConverterStatus)) {
+      if (relayConverterStatus.type === 'pending') {
+      transactionStatusMessage = (
+          <Alert  variant={"info"}>
+            <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+            {relayConverterStatus.message}
+          </Alert>
+        )
+      } else if (relayConverterStatus.type === 'success') {
+        transactionStatusMessage = <span/>;
+      }
+    }
+    let currentPage = <span/>;
+    if (showReceiptPage === false) {
+      currentPage = (
         <Stepper contextRef={this.appStepper}>
           <Step
             stepId={STEP1}
@@ -124,11 +145,11 @@ export default class CreateNewPool extends Component {
             description="Pool name and symbol"
           >
             <Step1 handler={this.setStepOneReceipt} smartTokenStatus={pool.smartTokenStatus}
-            isFetching={pool.isFetching} deployPoolContract={deployPoolContract} 
+            isFetching={pool.isFetching} deployPoolContract={this.deployPoolContract} 
             isResolved={isResolved}/>
           </Step>
-              <Step stepId={STEP2} title="Converter details" description="Configure convertible token">
-              <Step2 tokenSymbol={symbol} pool={pool} deployContract={this.deployConverterContract}/>
+          <Step stepId={STEP2} title="Converter details" description="Configure convertible token">
+              <Step2 tokenSymbol={poolSymbol} pool={pool} deployContract={this.deployConverterContract}/>
           </Step>
           <Step stepId={STEP3} title="Funding and initial supply" description="Fund pool with initial supply">
             <Step3 fundRelayWithSupply={this.fundRelayWithSupply}/>
@@ -137,6 +158,18 @@ export default class CreateNewPool extends Component {
             <Step4 activatePool={this.activatePool} />
           </Step>        
         </Stepper>
+        )
+    } else {
+      transactionStatusMessage = <span/>;
+      currentPage = <TransactioReceiptPage pool={this.props.pool}
+      getConverterAndPoolDetails={this.props.getConverterAndPoolDetails}/>
+    }
+    return (
+      <div>
+        <CreateNewPoolToolbar/>
+        <div className="">
+           {transactionStatusMessage}
+           {currentPage}
         </div>
       </div>
       )
@@ -172,13 +205,11 @@ class Step1 extends Component {
     const {poolName, poolSymbol, poolDecimals} = this.state;
     const {smartTokenStatus, isFetching} = this.props;
 
-
     return (
       <div className="create-pool-form-container">
 
       <div className="create-form-container">
          <Container>
-
         <Form onSubmit={this.onSubmit}> 
         <Form.Group controlId="formBasicEmail">
           <Form.Label>Pool Name</Form.Label>
@@ -187,14 +218,12 @@ class Step1 extends Component {
             Enter the pool name eg. XXX Smart Relay Token 
           </Form.Text>
         </Form.Group>
-      
         <Form.Group controlId="formBasicPassword">
           <Form.Label>Pool Symbol</Form.Label>
           <Form.Control type="text" placeholder="symbol" value={poolSymbol} onChange={this.formSymbolChanged}/>
         </Form.Group>
-
         <Form.Group controlId="formBasicPassword">
-          <Form.Label>Pool Symbol</Form.Label>
+          <Form.Label>Pool Decimals</Form.Label>
           <Form.Control type="text" placeholder="decimals" value={poolDecimals} onChange={this.formDecimalsChanged}/>
         </Form.Group>
         <Row>
@@ -219,7 +248,7 @@ class Step2 extends Component {
   
   constructor() {
     super();
-    this.state = {convertibleTokenAddress: ''};
+    this.state = {convertibleTokenAddress: '', weightValue: 50};
   }
   
   componentWillMount() {
@@ -239,38 +268,76 @@ class Step2 extends Component {
     this.setState({convertibleTokenAddress: e.target.value});
   }
   
+  sliderValueChanged = (e) => {
+    this.setState({weightValue: e.target.value});
+  }
+  
   render() {
     const {tokenSymbol, convertibleTokenAddress} = this.props;
-    
+    const {weightValue} = this.state;
+    let weightPromptMessage = <span/>;
+    if (weightValue === 50) {
+      weightPromptMessage = (
+        <div>
+          <div>
+            You are creating a pool with 50/50 reserve.
+          </div>
+          <div className="weight-subtext">
+            Your pool token will remain relatively stable as liquidity is added or removed.
+          </div>
+        </div>
+        )
+    } else if (weightValue < 50) {
+      weightPromptMessage = (
+        <div>
+          <div>
+            You are creating a pool with {weightValue}/{weightValue} reserve.
+          </div>
+          <div className="weight-subtext">
+            Your pool token will increase in value as liquidity is added and decrease in value as liquidity is removed.
+          </div>
+        </div>
+        )      
+    }
     return (
         <div className="create-pool-form-container">
-              <Container>
+        <div className="create-form-container">
+        <Container>
         <Form onSubmit={this.onSubmit}> 
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Contract Name</Form.Label>
-          <Form.Control type="text" placeholder="name" readOnly={true} value={tokenSymbol} onChange={this.tokenSymbolChanged}/>
-          <Form.Text className="text-muted">
-            Enter the address of the deployed token.
-          </Form.Text>
+          <Form.Label>Network reserve token</Form.Label>
+          <Form.Control type="text" placeholder="symbol" readOnly={true} value={"BNT"} onChange={this.tokenSymbolChanged}/>
         </Form.Group>
         
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Token Address</Form.Label>
+          <Form.Label>Convertible Reserve Token Address</Form.Label>
           <Form.Control type="text" placeholder="address" value={convertibleTokenAddress} onChange={this.converterAddressChanged}/>
           <Form.Text className="text-muted">
-            Enter the address of the deployed token.
+            Enter the address of the ERC20 token contract for which you want to create pool.
           </Form.Text>
+          
         </Form.Group>
-        
-        <div class="slidecontainer">
-             <Form.Label>Reserve Ratio</Form.Label>
-          <input type="range" min="30" max="50" value="50" className="slider" id="myRange"/>
-        </div>
+
+        <Row className="form-submit-container">
+        <Col lg={6} xs={12}>
+          <div className="slidecontainer">
+            <Form.Label>{`Reserve Ratio for pool. ${weightValue}/${weightValue}`}</Form.Label>
+            <input type="range" min="30" max="50" value={weightValue} className="slider"
+            id="myRange" onChange={this.sliderValueChanged}/>
+          </div>
+        </Col>
+        <Col lg={6} xs={12}>
+          <div>
+            {weightPromptMessage}
+          </div>
+        </Col>
+        </Row>
         <Button variant="primary" type="submit">
           Next
         </Button>
       </Form>
-           </Container>
+        </Container>
+        </div>
       </div>
     )
   }
@@ -306,7 +373,7 @@ class Step3 extends Component {
           <Form.Control type="text" placeholder="enter amount of token to transfer"  value={tokenAmount} 
           onChange={this.tokenAmountChanged}/>
           <Form.Text className="text-muted">
-            Enter amount of token to transfer
+            Enter amount of convertible ERC20 token to transfer
           </Form.Text>
         </Form.Group>
         
@@ -315,13 +382,13 @@ class Step3 extends Component {
           <Form.Control type="text" placeholder="Enter amount of connector token to transfer"
             value={connectorAmount} onChange={this.connectorAmountChanged}/>
           <Form.Text className="text-muted">
-            Enter amount of token to transfer
+            Enter amount of network token (BNT) to transfer
           </Form.Text>
         </Form.Group>
         
-                  <Form.Text className="text-muted">
-            Please ensure that the USD value of convertible token and reserve token are roughly equal.
-          </Form.Text>
+        <Form.Text className="text-muted">
+            Please ensure that the USD value of both reserve tokens are roughly equal.
+        </Form.Text>
         
 
           <Button variant="primary" type="submit">
@@ -338,8 +405,52 @@ class Step4 extends Component {
   render() {
     return (
       <Container>
+        <Row>
+          <Col lg={12}>
+            <div className="h5">Great job setting up your pool, now you just need to activate your pool.</div>
+            <div>
+            Activation means transferring ownership of the pool token to the bancor converter converter 
+            and the converter contract accepting owenership of the pool token.
+            </div>
+          </Col>
+        </Row>
         <Button onClick={this.props.activatePool}>Activate your pool</Button>
       </Container>
+      )
+  }
+}
+
+class TransactioReceiptPage extends Component {
+  componentWillMount() {
+    const {pool: {smartTokenStatus, converterContractReceipt}} = this.props;
+    const args = {
+      poolTokenAddress: smartTokenStatus.contractAddress,
+      converterAddress: converterContractReceipt.contractAddress,
+    }
+    this.props.getConverterAndPoolDetails(args);
+  }
+  render() {
+    const {pool: {poolCreationReceipt}} = this.props;
+    let receiptObject = <span/>;
+    if (isNonEmptyObject(poolCreationReceipt)) {
+      receiptObject = (
+        <div>
+          <div className="h6">Your pool is now ready.</div>
+          <div>Pool Name: {poolCreationReceipt.poolName}</div>
+          <div>Pool Symbol: {poolCreationReceipt.poolSymbol}</div>
+          <div>Connector Address: {poolCreationReceipt.connectorAdress}</div>
+          <div>Weight: {poolCreationReceipt.connectorWeight}/{poolCreationReceipt.connectorWeight}</div>
+          <div>Connector Balance: {poolCreationReceipt.connectorBalance}</div>
+          <div></div>
+          <div>Provide your pool address to Bancor developers channel for verification and addition to registry.</div>
+        </div>
+        )
+    }
+    return (
+      <div className="receipt-page-container">
+        {receiptObject}
+      </div>
+
       )
   }
 }
