@@ -3,3 +3,5 @@ client/node_modules
 client/build
 client/.env
 client/.env.development
+.env
+.env.development

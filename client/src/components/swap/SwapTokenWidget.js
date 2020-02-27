@@ -9,7 +9,6 @@ import {getConverterRegistryAddress, getConvertibleTokenList, getConvertibleToke
 } from '../../utils/RegistryUtils';
 import {toDecimals, fromDecimals} from '../../utils/eth';
 
-import {getBancorConversionRate} from '../../utils/BancorUtils';
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken
 } from '../../utils/ConverterUtils';

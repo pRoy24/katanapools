@@ -12,6 +12,7 @@ const BancorNetworkPathFinder = require('../contracts/BancorNetworkPathFinder.js
 
 const BancorConverter = require('../contracts/BancorConverter.json');
 
+const ethUtils = require('./eth');
 
 const axios = require('axios');
 
@@ -66,34 +67,20 @@ module.exports = {
     const web3 = window.web3;
     
     let convertibleTokenDataList = tokenList.map(function(tokenAddress){
-    let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
-    return CurrentToken.methods.name().call().then(function(tokenName){
-      return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
-        return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
-          return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
-
-            const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
-            const [name, ext] = imgFile.split(".");
-            let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
-
-            return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,
-                                decimals: tokenDecimals, imageURI: imgURI, meta: tokenApiMeta.data.data});
-          }).catch(function(err){
-                        return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,
-                                decimals: tokenDecimals, imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'
-                                , meta: {}});
-          })
-        })
-      });
-    }).catch(function(err){
-          return null;
-        });
+      return fetchTokenMeta(tokenAddress);
     });
 
   return Promise.all(convertibleTokenDataList).then(function(dataResponse){
     let filteredDataResponse = dataResponse.filter(Boolean);
     return filteredDataResponse;
   })
+    
+  },
+  
+  
+  getTokenDetails: function(tokenAddress) {
+
+  return fetchTokenMeta(tokenAddress);
     
   },
   
@@ -207,4 +194,35 @@ module.exports = {
   },
   
 
+}
+
+function fetchTokenMeta(tokenAddress) {
+      const web3 = window.web3;
+    
+    let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
+    return CurrentToken.methods.name().call().then(function(tokenName){
+      return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
+        return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
+          return CurrentToken.methods.totalSupply().call().then(function(totalSupply){
+            
+      
+          return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
+
+            const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
+            const [name, ext] = imgFile.split(".");
+            let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
+  
+            return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,totalSupply: totalSupply,
+                                decimals: tokenDecimals, imageURI: imgURI, meta: tokenApiMeta.data.data});
+          }).catch(function(err){
+                        return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress, totalSupply: totalSupply,
+                                decimals: tokenDecimals, imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'
+                                , meta: {}});
+          })
+          })
+        })
+      });
+    }).catch(function(err){
+          return null;
+        });
 }

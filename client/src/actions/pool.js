@@ -20,6 +20,15 @@ export const SET_ACTIVATION_STATUS = 'SET_ACTIVATION_STATUS';
 
 export const SET_POOL_CREATION_RECEIPT = 'SET_POOL_CREATION_RECEIPT';
 
+export const SET_CURRENT_SELECTED_POOL = 'SET_CURRENT_SELECTED_POOL';
+
+export function setCurrentSelectedPool(payload) {
+  return {
+    type: SET_CURRENT_SELECTED_POOL,
+    payload: payload
+  }
+}
+
 export function setPoolCreationReceipt(receipt) {
   return {
     type: SET_POOL_CREATION_RECEIPT,

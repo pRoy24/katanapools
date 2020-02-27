@@ -13,7 +13,7 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import ViewPools from './view_pools/ViewPools';
+import ViewPoolsContainer from './view_pools/ViewPoolsContainer';
 import MyPools from './MyPools';
 
 export default class PoolTokens extends Component {
@@ -72,7 +72,7 @@ export default class PoolTokens extends Component {
             <CreateNewPoolContainer/>
           </Route>
           <Route path="/pool/view">
-            <ViewPools poolData={poolData}/>
+            <ViewPoolsContainer poolData={poolData}/>
           </Route>
           <Route path="/pool/user">
             <MyPools />

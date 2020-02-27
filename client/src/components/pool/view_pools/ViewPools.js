@@ -3,25 +3,28 @@ import ViewPoolToolbar from './ViewPoolToolbar';
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import {ListGroupItem, ListGroup, Row, Col, Button} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import SelectedPool from './SelectedPool';
+import {isNonEmptyObject} from '../../../utils/ObjectUtils';
 
 export default class ViewPool extends Component {
   render() {
     return (
       <div>
         <ViewPoolToolbar/>
-        <ViewPoolList {...this.props}/>
+        <ViewPoolWidget {...this.props}/>
       </div>
       )
   }
 }
 
-class ViewPoolList extends Component {
+class ViewPoolWidget extends Component {
   
   setSelectedPool (selectedPool) {
     console.log(selectedPool);
+    this.props.getPoolDetails(selectedPool);
   }
   render() {
-    const {poolData} = this.props;
+    const {poolData, pool: {currentSelectedPool}} = this.props;
     const self = this;
     let poolDataList = <span/>;
     
@@ -43,6 +46,10 @@ class ViewPoolList extends Component {
        }
       </ListGroup>
     }
+    let selectedPool = <span/>;
+    if (isNonEmptyObject(currentSelectedPool)) {
+      selectedPool =  <SelectedPool {...this.props}/>
+    }
     return (
       <div className="app-toolbar-container ">
         
@@ -51,10 +58,8 @@ class ViewPoolList extends Component {
         {poolDataList}
         </Col>
         <Col lg={10}>
-          
+          {selectedPool}
         </Col>
-        
-        
         </Row>
       </div>
       )
