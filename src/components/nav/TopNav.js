@@ -22,9 +22,6 @@ export default class TopNav extends Component {
         <LinkContainer to="/pool/create">
     <NavItem key={3}>Create pool</NavItem>
   </LinkContainer>
-        <LinkContainer to="/pool/user">
-    <NavItem key={4}> My pools</NavItem>
-  </LinkContainer>
     </Nav>
   </Navbar.Collapse>
 </Navbar>

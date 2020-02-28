@@ -92,3 +92,30 @@
   max-height: 70vh;
   overflow-y: scroll;
 }
+
+.selected-pool-buy-sell-row {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.reserve-token-name-container {
+
+}
+
+.cell-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cell-data {
+    font-size: 12px;
+}
+
+.action-info-col {
+  padding-left: 10px;
+}
+
+.pool-action-btn {
+  width: 120px;
+  margin-top: 12px;
+}

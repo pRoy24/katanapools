@@ -30,7 +30,7 @@ const mapDispatchToProps = (dispatch) => {
     getPoolDetails: (poolRow) => {
 
       const web3 = window.web3;
-      
+      const senderAddress = web3.currentProvider.selectedAddress;
       const poolSmartTokenAddress = poolRow.address;
       const poolConverterAddress = poolRow.convertibles[0];
       
@@ -58,15 +58,18 @@ const mapDispatchToProps = (dispatch) => {
     
     
     getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
+     
+     SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
 
+  
     Promise.all(reserveTokenList).then(function(reserveTokenDetails){
       
-      let finalPayload = Object.assign({}, smartTokenDetails, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
+      let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
       dispatch(setCurrentSelectedPool(finalPayload));
     })
     
     })
-
+   })
       
       });
       
@@ -99,17 +102,30 @@ const mapDispatchToProps = (dispatch) => {
       
 
       getApproval(reserve1Contract, senderAddress,  args.converterAddress, args.reserve1.amount, args.reserve1.isEth).then(function(res){
-
-      getApproval(reserve2Contract, senderAddress, args.converterAddress, args.reserve2.amount, args.reserve2.isEth).then(function(res2){
-
-        ConverterContract.methods.fund(args.poolTokenNeeded).send({
-           from: senderAddress
-         }).then(function(fundRes){
-
-           console.log(fundRes);
-         })
+        getApproval(reserve2Contract, senderAddress, args.converterAddress, args.reserve2.amount, args.reserve2.isEth).then(function(res2){
+          ConverterContract.methods.fund(args.poolTokenNeeded).send({
+            from: senderAddress
+          }).then(function(fundRes){
+            console.log(fundRes);
+          })
+        })
       })
-    })
+    },
+    
+    submitPoolSell: (args) => {
+      const web3 = window.web3;
+      const senderAddress = web3.currentProvider.selectedAddress;
+    
+      const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
+      const PoolTokenContract = new web3.eth.Contract(SmartToken, args.poolAddress);
+      getApproval(PoolTokenContract, senderAddress,  args.converterAddress, args.poolTokenSold, false).then(function(res){
+        
+      ConverterContract.methods.liquidate(args.poolTokenSold).send({
+        from: senderAddress
+      }).then(function(sendResponse){
+        console.log(sendResponse);
+      })
+      });
     }
   }
 }
@@ -117,27 +133,22 @@ const mapDispatchToProps = (dispatch) => {
 
 function getApproval(contract, owner, spender, amount, isEth) {
   if (isEth) {
-    return contract.methods.withdrawTo(spender, amount).send({'from': owner}).then(function(sendRes){
-      return sendRes;
-    })
+    return new Promise((resolve)=>(resolve()));
   } else {
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
     if (!allowance || typeof allowance === undefined) {
       allowance = 0;
     }
-    console.log('allowance '+allowance);
-    
     let diff = new BigNumber(allowance).minus(new BigNumber(amount));
-
-  if (diff.isNegative()) {
-  return contract.methods.approve(spender, allowance).send({
-    from: owner
-  }).then(function(allowanceResponse){
-    return allowanceResponse;
-  })
-  } else {
-    return null;
-  }
+    if (diff.isNegative()) {
+    return contract.methods.approve(spender, allowance).send({
+      from: owner
+    }).then(function(allowanceResponse){
+      return allowanceResponse;
+    })
+    } else {
+      return null;
+    }
   });
   }
 }
