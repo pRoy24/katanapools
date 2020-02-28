@@ -11,20 +11,23 @@ const BancorConverter = require('../contracts/BancorConverter.json');
 
 const axios = require('axios');
 
-module.exports = {
-  getConverterRegistryAddress: function() {
+
+ export function getConverterRegistryAddress() {
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
-    let CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
+    let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    if (currentNetwork.toString() === '3') {
+      CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     return converterRegistry.methods
       .addressOf(web3.utils.utf8ToHex("BancorConverterRegistry")).call().then(function(converterRegistryAddress){
         return converterRegistryAddress;
       });
-  },
+  }
   
   
-  getTokenList: function(registryAddress, tokenFetchFlag) {
+   export function getTokenList(registryAddress, tokenFetchFlag) {
     const web3 = window.web3;
     var BancorConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, registryAddress)
     
@@ -47,18 +50,18 @@ module.exports = {
         resolve([]);
       })
     }
-  },
+  }
   
-  getConvertibleTokenList: function( converterRegistryAddress) {
+  export function getConvertibleTokenList( converterRegistryAddress) {
         const web3 = window.web3;
     var BancorConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress)
     
     return BancorConverterRegistryContract.methods.getConvertibleTokens().call().then(function(convertibleTokenList){
       return convertibleTokenList;
     });
-  },
+  }
   
-  getTokenData: function(tokenList) {
+  export function getTokenData(tokenList) {
 
     let convertibleTokenDataList = tokenList.map(function(tokenAddress){
       return fetchTokenMeta(tokenAddress);
@@ -69,39 +72,47 @@ module.exports = {
     return filteredDataResponse;
   })
     
-  },
+  }
   
   
-  getTokenDetails: function(tokenAddress) {
+  export function getTokenDetails(tokenAddress) {
 
     return fetchTokenMeta(tokenAddress);
-  },
+  }
   
-  getNetworkPathContractAddress: function() {
+  export function getNetworkPathContractAddress() {
     const web3 = window.web3;
-    const CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
+    const currentNetwork = web3.currentProvider.networkVersion;
+    let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    if (currentNetwork.toString() === '3') {
+      CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
     return converterRegistry.methods
       .addressOf(web3.utils.utf8ToHex("BancorNetworkPathFinder")).call().then(function(converterRegistryAddress){
         return converterRegistryAddress;
       });
-  },
+  }
   
   
   
-  getNetworkPath: function( from, to, networkPathContractAddress) {
+  export function getNetworkPath( from, to, networkPathContractAddress) {
     const web3 = window.web3;
     var BancorConverterRegistryContract = new web3.eth.Contract(BancorNetworkPathFinder, networkPathContractAddress)
     return BancorConverterRegistryContract.methods.generatePath(from, to).call().then(function(convertibleTokenList){
       return convertibleTokenList;
     });
-  },
+  }
   
   
-  getContractAddress: function(contractName) {
+  export function getContractAddress(contractName) {
     const web3 = window.web3;
-    const CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
+    const currentNetwork = web3.currentProvider.networkVersion;
+    let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    if (currentNetwork.toString() === '3') {
+      CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
     
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
@@ -109,9 +120,9 @@ module.exports = {
       .addressOf(web3.utils.utf8ToHex(contractName)).call().then(function(converterRegistryAddress){
         return converterRegistryAddress;
       });
-  },
+  }
   
-  getConverterValue: function(pathAddress, from, to, amount) {
+  export function getConverterValue(pathAddress, from, to, amount) {
     const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverter, pathAddress);
     
@@ -119,27 +130,27 @@ module.exports = {
       console.log(dataRes);
       return dataRes;
     })
-  },
+  }
   
   
-  getLiquidityPools: function(contractAddress) {
+  export function getLiquidityPools(contractAddress) {
     const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, contractAddress);
     return converterRegistry.methods.getLiquidityPools().call().then(function(poolData){
         return poolData;
       });    
-  },
+  }
   
   
-  getSmartTokens: function(contractAddress) {
+  export function getSmartTokens(contractAddress) {
     const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, contractAddress);
     return converterRegistry.methods.getSmartTokens().call().then(function(smartData){
         return smartData;
       });      
-  },
+  }
   
-  getERC20DData: function(contractAddress) {
+   export function getERC20DData(contractAddress) {
     const web3 = window.web3;
 
     let erc20Contract = new web3.eth.Contract(ERC20Token, contractAddress);
@@ -151,9 +162,9 @@ module.exports = {
          });
         });
       });      
-  },
+  }
   
-  getConverterReserveTokenCount: function(contractAddress) {
+   export function getConverterReserveTokenCount(contractAddress) {
     const web3 = window.web3;
     
     let converterContract = new web3.eth.Contract(BancorConverter, contractAddress);
@@ -162,10 +173,10 @@ module.exports = {
    
       return data;
     })
-  },
+  }
   
   
-  getConverterAddressList: function(converterRegistryAddress, smartTokenAddressList) {
+  export function getConverterAddressList(converterRegistryAddress, smartTokenAddressList) {
   
       const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
@@ -173,19 +184,18 @@ module.exports = {
     return converterRegistry.methods.getConvertersBySmartTokens(smartTokenAddressList).call().then(function(symbol){
         return symbol;
       });     
-  },
+  }
   
   
-  getConvertibleTokenSmartTokens: function(converterRegistryAddress, smartTokenAddress) {
+  export function getConvertibleTokenSmartTokens(converterRegistryAddress, smartTokenAddress) {
     const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
     return converterRegistry.methods.getConvertibleTokenSmartTokens(smartTokenAddress).call().then(function(smartData){
         return smartData;
       });   
-  },
+  }
   
 
-}
 
 function fetchTokenMeta(tokenAddress) {
       const web3 = window.web3;
@@ -216,27 +226,4 @@ function fetchTokenMeta(tokenAddress) {
     }).catch(function(err){
           return null;
   });
-}
-
-function getContractRegistry() {
-    const web3 = window.web3;
-    const currentNetwork = web3.currentProvider.networkVersion;
-    let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
-
-    if (currentNetwork.toString() === '3') {
-      CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
-    }
-    return CONTRACT_REGISTRY_ADDRESS;
-}
-
-function getBNTAddress() {
-    const web3 = window.web3;
-    const currentNetwork = web3.currentProvider.networkVersion;
-    
-    let BNT_ADDRESS = process.env.REACT_APP_BNT_ID_MAINNET;
-    
-    if (currentNetwork.toString() === '3') {
-      BNT_ADDRESS = process.env.REACT_APP_BNT_ID_ROPSTEN;
-    }
-    return BNT_ADDRESS;  
 }
