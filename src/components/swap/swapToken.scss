@@ -178,7 +178,7 @@
 }
 
 .spinner-icon {
-  color: #fff !important;
+  color: #0D0D0D !important;
 }
 
 .arrow-right-container {
@@ -204,3 +204,13 @@
   z-index: 0;
 }
 
+.toolbar-options-check {
+  padding-top: 6px;
+}
+
+.swap-token--loading-container {
+  height: 220px;
+  padding-top: 100px;
+  background: #fff;
+  color: #0D0D0D;
+}

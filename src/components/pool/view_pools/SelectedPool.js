@@ -128,6 +128,8 @@ export default class SelectedPool extends Component {
         )
     }
     let fundInfo = <span/>;
+    let poolFee = "3";
+    
     if (fundAmount && fundAmount > 0) {
       fundInfo = (
         <div>
@@ -140,10 +142,10 @@ export default class SelectedPool extends Component {
     return (
       <div>
         <Row className="select-pool-row-1">
-          <Col lg={1}>
+          <Col lg={1} className="pool-logo-container">
             <img src={currentSelectedPool.imageURI} className="selected-pool-image"/>
           </Col>
-          <Col lg={3}>
+          <Col lg={2}>
             <div className="cell-label">{currentSelectedPool.symbol}</div>
             <div className="cell-data">{currentSelectedPool.name}</div>
           </Col>
@@ -151,8 +153,8 @@ export default class SelectedPool extends Component {
            <div className="cell-label">Address</div>
            <div className="cell-data"><AddressDisplay address={currentSelectedPool.address}/></div>
           </Col>
-          <Col lg={1}>
-            <div className="cell-label">Supply</div>
+          <Col lg={2}>
+            <div className="cell-label">Pool Supply</div>
             <div className="cell-data">{minTotalSupply}</div>
           </Col>
           <Col lg={3}>
@@ -162,26 +164,44 @@ export default class SelectedPool extends Component {
             </div>
           </Col>
           <Col lg={2}>
-            <div className="cell-label">Your holdings</div> 
+            <div className="cell-label">Reserve Ratio</div>
+            <div className="cell-data">50/50 reserve ratio</div>          
+          </Col>
+        </Row>
+        <Row className="selected-pool-meta-row">
+          <Col lg={2}>
+            <div className="cell-label">Pool Fees</div>
+            <div className="cell-data">{poolFee}% fee generated</div>
+          </Col>
+          <Col lg={3}>
+            <div className="cell-label">Your pool token holdings</div> 
             <div className="cell-data">{poolHoldings} {currentSelectedPool.symbol}</div> 
+          </Col>
+          <Col lg={4}>
+            <div className="cell-label">Your reserve token holdings</div> 
+            <div className="cell-data">{reserveTokenList}</div>
           </Col>
         </Row>
         <Row className="selected-pool-buy-sell-row">
           <Col lg={3}>
             <div>Fund Pool Holdings</div>
-            <Form.Control type="number" placeholder="Enter amount you'd like to fund" onChange={this.onFundInputChanged}/>
+            <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
             <div className="action-info-col">
             {fundInfo}
             <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
             </div>
-            
           </Col>
           <Col lg={3}>
             <div>Liquitate Pool Holdings</div>
-            <Form.Control type="number" placeholder="Enter amount you'd like to liquidate" onChange={this.onLiquidateInputChanged}/>
+            <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
             <div className="action-info-col">
             {liquidateInfo}
             <Button onClick={this.submitSellPoolToken} className="pool-action-btn">Sell</Button>            
+            </div>
+          </Col>
+          <Col lg={6}>
+          <div className="volume-graph-container">
+            <VolumeGraph/>
             </div>
           </Col>
         </Row>
@@ -192,6 +212,22 @@ export default class SelectedPool extends Component {
         <Row>
 
         </Row>
+      </div>
+      
+      )
+  }
+}
+
+class VolumeGraph extends Component {
+  render() {
+    const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    if (currentNetwork !== '1') {
+      return <div className="graph-message-text">Volume graph is available only on mainnet</div>
+    }
+    return (
+      <div>
+      
       </div>
       
       )

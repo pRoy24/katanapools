@@ -83,19 +83,24 @@
   margin-top: 10px;
   position: relative;
   text-align: left;
+
 }
 .selected-pool-image {
   width:100%;
 }
 
 .select-pool-group {
-  max-height: 70vh;
+  height: 70vh;
+  width: 100%;
   overflow-y: scroll;
+  background: #fff;
+
 }
 
 .selected-pool-buy-sell-row {
   margin-top: 20px;
   text-align: left;
+
 }
 
 .reserve-token-name-container {
@@ -118,4 +123,40 @@
 .pool-action-btn {
   width: 120px;
   margin-top: 12px;
+}
+
+.pool-options-list {
+  background: #fff;
+}
+
+.loading-spinner {
+  margin-top: 100px;
+}
+
+.graph-message-text {
+  padding-top: 100px;
+  text-align: center;
+}
+
+.volume-graph-container {
+    background: #fff;
+    height: 300px;
+    margin: 8px 6px;
+    margin-right: 12px;
+    border-radius: 4px;
+    border: 2px solid #D9D9D9;
+    position: relative;
+}
+
+.selected-pool-meta-row {
+  text-align:left;
+  margin-top: 16px;
+  margin-bottom: 40px;
+}
+
+.pool-logo-container {
+  background: #fff;
+  border: 2px solid #D9D9D9;
+  border-radius: 1px;
+  padding-top: 4px;
 }

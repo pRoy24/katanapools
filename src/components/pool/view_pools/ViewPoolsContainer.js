@@ -2,7 +2,6 @@ import ViewPools from './ViewPools';
 
 import {connect} from 'react-redux';
 
-import {getTokenDetails} from '../../../utils/RegistryUtils';
 import {setCurrentSelectedPool} from '../../../actions/pool';
 
 const SmartToken = require('../../../contracts/SmartToken.json');
@@ -13,6 +12,8 @@ const ERC20Token = require('../../../contracts/ERC20Token.json');
 const EtherToken = require('../../../contracts/EtherToken.json');
 
 const BigNumber = require('bignumber.js');
+
+var RegistryUtils =require('../../../utils/RegistryUtils');
 
 const mapStateToProps = state => {
   return {
@@ -43,7 +44,7 @@ const mapDispatchToProps = (dispatch) => {
         let reserveTokenDetail = BancorConverterContract.methods.reserveTokens(a).call().then(function(reserveTokenAddress){
           
         return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
-         return getTokenDetails(reserveTokenAddress).then(function(tokenData){
+         return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
             return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance});
           })
         }) ;
@@ -53,7 +54,7 @@ const mapDispatchToProps = (dispatch) => {
       }
     
     
-    getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
+    RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
      
      SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
 

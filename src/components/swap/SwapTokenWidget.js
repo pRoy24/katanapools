@@ -4,15 +4,16 @@ import './swapToken.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Autosuggest from 'react-autosuggest';
-import {getConverterRegistryAddress, getConvertibleTokenList, getConvertibleTokenData,
-  getNetworkPath, getNetworkPathContractAddress, getContractAddress, getConverterValue,
-} from '../../utils/RegistryUtils';
+
+
+
+
 import {toDecimals, fromDecimals} from '../../utils/eth';
 
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken
 } from '../../utils/ConverterUtils';
-
+var RegistryUtils = require('../../utils/RegistryUtils');
 
 export default class SwapTokenWidget extends Component {
 
@@ -30,8 +31,8 @@ export default class SwapTokenWidget extends Component {
 
     const fromAmount = toDecimals(amount, fromToken.decimals);
     if (fromToken.address !== toToken.address) {
-      getNetworkPathContractAddress().then(function(networkPathGenerator){
-        getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
+      RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
+        RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
           
           getNetworkPathMeta(networkPath).then(function(networkMeta){
             self.setState({'pathMeta': networkMeta});
@@ -165,9 +166,12 @@ export default class SwapTokenWidget extends Component {
 
 
     if (tokenData.length === 0 ||  selectedTransferToken === undefined ||  selectedReceiveToken === undefined) {
-      return <div className="spinner-icon">
-     <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
-      </div>;
+      return (
+      <div className="swap-token--loading-container">
+      <div className="spinner-icon">
+              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+      </div>
+      </div>);
     }
     
     let pathMetaData = <span/>;

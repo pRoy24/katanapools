@@ -59,8 +59,7 @@ module.exports = {
   },
   
   getTokenData: function(tokenList) {
-    const web3 = window.web3;
-    
+
     let convertibleTokenDataList = tokenList.map(function(tokenAddress){
       return fetchTokenMeta(tokenAddress);
     });
@@ -75,8 +74,7 @@ module.exports = {
   
   getTokenDetails: function(tokenAddress) {
 
-  return fetchTokenMeta(tokenAddress);
-    
+    return fetchTokenMeta(tokenAddress);
   },
   
   getNetworkPathContractAddress: function() {
@@ -158,8 +156,6 @@ module.exports = {
   getConverterReserveTokenCount: function(contractAddress) {
     const web3 = window.web3;
     
-
-    
     let converterContract = new web3.eth.Contract(BancorConverter, contractAddress);
 
    return converterContract.methods.reserveTokenCount().call().then(function(data){
@@ -177,9 +173,6 @@ module.exports = {
     return converterRegistry.methods.getConvertersBySmartTokens(smartTokenAddressList).call().then(function(symbol){
         return symbol;
       });     
-
-  
-    
   },
   
   
@@ -222,7 +215,7 @@ function fetchTokenMeta(tokenAddress) {
       });
     }).catch(function(err){
           return null;
-        });
+  });
 }
 
 function getContractRegistry() {

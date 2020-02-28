@@ -3,11 +3,9 @@ import { Row, Col, Button, Form} from 'react-bootstrap';
 import './swapToken.scss';
 import SwapTokenToolbar from './SwapTokenToolbar';
 import SwapTokenWidget from './SwapTokenWidget';
-import {getConverterRegistryAddress,
-        getTokenList,
-        getTokenData,
-      } from '../../utils/RegistryUtils';
 
+
+var RegistryUtils = require('../../utils/RegistryUtils');
 
 export default class SwapToken extends Component {
   constructor(props) {
@@ -41,10 +39,10 @@ export default class SwapToken extends Component {
       }
 
       const transferAmount = this.state.transferAmount;  
-      getConverterRegistryAddress().then(function(convertibleTokenAddress){
+      RegistryUtils.getConverterRegistryAddress().then(function(convertibleTokenAddress){
  
-      getTokenList( convertibleTokenAddress, fetchTokenFlag).then(function(tokenList){
-      getTokenData( tokenList, fetchTokenFlag).then(function(tokenDataResponse){
+      RegistryUtils.getTokenList( convertibleTokenAddress, fetchTokenFlag).then(function(tokenList){
+      RegistryUtils.getTokenData( tokenList, fetchTokenFlag).then(function(tokenDataResponse){
         if (tokenDataResponse && tokenDataResponse.length > 0){
         const initialFromToken = tokenDataResponse[0];
         const initialToToken = tokenDataResponse[1];

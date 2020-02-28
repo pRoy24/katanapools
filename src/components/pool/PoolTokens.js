@@ -1,8 +1,7 @@
 import React, {Component} from 'react';
 import {Container, Row, Col, Button} from 'react-bootstrap';
-import {getContractAddress, getLiquidityPools, getERC20DData, getConverterData, getSmartTokens, getConverterReserveTokenCount,
-  getConverterAddressList, getConvertibleTokenSmartTokens
-} from '../../utils/RegistryUtils';
+
+
 
 import CreateNewPoolContainer from './create_pool/CreateNewPoolContainer';
 import './pool.scss';
@@ -14,6 +13,7 @@ import {
 } from "react-router-dom";
 import ViewPoolsContainer from './view_pools/ViewPoolsContainer';
 
+var RegistryUtils = require('../../utils/RegistryUtils');
 
 export default class PoolTokens extends Component {
   constructor(props) {
@@ -28,16 +28,16 @@ export default class PoolTokens extends Component {
   componentWillMount() {
     this.web3 = window.web3;
             const self = this;
-    getContractAddress('BancorConverterRegistry').then(function(converterContractRegistryAddress){
-      getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
+    RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
+      RegistryUtils.getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
         
 
         
         let poolData = 
           smartTokenList.map(function(smartToken){
             
-          return getConverterAddressList(converterContractRegistryAddress, [smartToken]).then(function(converters){
-            return getERC20DData(smartToken).then(function(tokenData){
+          return RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [smartToken]).then(function(converters){
+            return RegistryUtils.getERC20DData(smartToken).then(function(tokenData){
                 return Object.assign({}, tokenData, {'convertibles': converters});
             })
           }).catch(function(err){

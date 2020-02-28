@@ -5,3 +5,4 @@ client/.env
 client/.env.development
 .env
 .env.development
+build/

@@ -20,10 +20,8 @@ export default class ViewPool extends Component {
 class ViewPoolWidget extends Component {
   componentWillMount() {
     const {poolData} = this.props;
-
-    
-
   }
+  
   setSelectedPool (selectedPool) {
     this.props.getPoolDetails(selectedPool);
   }
@@ -35,6 +33,7 @@ class ViewPoolWidget extends Component {
           this.props.getPoolDetails(poolData[0]);
     }
   }
+  
   render() {
     const {poolData, pool: {currentSelectedPool}} = this.props;
     const self = this;
@@ -43,7 +42,8 @@ class ViewPoolWidget extends Component {
     if (poolData.length === 0) {
       poolDataList =  <span/>;
     } else {
-      poolDataList = <ListGroup className="select-pool-group">
+      poolDataList = 
+      <span>
         <ListGroupItem>
               Symbol
         </ListGroupItem>
@@ -53,10 +53,13 @@ class ViewPoolWidget extends Component {
               {poolRow.symbol}
            </ListGroupItem>
          })
-       }
-      </ListGroup>
+       }</span>
+   
     }
-    let selectedPool =  <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+    let selectedPool =  (<div className="loading-spinner">
+                          <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+                        </div>
+                        )
     if (isNonEmptyObject(currentSelectedPool)) {
       selectedPool =  <SelectedPool {...this.props}/>
     }
@@ -64,7 +67,9 @@ class ViewPoolWidget extends Component {
       <div className="app-toolbar-container">
         <Row>
         <Col lg={2}>
-        {poolDataList}
+        <ListGroup className="select-pool-group">
+          {poolDataList}
+        </ListGroup>
         </Col>
         <Col lg={10}>
           {selectedPool}
