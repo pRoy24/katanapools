@@ -169,7 +169,7 @@ const mapDispatchToProps = (dispatch) => {
             from: senderAddress
       }).then(function(issueResponse){
 
-            reserveTokenContract.methods.transfer(bancorConverterAddress, reserveTokenMinAmount).send({
+      reserveTokenContract.methods.transfer(bancorConverterAddress, reserveTokenMinAmount).send({
               from: senderAddress
             }).then(function(rsResponse){
       convertibleTokenContract.methods.approve(bancorConverterAddress, convertibleTokenMinAmount).send({
@@ -184,9 +184,6 @@ const mapDispatchToProps = (dispatch) => {
             })
           })
         })
-        
-
-          
       })
       
       })

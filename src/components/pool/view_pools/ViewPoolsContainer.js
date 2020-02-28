@@ -14,6 +14,9 @@ const BancorConverterByteCode = require('../../../contracts/BancorConverterByteC
 const ContractRegistry = require('../../../contracts/ContractRegistry.json');
 const BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID;
 const ERC20Token = require('../../../contracts/ERC20Token.json');
+const EtherToken = require('../../../contracts/EtherToken.json');
+
+const BigNumber = require('bignumber.js');
 
 const mapStateToProps = state => {
   return {
@@ -43,9 +46,7 @@ const mapDispatchToProps = (dispatch) => {
   
         let reserveTokenDetail = BancorConverterContract.methods.reserveTokens(a).call().then(function(reserveTokenAddress){
           
-        return   BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
-          
-        
+        return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
          return getTokenDetails(reserveTokenAddress).then(function(tokenData){
             return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance});
           })
@@ -59,6 +60,7 @@ const mapDispatchToProps = (dispatch) => {
     getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
 
     Promise.all(reserveTokenList).then(function(reserveTokenDetails){
+      
       let finalPayload = Object.assign({}, smartTokenDetails, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
       dispatch(setCurrentSelectedPool(finalPayload));
     })
@@ -72,11 +74,71 @@ const mapDispatchToProps = (dispatch) => {
     
     getPoolFundingDetails:(amount) => {
       
+    },
+    
+    submitPoolBuy: (args) => {
+
+      const web3 = window.web3;
+      const senderAddress = web3.currentProvider.selectedAddress;
+    
+      const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
+
+      let reserve1Contract = null;
+      let reserve2Contract = null;
+      if (!args.reserve1.isEth) {
+        reserve1Contract = new web3.eth.Contract(ERC20Token, args.reserve1.address);
+      } else {
+        reserve1Contract = new web3.eth.Contract(EtherToken, args.reserve2.address);
+      }
+      
+      if (!args.reserve2.isEth) {
+        reserve2Contract = new web3.eth.Contract(ERC20Token, args.reserve2.address);
+      } else {
+        reserve2Contract = new web3.eth.Contract(EtherToken, args.reserve2.address);
+      }
+      
+
+      getApproval(reserve1Contract, senderAddress,  args.converterAddress, args.reserve1.amount, args.reserve1.isEth).then(function(res){
+
+      getApproval(reserve2Contract, senderAddress, args.converterAddress, args.reserve2.amount, args.reserve2.isEth).then(function(res2){
+
+        ConverterContract.methods.fund(args.poolTokenNeeded).send({
+           from: senderAddress
+         }).then(function(fundRes){
+
+           console.log(fundRes);
+         })
+      })
+    })
     }
-    
+  }
+}
 
-    
 
+function getApproval(contract, owner, spender, amount, isEth) {
+  if (isEth) {
+    return contract.methods.withdrawTo(spender, amount).send({'from': owner}).then(function(sendRes){
+      return sendRes;
+    })
+  } else {
+  return contract.methods.allowance(owner, spender).call().then(function(allowance) {
+    if (!allowance || typeof allowance === undefined) {
+      allowance = 0;
+    }
+    console.log('allowance '+allowance);
+    
+    let diff = new BigNumber(allowance).minus(new BigNumber(amount));
+
+  if (diff.isNegative()) {
+  return contract.methods.approve(spender, allowance).send({
+    from: owner
+  }).then(function(allowanceResponse){
+    return allowanceResponse;
+  })
+  } else {
+    return null;
+  }
+  });
   }
 }
 

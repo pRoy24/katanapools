@@ -79,6 +79,16 @@
   background: #f2f2f2;
 }
 
+.select-pool-row-1 {
+  margin-top: 10px;
+  position: relative;
+  text-align: left;
+}
 .selected-pool-image {
-  width: 90px;
+  width:100%;
+}
+
+.select-pool-group {
+  max-height: 70vh;
+  overflow-y: scroll;
 }

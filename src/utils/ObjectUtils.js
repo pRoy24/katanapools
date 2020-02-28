@@ -10,5 +10,20 @@ module.exports = {
       return false;
     }
     return true;    
+  },
+  isEmptyArray: function(arr) {
+    if (arr === undefined || arr === null || arr.length === 0) {
+      return true;
+    }
+    return false;
+  },
+  isNonEmptyArray: function(arr) {
+    if (arr === undefined || arr === null || arr.length === 0) {
+      return false;
+    }
+    return true;    
   }
+  
+  
+  
 }
