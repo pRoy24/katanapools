@@ -13,12 +13,15 @@ export default class TopNav extends Component {
     if (window.web3 && window.web3.currentProvider) {
      const selectedAddress = window.web3.currentProvider.selectedAddress;
      const currentNetwork = window.web3.currentProvider.networkVersion;
+     if (currentNetwork && selectedAddress) {
+     
      addressBar = <AddressDisplay address={selectedAddress}/>
      if (currentNetwork.toString() === '1') {
        currentConnection = <div className="connection-string">Connected to Mainnet</div>;
      }
      if (currentNetwork.toString() === '3') {
        currentConnection = <div className="connection-string">Connected to Ropsten</div>;
+     }
      }
     }
    

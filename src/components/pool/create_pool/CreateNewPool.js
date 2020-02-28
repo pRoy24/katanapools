@@ -62,13 +62,13 @@ export default class CreateNewPool extends Component {
     const {relayTokenAddress, convertibleTokenAddress} = this.state;
 
     const args = {
-      convertibleTokenAmount: vals.tokenAmount,
-      reserveTokenAmount: vals.connectorAmount,
       convertibleTokenAddress: convertibleTokenAddress,
+      convertibleTokenAmount: vals.tokenAmount,
+      networkTokenAmount: vals.connectorAmount,
       smartTokenAddress: relayTokenAddress,
       converterAddress: converterContractReceipt.contractAddress
     }
-
+    
     this.props.fundRelayWithSupply(args);
   }
   
@@ -102,7 +102,7 @@ export default class CreateNewPool extends Component {
     
     const {poolSymbol, isResolved, showReceiptPage} = this.state;
 
-    const {pool: {isFetching, smartTokenStatus, relayConverterStatus}, pool,} = this.props;
+    const {pool: {isFetching, smartTokenStatus, relayConverterStatus, poolFundedStatus}, pool,} = this.props;
     let transactionStatusMessage = <span/>;
     if (isFetching) {
       let message = <span/>;
@@ -133,6 +133,19 @@ export default class CreateNewPool extends Component {
       } else if (relayConverterStatus.type === 'success') {
         transactionStatusMessage = <span/>;
       }
+    }
+    
+    if (isNonEmptyObject(poolFundedStatus)) {
+    if (poolFundedStatus.type === 'pending') {
+      transactionStatusMessage = (
+          <Alert  variant={"info"}>
+            <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+            {poolFundedStatus.message}
+          </Alert>
+        )
+    } else {
+      transactionStatusMessage = <span/>;
+    }
     }
     let currentPage = <span/>;
     if (showReceiptPage === false) {
@@ -369,7 +382,7 @@ class Step3 extends Component {
         <Container>
         <Form onSubmit={this.onSubmit}> 
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Contract Amount to Transfer</Form.Label>
+          <Form.Label>Base token reserve amount to Transfer</Form.Label>
           <Form.Control type="text" placeholder="enter amount of token to transfer"  value={tokenAmount} 
           onChange={this.tokenAmountChanged}/>
           <Form.Text className="text-muted">
@@ -378,7 +391,7 @@ class Step3 extends Component {
         </Form.Group>
         
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Dai Amount to Transfer</Form.Label>
+          <Form.Label>Network token reserve amount to transfer</Form.Label>
           <Form.Control type="text" placeholder="Enter amount of connector token to transfer"
             value={connectorAmount} onChange={this.connectorAmountChanged}/>
           <Form.Text className="text-muted">
@@ -389,8 +402,6 @@ class Step3 extends Component {
         <Form.Text className="text-muted">
             Please ensure that the USD value of both reserve tokens are roughly equal.
         </Form.Text>
-        
-
           <Button variant="primary" type="submit">
             Next
           </Button>
@@ -407,14 +418,16 @@ class Step4 extends Component {
       <Container>
         <Row>
           <Col lg={12}>
-            <div className="h5">Great job setting up your pool, now you just need to activate your pool.</div>
+            <div className="h5 activation-heading">Your pool is now ready to be activated !!</div>
             <div>
-            Activation means transferring ownership of the pool token to the bancor converter converter 
-            and the converter contract accepting owenership of the pool token.
+            <div className="activation-text">In order to activate the liquidity pool - </div> 
+            <div className="activation-text">You need to transfer pool ownership to the converter</div>
+            <div className="activation-text">The converter contract needs to accept ownership of the pool</div>
+            <div className="activation-sub-text">Click below to activate your pool now.</div>
             </div>
           </Col>
         </Row>
-        <Button onClick={this.props.activatePool}>Activate your pool</Button>
+        <Button onClick={this.props.activatePool} className="pool-activation-btn">Activate your pool</Button>
       </Container>
       )
   }

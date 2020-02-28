@@ -15,6 +15,8 @@ const ContractRegistry = require('../../../contracts/ContractRegistry.json');
 
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 
+const BigNumber = require('bignumber.js');
+
 const mapStateToProps = state => {
   return {
     pool: state.pool,
@@ -139,54 +141,58 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     fundRelayWithSupply: (args) => {
+
       const web3 = window.web3;
       const convertibleTokenAddress = args.convertibleTokenAddress;
       const convertibleTokenAmount = args.convertibleTokenAmount;
-      
       const convertibleTokenMinAmount = toDecimals(convertibleTokenAmount, 18);
-      const reserveTokenAmount = args.reserveTokenAmount;
+      
+      const networkTokenAmount = args.networkTokenAmount;
 
+      const networkTokenMinAmount = toDecimals(networkTokenAmount, 18);
       
       const smartTokenAddress = args.smartTokenAddress;
 
       const bancorConverterAddress = args.converterAddress;
       
       const senderAddress = web3.currentProvider.selectedAddress;
-          
-      let convertibleTokenContract = new web3.eth.Contract(ERC20Token, convertibleTokenAddress);
-      let reserveTokenContract = new web3.eth.Contract(ERC20Token, getBNTAddress());
       
+      const BNT_ADDRESS = getBNTAddress();
+
+      let convertibleTokenContract = new web3.eth.Contract(ERC20Token, convertibleTokenAddress);
+      let networkTokenContract = new web3.eth.Contract(ERC20Token, BNT_ADDRESS);
       
       const smartTokenContract = new web3.eth.Contract(SmartToken, smartTokenAddress);
       
-      reserveTokenContract.methods.decimals().call().then(function(numDecimals){
-
-         const reserveTokenMinAmount = toDecimals(reserveTokenAmount, numDecimals);
-
-      let supplyAmount = toDecimals(reserveTokenAmount * 2, 18);
+      networkTokenContract.methods.decimals().call().then(function(numDecimals){
+      let supplyAmount = toDecimals(networkTokenAmount * 2, 18);
+      dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to approve supply creation'}));
       
-      smartTokenContract.methods.issue(senderAddress, supplyAmount).send({
-            from: senderAddress
+      smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
+          dispatch(setPoolFundedStatus({type: 'pending', message:'Creating pool token supply'}));
       }).then(function(issueResponse){
-
-      reserveTokenContract.methods.transfer(bancorConverterAddress, reserveTokenMinAmount).send({
-              from: senderAddress
-            }).then(function(rsResponse){
-      convertibleTokenContract.methods.approve(bancorConverterAddress, convertibleTokenMinAmount).send({
-        from: senderAddress
-      }).then(function(approvalResponse){
-        dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user approval for network token transfer'}));
-        convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({
-          from: senderAddress
-        }).then(function(txResponse){
-          dispatch(setPoolFundedStatus({type: 'success', message:'finished funding pool with initial liquidity'}));
-
+          dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user approval for convertible token transfer'}));
+          getApproval(convertibleTokenContract, senderAddress, bancorConverterAddress, convertibleTokenMinAmount, dispatch, false).then(function(approvalResponse){
+            dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to initiate convertible token transfer'}));
+            convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
+              dispatch(setPoolFundedStatus({type: 'pending', message:'Transferring convertible token from user balance to contract'}));
+            }).then(function(txResponse){
+              dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user approval for network token transfer'}));              
+              getApproval(networkTokenContract, senderAddress, bancorConverterAddress, networkTokenMinAmount, dispatch, false).then(function(approvalResponse){
+                dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to initiate for network token transfer'}));
+                networkTokenContract.methods.transfer(bancorConverterAddress, networkTokenMinAmount).send({from: senderAddress}, function(err, txHash){
+                    dispatch(setPoolFundedStatus({type: 'pending', message:'Transferring network token from user balance to contract'}));
+                })
+                .then(function(rsResponse){
+                dispatch(setPoolFundedStatus({type: 'success', message:'finished funding pool with initial liquidity'}));
+              })
             })
           })
         })
       })
-      
-      })
+    }).catch(function(err){
+      dispatch(setPoolFundedStatus({type: 'error', message: err.message.toString()}));
+    })
       
 
     },
@@ -233,7 +239,6 @@ const mapDispatchToProps = (dispatch) => {
                 
               BancorConverterContract.methods.getReserveBalance(token1).call()
               .then(function(connectorReserveBalance){
-
                 const payload = {connectorBalance: fromDecimals(connectorReserveBalance, 18),
                   connectorWeight: connectorReserveRatio / 10000, poolName: poolName, poolSymbol: poolSymbol,
                   poolSupply: fromDecimals(poolSupply, 18), numConnectors: connectorTokenCount,
@@ -256,13 +261,38 @@ function getBNTAddress() {
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
     
-    let BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    let BNT_ADDRESS = process.env.REACT_APP_BNT_ID_MAINNET;
     
-    if (currentNetwork === 3) {
-      BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    if (currentNetwork.toString() === '3') {
+      BNT_ADDRESS = process.env.REACT_APP_BNT_ID_ROPSTEN;
     }
     return BNT_ADDRESS;  
 }
+
+function getApproval(contract, owner, spender, amount, dispatch, isEth) {
+  if (isEth) {
+    return new Promise((resolve)=>(resolve()));
+  } else {
+  return contract.methods.allowance(owner, spender).call().then(function(allowance) {
+    if (!allowance || typeof allowance === undefined) {
+      allowance = 0;
+    }
+    let diff = new BigNumber(allowance).minus(new BigNumber(amount));
+    if (diff.isNegative()) {
+    return contract.methods.approve(spender, allowance).send({
+      from: owner
+    }, function(err, txHash){
+      dispatch(setPoolFundedStatus({type: 'pending', message:'Processing user approval of fund transfer'}));
+    }).then(function(allowanceResponse){
+      return allowanceResponse;
+    })
+    } else {
+      return allowance;
+    }
+  });
+  }
+}
+
 
 export default connect(
     mapStateToProps,
