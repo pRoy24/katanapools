@@ -20,8 +20,31 @@
 
 .nav-item {
   margin-left: 14px;
+  cursor: pointer;
+  padding: 6px 4px;
 }
 
 .active  {
-  color: #f5f5f5;
+  color: #0D0D0D !important;
+  background: #f2f2f2 !important;
+  border-radius: 2px !important;
+}
+
+.connection-string {
+  font-size: 12px;
+  color: #28a745;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    background: #f2f2f2;
+    padding-top: 8px;
+    padding-bottom: 2px;
+}
+
+.app-disclaimer-container {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
 }

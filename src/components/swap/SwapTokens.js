@@ -3,17 +3,17 @@ import { Row, Col, Button, Form} from 'react-bootstrap';
 import './swapToken.scss';
 import SwapTokenToolbar from './SwapTokenToolbar';
 import SwapTokenWidget from './SwapTokenWidget';
-import {getConverterRegistryAddress, getTokenList,
-getTokenData,
-} from '../../utils/RegistryUtils';
-import {toDecimals, fromDecimals} from '../../utils/eth';
+import {getConverterRegistryAddress,
+        getTokenList,
+        getTokenData,
+      } from '../../utils/RegistryUtils';
 
 
 export default class SwapToken extends Component {
   constructor(props) {
     super(props);
     this.state = {smartTokenCheck: false, convertibleTokenCheck: true, transferAmount: 1,
-            receiveAmount: 0, totalFee: 0, transactionFee: 0, 'ConverterRegistryContractAddress': '',
+            receiveAmount: 0, totalFee: 0, transactionFee: 0,
           tokenData: [],
     };
     
@@ -39,8 +39,10 @@ export default class SwapToken extends Component {
       } else {
         fetchTokenFlag = "notokens";
       }
+
       const transferAmount = this.state.transferAmount;  
       getConverterRegistryAddress().then(function(convertibleTokenAddress){
+ 
       getTokenList( convertibleTokenAddress, fetchTokenFlag).then(function(tokenList){
       getTokenData( tokenList, fetchTokenFlag).then(function(tokenDataResponse){
         if (tokenDataResponse && tokenDataResponse.length > 0){

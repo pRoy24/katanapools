@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.scss';
 import LandingContainer from './components/landing/LandingContainer';
 import TopNav from './components/nav/TopNav';
+import BottomNav from './components/nav/BottomNav';
 
 import {
   BrowserRouter as Router,
@@ -20,6 +21,7 @@ function App() {
     <div className="App">
       <TopNav/>
       <LandingContainer/>
+      <BottomNav/>
       </div>
     </Router>
   );
