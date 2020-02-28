@@ -24,6 +24,9 @@ export default class SelectedPool extends Component {
 
     let fundAfterAdd = maxInputFund.dividedBy((minTotalSupply).plus(maxInputFund)).multipliedBy(new BigNumber(100));
     
+    console.log(maxInputFund.toString());
+    console.log(fundAfterAdd.toString());
+    
      console.log(fundAfterAdd.toString());
 
 
