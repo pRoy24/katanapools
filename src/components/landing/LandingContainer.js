@@ -1,12 +1,25 @@
-import { drizzleConnect } from 'drizzle-react'
+import {connect} from 'react-redux';
 import Landing from './Landing';
+import {setUserEnvironment} from '../../actions/user';
 
 const mapStateToProps = state => {
   return {
-    drizzleStatus: state.drizzleStatus,
     web3: state.web3,
-    drizzle: state.drizzle
+
   }
 }
 
-export default drizzleConnect(Landing, mapStateToProps);
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setUserEnvironment: () => {
+      const web3 = window.web3;
+      const args = {'selectedAddress': web3.currentProvider.selectedAddress, 'selectedNetwork': web3.currentProvider.networkVersion};
+      dispatch(setUserEnvironment(args))
+    }
+  }
+}
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Landing);

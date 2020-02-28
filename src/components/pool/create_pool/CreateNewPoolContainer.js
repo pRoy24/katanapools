@@ -12,7 +12,7 @@ const RegistryUtils = require('../../../utils/RegistryUtils');
 const BancorConverter = require('../../../contracts/BancorConverter.json');
 const BancorConverterByteCode = require('../../../contracts/BancorConverterByteCode.js');
 const ContractRegistry = require('../../../contracts/ContractRegistry.json');
-const BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID;
+
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 
 const mapStateToProps = state => {
@@ -86,7 +86,7 @@ const mapDispatchToProps = (dispatch) => {
                       smartTokenAddress, 
                       contractRegistryContractAddress,
                       maxFee,
-                      BNT_TOKEN_ID,
+                      getBNTAddress(),
                       reserveWeight
                     ]});
       
@@ -154,7 +154,7 @@ const mapDispatchToProps = (dispatch) => {
       const senderAddress = web3.currentProvider.selectedAddress;
           
       let convertibleTokenContract = new web3.eth.Contract(ERC20Token, convertibleTokenAddress);
-      let reserveTokenContract = new web3.eth.Contract(ERC20Token, BNT_TOKEN_ID);
+      let reserveTokenContract = new web3.eth.Contract(ERC20Token, getBNTAddress());
       
       
       const smartTokenContract = new web3.eth.Contract(SmartToken, smartTokenAddress);
@@ -248,11 +248,20 @@ const mapDispatchToProps = (dispatch) => {
           })  
       })
       })
-      
     }
-    
-
   }
+}
+
+function getBNTAddress() {
+    const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    
+    let BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    
+    if (currentNetwork === 3) {
+      BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
+    return BNT_ADDRESS;  
 }
 
 export default connect(

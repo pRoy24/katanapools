@@ -5,7 +5,8 @@ const BancorConverterByteCode = require('../contracts/BancorConverterByteCode.js
 const ContractRegistry = require('../contracts/ContractRegistry.json');
 const ERC20Token = require('../contracts/ERC20Token.json');
 const RegistryUtils = require('./RegistryUtils');
-const BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID;
+
+
 
 module.exports = {
   deploySmartToken: function(args) {
@@ -60,6 +61,12 @@ module.exports = {
     const conversionFee = args.conversionFee * 10000;
     const smartTokenAddress = args.smartTokenAddress;
     const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    
+    let BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID_MAINNET;
+    if (currentNetwork === 3) {
+      BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID_ROPSTEN;
+    }
     
     return new Promise((resolve, reject) => {
             
@@ -115,8 +122,7 @@ module.exports = {
    
       })
       .on('confirmation', function(confirmationNumber, receipt){
-        console.log('connector connected');
-        console.log(receipt);
+
       //  console.log(receipt) 
         
       }).then(function(deployerInstance){

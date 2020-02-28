@@ -1,7 +1,7 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.scss';
-import Landing from './components/landing/Landing';
+import LandingContainer from './components/landing/LandingContainer';
 import TopNav from './components/nav/TopNav';
 
 import {
@@ -19,7 +19,7 @@ function App() {
    <Router>
     <div className="App">
       <TopNav/>
-      <Landing/>
+      <LandingContainer/>
       </div>
     </Router>
   );

@@ -3,10 +3,8 @@ import { Row, Col, Button, Form} from 'react-bootstrap';
 import './swapToken.scss';
 import SwapTokenToolbar from './SwapTokenToolbar';
 import SwapTokenWidget from './SwapTokenWidget';
-import {getConverterRegistryAddress, getConvertibleTokenList, getTokenList,
+import {getConverterRegistryAddress, getTokenList,
 getTokenData,
-
-  getNetworkPath, getNetworkPathContractAddress, getContractAddress, getConverterValue,
 } from '../../utils/RegistryUtils';
 import {toDecimals, fromDecimals} from '../../utils/eth';
 

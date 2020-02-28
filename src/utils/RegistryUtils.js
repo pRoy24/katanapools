@@ -1,6 +1,3 @@
-const CONTRACT_REGISTRY_ADDRESS=process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY;
-
-const BNT_ADDRESS = process.env.REACT_APP_BNT_ID;
 
 const ContractRegistry = require('../contracts/ContractRegistry.json');
 
@@ -12,13 +9,14 @@ const BancorNetworkPathFinder = require('../contracts/BancorNetworkPathFinder.js
 
 const BancorConverter = require('../contracts/BancorConverter.json');
 
-const ethUtils = require('./eth');
-
 const axios = require('axios');
 
 module.exports = {
   getConverterRegistryAddress: function() {
     const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    
+    let CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
     
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
@@ -85,7 +83,8 @@ module.exports = {
   },
   
   getNetworkPathContractAddress: function() {
-        const web3 = window.web3;
+    const web3 = window.web3;
+    const CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
     return converterRegistry.methods
@@ -107,6 +106,8 @@ module.exports = {
   
   getContractAddress: function(contractName) {
     const web3 = window.web3;
+    const CONTRACT_REGISTRY_ADDRESS = getContractRegistry();
+    
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
     return converterRegistry.methods
@@ -225,4 +226,28 @@ function fetchTokenMeta(tokenAddress) {
     }).catch(function(err){
           return null;
         });
+}
+
+function getContractRegistry() {
+    const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    
+    let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    
+    if (currentNetwork === 3) {
+      CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
+    return CONTRACT_REGISTRY_ADDRESS;
+}
+
+function getBNTAddress() {
+    const web3 = window.web3;
+    const currentNetwork = web3.currentProvider.networkVersion;
+    
+    let BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
+    
+    if (currentNetwork === 3) {
+      BNT_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
+    }
+    return BNT_ADDRESS;  
 }

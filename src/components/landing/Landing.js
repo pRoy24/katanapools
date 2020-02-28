@@ -6,7 +6,6 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import axios from 'axios';
 import SwapTokens from '../swap/SwapTokens';
 
-import RelayTokens from '../relay/RelayTokens';
 import PoolTokens from '../pool/PoolTokens';
 import {
   BrowserRouter as Router,
@@ -27,13 +26,14 @@ export default class Landing extends Component {
   componentWillMount() {
     
     let web3 = window.web3;
-    
+    const self = this;
     window.addEventListener('load', async() => {
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
         try {
           
           await window.ethereum.enable();
+          self.props.setUserEnvironment();
           this.setState({currentView: 'home'});
           
         }
@@ -48,8 +48,7 @@ export default class Landing extends Component {
 
       // Non-dapp browsers...
       else {
-       
-console.log("Error");
+        console.log("Error");
       }
     });
 
@@ -94,9 +93,6 @@ class AppHome extends Component {
           </Route>
           <Route path="/pool">
             <PoolTokens />
-          </Route>
-          <Route path="/relay">
-            <RelayTokens />
           </Route>
         </Switch>  
         

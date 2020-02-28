@@ -2,17 +2,13 @@ import ViewPools from './ViewPools';
 
 import {connect} from 'react-redux';
 
-import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {getTokenDetails} from '../../../utils/RegistryUtils';
 import {setCurrentSelectedPool} from '../../../actions/pool';
 
 const SmartToken = require('../../../contracts/SmartToken.json');
-const SmartTokenByteCode = require('../../../contracts/SmartTokenByteCode.js');
-const RegistryUtils = require('../../../utils/RegistryUtils');
+
 const BancorConverter = require('../../../contracts/BancorConverter.json');
-const BancorConverterByteCode = require('../../../contracts/BancorConverterByteCode.js');
-const ContractRegistry = require('../../../contracts/ContractRegistry.json');
-const BNT_TOKEN_ID = process.env.REACT_APP_BNT_ID;
+
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 const EtherToken = require('../../../contracts/EtherToken.json');
 

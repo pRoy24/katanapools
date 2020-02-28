@@ -3,8 +3,7 @@ import {Container, Row, Col, Button} from 'react-bootstrap';
 import {getContractAddress, getLiquidityPools, getERC20DData, getConverterData, getSmartTokens, getConverterReserveTokenCount,
   getConverterAddressList, getConvertibleTokenSmartTokens
 } from '../../utils/RegistryUtils';
-import CurrentSelectedPool from './CurrentSelectedPool';
-import PoolTokenToolbar from './PoolTokenToolbar';
+
 import CreateNewPoolContainer from './create_pool/CreateNewPoolContainer';
 import './pool.scss';
 import {
@@ -14,7 +13,7 @@ import {
   Link
 } from "react-router-dom";
 import ViewPoolsContainer from './view_pools/ViewPoolsContainer';
-import MyPools from './MyPools';
+
 
 export default class PoolTokens extends Component {
   constructor(props) {
@@ -73,9 +72,6 @@ export default class PoolTokens extends Component {
           </Route>
           <Route path="/pool/view">
             <ViewPoolsContainer poolData={poolData}/>
-          </Route>
-          <Route path="/pool/user">
-            <MyPools />
           </Route>
         </Switch>  
        </Container>
