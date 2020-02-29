@@ -79,7 +79,7 @@ class ViewPoolWidget extends Component {
         </ListGroupItem>
        {
          poolData.map(function(poolRow, idx){
-           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow)} key={'pool-select-'+idx}>
+           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow)} key={'pool-select-'+idx} className="select-pool-toolbar">
               {poolRow.symbol}
            </ListGroupItem>
          })
