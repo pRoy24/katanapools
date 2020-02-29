@@ -1,9 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Container, Row, Col, Button} from 'react-bootstrap'; 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import axios from 'axios';
+
 import SwapTokens from '../swap/SwapTokens';
 
 import PoolTokens from '../pool/PoolTokens';
@@ -31,26 +29,41 @@ export default class Landing extends Component {
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
         try {
-          
           await window.ethereum.enable();
           self.props.setUserEnvironment();
           this.setState({currentView: 'home'});
-          
         }
         catch (error) {
-          console.log(error);
+           this.setState({currentView: 'prompt'});
         }
+      window.ethereum.on('accountsChanged', function (accounts) {
+
+        async function reload() {
+          window.web3 = new Web3(window.ethereum);
+          try {
+            
+            await window.ethereum.enable();
+            self.props.setUserEnvironment();
+            self.setState({currentView: ''}, function(){
+              self.setState({currentView: 'home'});
+            });     
+          }
+          catch (error) {
+
+          }
+        }
+        reload();
+    })        
       }
-      // Legacy dapp browsers...
       else if (window.web3) {
         window.web3 = new Web3(web3.currentProvider);
       }
-
-      // Non-dapp browsers...
       else {
-        console.log("Error");
+           this.setState({currentView: 'prompt'});
       }
     });
+
+
 
   }
   
@@ -60,7 +73,12 @@ export default class Landing extends Component {
     let appHome = <span/>;
     if (this.state.currentView === 'home') {
       appHome = <AppHome {...this.props}/>
+    } else if (this.state.currentView === 'prompt'){
+      appHome = <Web3Prompt/>
     }
+    if (window.web3 && window.web3.currentProvider && window.web3.currentProvider.selectedAddress === null) {
+      return  <div className="install-prompt">Please click connect on Metamask prompt to continue.</div>
+    }    
     return (
       <Container>
         <div>
@@ -82,13 +100,11 @@ class AppHome extends Component {
   
 
   render() {
-    const {tokenData, toAmount} = this.state;
-    let tokenDataSwap = <div>Loading</div>
+    const web3 = window.web3;
 
     return (
       <div>
           <Switch>
-
           <Route path="/swap">
             <SwapTokens/>
           </Route>
@@ -99,13 +115,18 @@ class AppHome extends Component {
             <SwapTokens/>
           </Route>
         </Switch>  
-        
-        </div>
-  
+    </div>
       )
   }
 }
 
-AppHome.contextTypes = {
-  drizzle: PropTypes.object
+
+class Web3Prompt extends Component {
+  render() {
+    return (
+      <div className="install-prompt">
+        Please install <a href="https://metamask.io/" target="_blank">Metamask</a> and allow Katana to connect to proceed.
+      </div>
+      )
+  }
 }
