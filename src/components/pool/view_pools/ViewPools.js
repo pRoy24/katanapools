@@ -7,11 +7,34 @@ import SelectedPool from './SelectedPool';
 import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/ObjectUtils';
 
 export default class ViewPool extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {poolData: []};
+  }
+  filterInputList = (searchVal) => {
+    const searchString = searchVal && searchVal.length > 0 ?searchVal.toLowerCase() : '';
+    const {poolData} = this.state;
+    let filteredPoolData = [];
+    if (searchString){
+     filteredPoolData = poolData.filter(function(item){
+      return item.symbol.toLowerCase().includes(searchString) || item.name.toLowerCase().includes(searchString)
+    });
+    } else {
+       filteredPoolData = this.props.poolData;
+    }
+    this.setState({poolData: filteredPoolData});
+  }
+  componentWillReceiveProps(nextProps) {
+    const {poolData} = nextProps;
+    if (nextProps.poolData && nextProps.poolData.length !== this.props.poolData.length) {
+      this.setState({poolData: poolData});
+    }
+  }
   render() {
     return (
       <div>
-        <ViewPoolToolbar/>
-        <ViewPoolWidget {...this.props}/>
+        <ViewPoolToolbar filterInputList={this.filterInputList}/>
+        <ViewPoolWidget {...this.props} poolData={this.state.poolData}/>
       </div>
       )
   }

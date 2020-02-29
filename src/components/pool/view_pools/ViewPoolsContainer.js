@@ -34,10 +34,8 @@ const mapDispatchToProps = (dispatch) => {
 
       const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
-      
       BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
 
-      
       let reserveTokenList = [];
       
       for (let a = 0; a < numReserveTokens; a++){
@@ -45,9 +43,11 @@ const mapDispatchToProps = (dispatch) => {
         let reserveTokenDetail = BancorConverterContract.methods.reserveTokens(a).call().then(function(reserveTokenAddress){
           
         return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
-         return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
-            return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance});
-          })
+          return BancorConverterContract.methods.getReserveRatio(reserveTokenAddress).call().then(function(reserveRatio){
+           return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
+              return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance}, {reserveRatio: reserveRatio});
+            })
+          });
         }) ;
         });
         
@@ -59,7 +59,6 @@ const mapDispatchToProps = (dispatch) => {
 
      SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
 
-  
       Promise.all(reserveTokenList).then(function(reserveTokenDetails){
         
         let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
@@ -73,7 +72,6 @@ const mapDispatchToProps = (dispatch) => {
 
         dispatch(setCurrentSelectedPoolError(err.toString()));
       });
-      
     },
     
     getPoolFundingDetails:(amount) => {

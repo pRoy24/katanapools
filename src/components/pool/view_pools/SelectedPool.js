@@ -106,6 +106,10 @@ export default class SelectedPool extends Component {
   
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError}, pool} = this.props;
+    let reserveRatio = '';
+    if (currentSelectedPool.reserves[0].reserveRatio && currentSelectedPool.reserves[1].reserveRatio) {
+      reserveRatio = parseInt(currentSelectedPool.reserves[0].reserveRatio)/10000 + '/' + parseInt(currentSelectedPool.reserves[1].reserveRatio)/10000;
+    }
     if (currentSelectedPoolError) {
       return (<div>
       <div>Could not fetch pool details.</div>
@@ -167,14 +171,10 @@ export default class SelectedPool extends Component {
           </Col>
           <Col lg={2}>
             <div className="cell-label">Reserve Ratio</div>
-            <div className="cell-data">50/50 reserve ratio</div>          
+            <div className="cell-data">{reserveRatio}</div>          
           </Col>
         </Row>
         <Row className="selected-pool-meta-row">
-          <Col lg={2}>
-            <div className="cell-label">Pool Fees</div>
-            <div className="cell-data">{poolFee}% fee generated</div>
-          </Col>
           <Col lg={3}>
             <div className="cell-label">Your pool token holdings</div> 
             <div className="cell-data">{poolHoldings} {currentSelectedPool.symbol}</div> 
