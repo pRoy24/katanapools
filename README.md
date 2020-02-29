@@ -23,6 +23,19 @@ A live deployment for discovering creating, funding and liquidating pools as wel
 
 - Works on both Ropsten and Mainnet. 
 
+## Installation
+This is built on top of vanilla CRA, so to run locally, Simply clone the project
+
+```
+sudo npm install
+npm start
+```
+All the needed env variables should already be in the .env file
+
+You currently need to use Metamask to login (Support for other providers is on the roadmap)
+
+The app works on Mainnet (networkVersion 1) and Ropsten (networkVersion 3)
+
 
 ## Screenshots
 
