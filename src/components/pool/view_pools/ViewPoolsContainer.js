@@ -2,7 +2,7 @@ import ViewPools from './ViewPools';
 
 import {connect} from 'react-redux';
 
-import {setCurrentSelectedPool} from '../../../actions/pool';
+import {setCurrentSelectedPool, setCurrentSelectedPoolError} from '../../../actions/pool';
 
 const SmartToken = require('../../../contracts/SmartToken.json');
 
@@ -25,17 +25,18 @@ const mapDispatchToProps = (dispatch) => {
   return {
     
     getPoolDetails: (poolRow) => {
-
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
       const poolSmartTokenAddress = poolRow.address;
       const poolConverterAddress = poolRow.convertibles[0];
-      
+
       const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
-      
+
       const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
+      
       BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
+
       
       let reserveTokenList = [];
       
@@ -55,19 +56,22 @@ const mapDispatchToProps = (dispatch) => {
     
     
     RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
-     
+
      SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
 
   
-    Promise.all(reserveTokenList).then(function(reserveTokenDetails){
-      
-      let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
-      dispatch(setCurrentSelectedPool(finalPayload));
-    })
+      Promise.all(reserveTokenList).then(function(reserveTokenDetails){
+        
+        let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
+        dispatch(setCurrentSelectedPool(finalPayload));
+      })
     
     })
    })
       
+      }).catch(function(err){
+
+        dispatch(setCurrentSelectedPoolError(err.toString()));
       });
       
     },

@@ -18,16 +18,12 @@ export default class SelectedPool extends Component {
   }
   
   onLiquidateInputChanged = (evt) => {
-    
     let inputFund = evt.target.value;
-    console.log(inputFund);
     this.calculateLiquidateAmount(inputFund);
     this.setState({liquidateAmount: inputFund});
   }
   
   calculateLiquidateAmount = (inputFund) => {
-    console.log("**");
-    console.log(inputFund);
     const {pool: {currentSelectedPool}} = this.props;
 
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
@@ -98,7 +94,7 @@ export default class SelectedPool extends Component {
   }
   
   submitSellPoolToken = () => {
-    const {pool: {currentSelectedPool}} = this.props;
+    const {pool: {currentSelectedPool, currentSelectedPoolError}} = this.props;
         
     const {liquidateAmount} = this.state;
     const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
@@ -109,11 +105,17 @@ export default class SelectedPool extends Component {
   }
   
   render() {
-    const {pool: {currentSelectedPool}} = this.props;
+    const {pool: {currentSelectedPool, currentSelectedPoolError}, pool} = this.props;
+    if (currentSelectedPoolError) {
+      return (<div>
+      <div>Could not fetch pool details.</div>
+      <div>Currently only pool contracts which expose reserveTokenCount() and reserveTokens() methods are supported.</div>
+      </div>)
+    }
     const {reserve1Needed, reserve2Needed, reserve1Added, reserve2Added, fundAmount, liquidateAmount} = this.state;
     let minTotalSupply = parseFloat(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals)).toFixed(4);
-    let reserveTokenList = currentSelectedPool.reserves.map(function(item){
-      return <div>{item.name}</div>
+    let reserveTokenList = currentSelectedPool.reserves.map(function(item, idx){
+      return <div key={`token-${idx}`}>{item.name}</div>
     })
     let poolHoldings = parseFloat(fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals)).toFixed(4);
     

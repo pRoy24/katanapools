@@ -47,6 +47,7 @@ export default class PoolTokens extends Component {
 
         Promise.all(poolData).then(function(poolDataResponse){
           poolDataResponse = poolDataResponse.filter(Boolean);
+
           self.setState({poolData: poolDataResponse, currentSelectedPool: poolDataResponse[0]})
         });
       });
@@ -58,11 +59,8 @@ export default class PoolTokens extends Component {
   
   render() {
 
-  const {poolData, currentSelectedPool, currentView} = this.state;
+  const {poolData,} = this.state;
 
-  let cardView = <span/>;
-
-  
   return (
     <div>
       <Container>

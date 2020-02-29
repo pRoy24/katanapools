@@ -30,7 +30,14 @@ class ViewPoolWidget extends Component {
     const {poolData} = nextProps;
     
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
-          this.props.getPoolDetails(poolData[0]);
+      
+          let selectedPoolIndex = poolData.findIndex(function(item){
+            return item.symbol === 'BNT-USD';
+          });
+          if (selectedPoolIndex === -1) {
+            selectedPoolIndex = 0;
+          }
+          this.props.getPoolDetails(poolData[selectedPoolIndex]);
     }
   }
   

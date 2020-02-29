@@ -22,6 +22,15 @@ export const SET_POOL_CREATION_RECEIPT = 'SET_POOL_CREATION_RECEIPT';
 
 export const SET_CURRENT_SELECTED_POOL = 'SET_CURRENT_SELECTED_POOL';
 
+export const SET_CURRENT_SELECTED_POOL_ERROR = 'SET_CURRENT_SELECTED_POOL_ERROR';
+
+export function setCurrentSelectedPoolError(payload) {
+  return {
+    type: SET_CURRENT_SELECTED_POOL_ERROR,
+    payload: payload
+  }  
+}
+
 export function setCurrentSelectedPool(payload) {
   return {
     type: SET_CURRENT_SELECTED_POOL,
