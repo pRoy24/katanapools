@@ -21,15 +21,15 @@
 
 - Swap tokens allows swapping of convertible as well as smart tokens.
 
-[Swap tokens](https://github.com/pRoy24/Katana/blob/master/screenshots/swap.png)
+![Swap tokens](https://github.com/pRoy24/Katana/blob/master/screenshots/swap.png)
 
 - Fund/Liquidate/Discover pools
 
-[Fund Liquidate pools](https://github.com/pRoy24/Katana/blob/master/screenshots/fund_liquidate.png)
+![Fund Liquidate pools](https://github.com/pRoy24/Katana/blob/master/screenshots/fund_liquidate.png)
 
 - Create new pools 
 
-[Create new pools image](https://github.com/pRoy24/Katana/blob/master/screenshots/create.png)
+![Create new pools image](https://github.com/pRoy24/Katana/blob/master/screenshots/create.png)
 
 
 ## Limitations and future work
