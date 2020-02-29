@@ -3,6 +3,7 @@ import ViewPools from './ViewPools';
 import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError} from '../../../actions/pool';
+import {getConvertibleTokensBySmartTokens} from '../../../utils/ConverterUtils';
 
 const SmartToken = require('../../../contracts/SmartToken.json');
 
@@ -28,31 +29,27 @@ const mapDispatchToProps = (dispatch) => {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
       const poolSmartTokenAddress = poolRow.address;
-      const poolConverterAddress = poolRow.convertibles[0];
+      const poolConverterAddress = poolRow.converter;
 
       const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
 
       const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
-      BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
+      BancorConverterContract.methods.connectorTokenCount().call().then(function(numReserveTokens){
 
-      let reserveTokenList = [];
-      
-      for (let a = 0; a < numReserveTokens; a++){
-  
-        let reserveTokenDetail = BancorConverterContract.methods.reserveTokens(a).call().then(function(reserveTokenAddress){
-          
-        return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
-          return BancorConverterContract.methods.getReserveRatio(reserveTokenAddress).call().then(function(reserveRatio){
+      let reserveTokenList =
+     poolRow.reserves.map(function(item){
+       let reserveTokenAddress = item.address;
+        return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
+          return getReserveRatio(BancorConverterContract, reserveTokenAddress).then(function(reserveRatio){
            return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
               return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance}, {reserveRatio: reserveRatio});
             })
           });
         }) ;
-        });
-        
-        reserveTokenList.push(reserveTokenDetail);
-      }
+     })
+
+      
     
     
     RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
@@ -130,6 +127,22 @@ const mapDispatchToProps = (dispatch) => {
 }
 
 
+function getReserveBalance(BancorConverterContract, reserveTokenAddress) {
+  return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
+    return reserveTokenBalance;
+  }).catch(function(err){
+    return 0;
+  });
+}
+
+function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
+  return  BancorConverterContract.methods.getReserveRatio(reserveTokenAddress).call().then(function(reserveTokenBalance){
+    return reserveTokenBalance;
+  }).catch(function(err){
+    return '-';
+  });  
+}
+
 function getApproval(contract, owner, spender, amount, isEth) {
   if (isEth) {
     return new Promise((resolve)=>(resolve()));
@@ -151,6 +164,8 @@ function getApproval(contract, owner, spender, amount, isEth) {
   });
   }
 }
+
+
 
 export default connect(
     mapStateToProps,

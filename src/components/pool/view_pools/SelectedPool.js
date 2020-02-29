@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Container, Row, Col, Form, Button} from 'react-bootstrap';
 import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
+import {VictoryChart, VictoryLine} from 'victory';
 const BigNumber = require('bignumber.js');
 
 export default class SelectedPool extends Component {
@@ -229,8 +230,20 @@ class VolumeGraph extends Component {
     }
     return (
       <div>
-      
-      </div>
+      <VictoryChart
+
+>
+  <VictoryLine
+    style={{
+      data: { stroke: "#c43a31" },
+      parent: { border: "1px solid #ccc"}
+    }}
+    data={[
+     ]}
+      />
+    </VictoryChart>
+    <div className="h6 coming-soon-text">Volume and price graph. Coming Soon</div>
+    </div>
       
       )
   }

@@ -181,8 +181,8 @@ const axios = require('axios');
       const web3 = window.web3;
     let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
 
-    return converterRegistry.methods.getConvertersBySmartTokens(smartTokenAddressList).call().then(function(symbol){
-        return symbol;
+    return converterRegistry.methods.getConvertersBySmartTokens(smartTokenAddressList).call().then(function(converters){
+        return converters;
       });     
   }
   

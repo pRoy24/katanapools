@@ -12,6 +12,7 @@ import {
   Link
 } from "react-router-dom";
 import ViewPoolsContainer from './view_pools/ViewPoolsContainer';
+import {getConvertibleTokensBySmartTokens} from '../../utils/ConverterUtils';
 
 var RegistryUtils = require('../../utils/RegistryUtils');
 
@@ -31,14 +32,24 @@ export default class PoolTokens extends Component {
     RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
       RegistryUtils.getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
         
-
         
+         getConvertibleTokensBySmartTokens().then(function(smartToConvertibleMap){
+           
         let poolData = 
           smartTokenList.map(function(smartToken){
             
           return RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [smartToken]).then(function(converters){
             return RegistryUtils.getERC20DData(smartToken).then(function(tokenData){
-                return Object.assign({}, tokenData, {'convertibles': converters});
+              
+              let convertibleTokensForSmartToken = smartToConvertibleMap.find(function(mapCell){
+                return mapCell.address === tokenData.address;
+              })
+
+              let reservesForToken = convertibleTokensForSmartToken.reserves.map(function(res){
+                return {address: res}
+              })
+              let tokenDataWithReserves = Object.assign({}, tokenData, {reserves: reservesForToken});
+                return Object.assign({}, tokenDataWithReserves, {'convertibles': converters}, {'converter': converters[0]});
             })
           }).catch(function(err){
                 return null;
@@ -48,10 +59,10 @@ export default class PoolTokens extends Component {
         Promise.all(poolData).then(function(poolDataResponse){
           poolDataResponse = poolDataResponse.filter(Boolean);
 
-          self.setState({poolData: poolDataResponse, currentSelectedPool: poolDataResponse[0]})
+          self.setState({poolData: poolDataResponse})
         });
       });
-      
+      })
       
  
     })

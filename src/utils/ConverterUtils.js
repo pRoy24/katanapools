@@ -163,6 +163,59 @@ module.exports = {
     });
     
     
-  }
+  },
+  
+  getConvertibleTokensBySmartTokens: function() {
+    // {address: '', reserves: []}
+    let smartTokenList = [];
+    return getConvertibleToSmartTokenMapping().then(function(dataResponse){
+      dataResponse.forEach(function(dataItem){
+        dataItem.smartTokens.forEach(function(smartToken){
+          let tokenFoundIndex = smartTokenList.findIndex(function(existing){
+            return existing.address === smartToken;
+          })
+          if (tokenFoundIndex !== -1) {
+            smartTokenList[tokenFoundIndex].reserves.push(dataItem.convertibleToken);
+          } else {
+            smartTokenList.push({address: smartToken, reserves: [dataItem.convertibleToken]})
+          }
+        })
+      });
+      return smartTokenList;
+    })
+  }  
   
 }
+
+function getConvertibleToSmartTokensMap() {
+      let web3 = window.web3;
+    
+    return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
+      let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
+      return converterRegistry.methods.getConvertibleTokens().call()
+      .then(function(convertibleTokenList){
+        return convertibleTokenList.map(function(convertibleToken){
+          return converterRegistry.methods.getConvertibleTokenSmartTokens(convertibleToken).call()
+          .then(function(smartTokensForConverter){
+            return {'convertibleToken': convertibleToken, smartTokens: smartTokensForConverter }
+          })
+        })
+
+      }).catch(function(err){
+        throw err;
+      })
+      
+    })
+}
+
+
+  function getConvertibleToSmartTokenMapping() {
+    return new Promise((resolve, reject)=>{
+           getConvertibleToSmartTokensMap().then(function(data){
+      Promise.all(data).then(function(response){
+        resolve(response);
+      });
+    })
+    
+      })
+  }
