@@ -71,13 +71,20 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     deployRelayConverter: (args) => {
-
+    const web3 = window.web3;
+    
     const maxFee = args.maxFee * 10000;
+    
+    const relayToken = args.tokenAddressList.find((a)=>(a.type === 'relay'));
+    const relayTokenAddress = relayToken.address;
+    const relayTokenWeight = relayToken.weight;
+    
     const reserveWeight = args.reserveWeight * 10000;
     const convertibleWeight = args.convertibleWeight * 1000;
     const conversionFee = args.conversionFee * 10000;
     const smartTokenAddress = args.smartTokenAddress;
-    const web3 = window.web3;
+
+    // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
     
     RegistryUtils.getContractAddress('ContractRegistry').then(function(contractRegistryContractAddress){
       const walletAddress = web3.currentProvider.selectedAddress;
@@ -88,8 +95,8 @@ const mapDispatchToProps = (dispatch) => {
                       smartTokenAddress, 
                       contractRegistryContractAddress,
                       maxFee,
-                      getBNTAddress(),
-                      reserveWeight
+                      relayTokenAddress,
+                      relayTokenWeight
                     ]});
       
       deployer.send({
@@ -119,8 +126,10 @@ const mapDispatchToProps = (dispatch) => {
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding network connector`}));
 
-        
-        deployerContractInstance.methods.addConnector(args.convertibleTokenAddress, convertibleWeight, false).call()
+          let convertibleTokenDeploy = args.tokenAddressList.map(function(item){
+            if (item.type === 'convertible') {
+                
+                deployerContractInstance.methods.addConnector(item.address, item.weight, false).call()
         .then(function(data){
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Setting conversion fees`}));
@@ -130,8 +139,15 @@ const mapDispatchToProps = (dispatch) => {
           message: `Relay token is ready to be used`}));
     
             
-          })
+          });
+          
         })
+              
+            } else {
+              return null;
+            }
+          })
+          
 
       });
     

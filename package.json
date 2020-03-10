@@ -26,7 +26,9 @@
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.0",
     "redux": "^4.0.5",
+    "redux-form": "^8.3.1",
     "redux-promise": "^0.6.0",
+    "typescript": "^3.8.3",
     "victory": "^34.1.1",
     "web3": "^1.2.6"
   },

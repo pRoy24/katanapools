@@ -5,6 +5,85 @@ const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
 const SwapActions = require('../actions/swap');
 
+class Graph { 
+    constructor(noOfVertices) 
+    { 
+        this.noOfVertices = noOfVertices; 
+        this.AdjList = new Map(); 
+        this.sourceDestPaths = [];
+    } 
+
+    addVertex(v) 
+    { 
+        this.AdjList.set(v, []); 
+    } 
+    
+    addEdge(v, w) 
+    { 
+        this.AdjList.get(v).push(w); 
+        this.AdjList.get(w).push(v); 
+    } 
+    
+    printGraph() 
+    { 
+    	var get_keys = this.AdjList.keys(); 
+    	for (var i of get_keys) 
+      { 
+    		var get_values = this.AdjList.get(i); 
+    		var conc = ""; 
+    		for (var j of get_values) 
+    			conc += j + " "; 
+    		console.log(i + " -> " + conc); 
+    	} 
+    }
+  
+  
+  getPath(startingNode, endingNode) {
+  	var visited = []; 
+    	var get_keys = this.AdjList.keys(); 
+    	for (var key of get_keys) 
+      { 
+  	    visited[key] = false;
+  	  }
+  	 visited[startingNode] = true;
+
+    
+    let allPathList = [];
+    
+    
+  	this.GetPathDFSUtil(startingNode, endingNode,allPathList, visited); 
+  	
+  	console.log(this.sourceDestPaths);
+  }
+  
+  GetPathDFSUtil(start, end, allPathList, visited) 
+  { 
+    allPathList.push(start);
+    
+    visited[start] = true;
+
+    
+    let get_neighbours = this.AdjList.get(start);
+
+    for (var i in get_neighbours) { 
+      var curr = get_neighbours[i]; 
+      if (!visited[curr] && curr !== end) {
+        this.GetPathDFSUtil(curr, end, allPathList, visited);
+      } else if (curr === end){
+        console.log("found end");
+        allPathList.push(curr);
+        console.log(allPathList);
+    //   return;
+        //this.sourceDestPaths.push(allPathList);
+      }
+    }
+    visited[start] = false;
+    
+  }
+  
+} 
+
+
 module.exports = {
   getConvertibleTokensInRegistry: function() {
     let web3 = window.web3;
@@ -183,7 +262,47 @@ module.exports = {
       });
       return smartTokenList;
     })
-  }  
+  },
+  
+  fetchTokenPathsWithRates: function(fromToken, toToken) {
+    
+  },
+  
+  
+  createTokenMap: function() {
+
+      let web3 = window.web3;
+    
+    return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
+      let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
+      return converterRegistry.methods.getConvertibleTokens().call()
+      .then(function(convertibleTokenList){
+        return converterRegistry.methods.getSmartTokens().call()
+          .then(function(smartTokenList){
+            let completeTokenList = convertibleTokenList.concat(smartTokenList);
+            var graph = new Graph(completeTokenList.length);
+            completeTokenList.forEach(function(item){
+              graph.addVertex(item);
+            });
+            
+            // add vertices
+            let verexMap = completeTokenList.map(function(item){
+              return converterRegistry.methods.getConvertibleTokenSmartTokens(item).call().then(function(data){
+                data.forEach(function(smartToken){
+                  graph.addEdge(item, smartToken);
+                })
+              })
+            });
+            
+            return Promise.all(verexMap).then(function(mapRes){
+              return graph;
+            })
+          })
+      })
+      
+    });
+    
+  }
   
 }
 
@@ -209,13 +328,12 @@ function getConvertibleToSmartTokensMap() {
 }
 
 
-  function getConvertibleToSmartTokenMapping() {
-    return new Promise((resolve, reject)=>{
-           getConvertibleToSmartTokensMap().then(function(data){
+function getConvertibleToSmartTokenMapping() {
+  return new Promise((resolve, reject)=>{
+    getConvertibleToSmartTokensMap().then(function(data){
       Promise.all(data).then(function(response){
         resolve(response);
       });
     })
-    
-      })
-  }
+  })
+}

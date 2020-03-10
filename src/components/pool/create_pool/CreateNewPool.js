@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Form, Button, Container, Row, Col, Alert} from 'react-bootstrap';
+import {Form, Button, Container, Row, Col, Alert, InputGroup} from 'react-bootstrap';
 import Stepper, { Step } from "react-material-stepper";
 import {
   StepperAction,
@@ -8,9 +8,9 @@ import {
 } from "react-material-stepper";
 import {isEmptyObject, isNonEmptyObject} from '../../../utils/ObjectUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faArrowRight,  faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
-import {deploySmartToken, deployConverter} from '../../../utils/PoolUtils';
+
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
 
 export default class CreateNewPool extends Component {
@@ -18,7 +18,7 @@ export default class CreateNewPool extends Component {
   constructor(props) {
     super(props);
     this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: '',
-                  poolName: '', poolSymbol: '', showReceiptPage: false};
+                  poolName: '', poolSymbol: '', showReceiptPage: false, isError: false, errorMessage: ''};
     this.appStepper = React.createRef();
   }
   setStepOneReceipt = (val) => {
@@ -30,19 +30,64 @@ export default class CreateNewPool extends Component {
   }
   
   deployConverterContract = (vals) => {
+
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
     this.setState({convertibleTokenAddress: vals.convertibleTokenAddress, relayTokenAddress: smartTokenStatus.contractAddress});
 
+    const {tokenArrayList} = vals;
+   
+   let tokenAddressList = [];
+   const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
+   tokenAddressList.push({'address': baseReserveAddress, 'weight': vals.baseReserveWeight, 'type': 'relay'});
+   tokenArrayList.forEach(function(item){
+     if (item.address && item.weight) {
+       tokenAddressList.push({
+         'address': item.address,
+         'weight': parseFloat(item.weight),
+         'type': 'convertible'
+       })
+     }
+   })
+     
+   let totalWeight = 0;
+   tokenAddressList.forEach(function(tokenItem){
+     if (tokenItem.address) {
+       console.log(tokenItem.weight);
+       totalWeight += tokenItem.weight;
+     }
+   });
+   console.log(totalWeight);
+   if (totalWeight > 100) {
+     this.setState({isError: true, errorMessage: 'Total weight cannot be more than 100'});
+   } else {
+
+    this.setState({isError: false, errorMessage: ''});
     const args = {
-      maxFee: 3,
-      reserveWeight: vals.weightValue,
-      convertibleWeight: vals.weightValue,
+      maxFee: parseFloat(vals.reserveFee).toFixed(2),
       smartTokenAddress: smartTokenStatus.contractAddress,
-      convertibleTokenAddress: vals.convertibleTokenAddress,
-      conversionFee: 1000
+      tokenAddressList: tokenAddressList,
     }
     
     this.props.deployRelayConverter(args);
+   }
+  }
+  
+  getBaseReserveAddress = (baseReserveSelected) => {
+    const web3 = window.web3;
+    const currentProvider = web3.currentProvider.networkVersion;
+    if (currentProvider === '1') {
+      if (baseReserveSelected === 'BNT') {
+        return process.env.REACT_APP_BNT_ID_MAINNET;
+      } else {
+        return process.env.REACT_APP_USDB_ID_MAINNET;
+      }
+    } else {
+      if (baseReserveSelected === 'BNT') {
+        return process.env.REACT_APP_BNT_ID_ROPSTEN;        
+      } else {
+        return process.env.REACT_APP_USDB_ID_ROPSTEN;        
+      }      
+    }
   }
   
   activatePool = () => {
@@ -100,52 +145,60 @@ export default class CreateNewPool extends Component {
     const STEP3 = "step-three";
     const STEP4 = "step-four";
     
-    const {poolSymbol, isResolved, showReceiptPage} = this.state;
+    const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage} = this.state;
 
     const {pool: {isFetching, smartTokenStatus, relayConverterStatus, poolFundedStatus}, pool,} = this.props;
     let transactionStatusMessage = <span/>;
-    if (isFetching) {
-      let message = <span/>;
-      if (smartTokenStatus.message) {
-        message = smartTokenStatus.message;
-      }
-      if (smartTokenStatus.transactionHash) {
-        message = "Transaction broadcast " + smartTokenStatus.transactionHash;
-      }
-      transactionStatusMessage = (
-          <Alert  variant={"info"}>
-            <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-            {message}
-          </Alert>
-        )
-    } else {
-      transactionStatusMessage = <span/>;
-    }
     
-    if (isNonEmptyObject(relayConverterStatus)) {
-      if (relayConverterStatus.type === 'pending') {
+    if (isError) {
       transactionStatusMessage = (
-          <Alert  variant={"info"}>
-            <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-            {relayConverterStatus.message}
-          </Alert>
-        )
-      } else if (relayConverterStatus.type === 'success') {
+            <Alert  variant={"danger"}>
+              {errorMessage}
+            </Alert>)
+    } else {
+    if (isFetching) {
+        let message = <span/>;
+        if (smartTokenStatus.message) {
+          message = smartTokenStatus.message;
+        }
+        if (smartTokenStatus.transactionHash) {
+          message = "Transaction broadcast " + smartTokenStatus.transactionHash;
+        }
+        transactionStatusMessage = (
+            <Alert  variant={"info"}>
+              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+              {message}
+            </Alert>
+          )
+      } else {
         transactionStatusMessage = <span/>;
       }
-    }
-    
-    if (isNonEmptyObject(poolFundedStatus)) {
-    if (poolFundedStatus.type === 'pending') {
-      transactionStatusMessage = (
-          <Alert  variant={"info"}>
-            <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-            {poolFundedStatus.message}
-          </Alert>
-        )
-    } else {
-      transactionStatusMessage = <span/>;
-    }
+      
+      if (isNonEmptyObject(relayConverterStatus)) {
+        if (relayConverterStatus.type === 'pending') {
+        transactionStatusMessage = (
+            <Alert  variant={"info"}>
+              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+              {relayConverterStatus.message}
+            </Alert>
+          )
+        } else if (relayConverterStatus.type === 'success') {
+          transactionStatusMessage = <span/>;
+        }
+      }
+      
+      if (isNonEmptyObject(poolFundedStatus)) {
+      if (poolFundedStatus.type === 'pending') {
+        transactionStatusMessage = (
+            <Alert  variant={"info"}>
+              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+              {poolFundedStatus.message}
+            </Alert>
+          )
+      } else {
+        transactionStatusMessage = <span/>;
+      }
+      }
     }
     let currentPage = <span/>;
     if (showReceiptPage === false) {
@@ -188,7 +241,6 @@ export default class CreateNewPool extends Component {
       )
   }
 }
-
 
 
 class Step1 extends Component {
@@ -261,83 +313,104 @@ class Step2 extends Component {
   
   constructor() {
     super();
-    this.state = {convertibleTokenAddress: '', weightValue: 50};
+    this.state = {convertibleTokenAddress: '', reserveFee: 3, tokenArrayList: [], baseReserveSelected: '', baseReserveWeight: ''};
   }
   
   componentWillMount() {
-    this.setState({maxFee: 3, weight: 50, })
+    this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
+    baseReserveSelected: 'BNT', baseReserveWeight: 50})
   }
   onSubmit = (e) => {
     e.preventDefault();
+
     this.props.deployContract(this.state);
     
   }
+
   
-  tokenSymbolChanged = () => {
-    // Readonly value nothing to do
+  reserveFeeChanged = (e) => {
+    this.setState({reserveFee: e.target.value});
   }
   
-  converterAddressChanged = (e) => {
-    this.setState({convertibleTokenAddress: e.target.value});
+  addReserveTokenRow = () => {
+    let currentRowList = this.state.tokenArrayList;
+    currentRowList.push({'weight': '', 'address': ''});
+    this.setState({tokenArrayList: currentRowList});
   }
   
-  sliderValueChanged = (e) => {
-    this.setState({weightValue: e.target.value});
+  weightChanged = (value, idx) => {
+    let currentRowList = this.state.tokenArrayList;
+    currentRowList[idx].weight = value;
+    this.setState({tokenArrayList: currentRowList});    
   }
   
+  addressChanged = (value, idx) => {
+    let currentRowList = this.state.tokenArrayList;
+    currentRowList[idx].address = value;
+    this.setState({tokenArrayList: currentRowList});        
+  }
+  
+  baseReserveChanged = (evt) => {
+    this.setState({baseReserveSelected: evt.target.value});
+  }
+  
+  baseWeightValueChanged = (evt) => {
+    this.setState({baseReserveWeight: evt.target.value});
+  }
   render() {
-    const {tokenSymbol, convertibleTokenAddress} = this.props;
-    const {weightValue} = this.state;
+
+    const {baseReserveWeight, reserveFee, tokenArrayList} = this.state;
     let weightPromptMessage = <span/>;
-    if (weightValue === 50) {
-      weightPromptMessage = (
-        <div>
-          <div>
-            You are creating a pool with 50/50 reserve.
-          </div>
-          <div className="weight-subtext">
-            Your pool token will remain relatively stable as liquidity is added or removed.
-          </div>
-        </div>
-        )
-    } else if (weightValue < 50) {
-      weightPromptMessage = (
-        <div>
-          <div>
-            You are creating a pool with {weightValue}/{weightValue} reserve.
-          </div>
-          <div className="weight-subtext">
-            Your pool token will increase in value as liquidity is added and decrease in value as liquidity is removed.
-          </div>
-        </div>
-        )      
-    }
+    
+    const self = this;
+    
+    let tokenArrayListDisplay = tokenArrayList.map(function(item, idx){
+      return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight} idx={idx}
+      weightChanged={self.weightChanged} addressChanged={self.addressChanged}/>;
+    })
+
     return (
         <div className="create-pool-form-container">
         <div className="create-form-container">
         <Container>
         <Form onSubmit={this.onSubmit}> 
+        <Row>
+        <Col lg={8}>
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Network reserve token</Form.Label>
-          <Form.Control type="text" placeholder="symbol" readOnly={true} value={"BNT"} onChange={this.tokenSymbolChanged}/>
+         <Form.Label>Select base token</Form.Label>
+          <Form.Control as="select" onChange={this.baseReserveChanged} selected={this.baseReserveSelected}>
+            <option>BNT</option>
+            <option>USDB</option>
+          </Form.Control>
+        </Form.Group>
+        </Col>
+        <Col lg={4}>
+          <div className="slidecontainer">
+            <Form.Label>{`Token reserve ratio - ${baseReserveWeight}`}</Form.Label>
+            <input type="range" min="0" max="100" value={baseReserveWeight} className="slider"
+            id="myRange" onChange={this.baseWeightValueChanged}/>
+          </div>        
+        </Col>
+        </Row>
+        {tokenArrayListDisplay}
+        <Button onClick={this.addReserveTokenRow}>Add another reserve token <FontAwesomeIcon icon={faPlus} /></Button>
+        <Form.Group controlId="formBasicEmail">
+          <Form.Label>Conversion fees</Form.Label>
+            <InputGroup>
+            <Form.Control type="text" placeholder="reserve fee" value={reserveFee} onChange={this.reserveFeeChanged}/>
+            <InputGroup.Append>
+              <InputGroup.Text id="inputGroupPrepend">%</InputGroup.Text>
+            </InputGroup.Append>
+
+          </InputGroup>
+                    <Form.Text className="text-muted">
+            Enter the max conversion fees when using this reserve (Recommended 3%)
+          </Form.Text>
         </Form.Group>
         
-        <Form.Group controlId="formBasicEmail">
-          <Form.Label>Convertible Reserve Token Address</Form.Label>
-          <Form.Control type="text" placeholder="address" value={convertibleTokenAddress} onChange={this.converterAddressChanged}/>
-          <Form.Text className="text-muted">
-            Enter the address of the ERC20 token contract for which you want to create pool.
-          </Form.Text>
-          
-        </Form.Group>
-
         <Row className="form-submit-container">
         <Col lg={6} xs={12}>
-          <div className="slidecontainer">
-            <Form.Label>{`Reserve Ratio for pool. ${weightValue}/${weightValue}`}</Form.Label>
-            <input type="range" min="30" max="50" value={weightValue} className="slider"
-            id="myRange" onChange={this.sliderValueChanged}/>
-          </div>
+
         </Col>
         <Col lg={6} xs={12}>
           <div>
@@ -464,6 +537,45 @@ class TransactioReceiptPage extends Component {
         {receiptObject}
       </div>
 
+      )
+  }
+}
+
+
+class TokenFormRow extends Component {
+  constructor(props) {
+    super(props);
+  }
+  addressChanged = (evt) => {
+    const {addressChanged, idx} = this.props;
+    addressChanged(evt.target.value, idx);
+  }
+  
+  weightChanged = (evt) => {
+    const {weightChanged, idx} = this.props;    
+    weightChanged(evt.target.value, idx);
+  }
+  render() {
+    const {address, weight, idx, addressChanged, weightChanged} = this.props;
+    return (
+        <Row>
+        <Col lg={8}>
+        <Form.Group controlId="formBasicEmail">
+          <Form.Label>Convertible Reserve Token Address</Form.Label>
+          <Form.Control type="text" placeholder="address" value={address} onChange={this.addressChanged}/>
+          <Form.Text className="text-muted">
+            Enter the address of the ERC20 token contract for which you want to create pool.
+          </Form.Text>
+        </Form.Group>
+        </Col>
+        <Col lg={4}>
+          <div className="slidecontainer">
+            <Form.Label>{`Token reserve ratio - ${weight}`}</Form.Label>
+            <input type="range" min="0" max="100" value={weight} className="slider"
+            id="myRange" onChange={this.weightChanged}/>
+          </div>           
+        </Col>
+        </Row>
       )
   }
 }

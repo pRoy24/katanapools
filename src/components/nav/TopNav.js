@@ -35,6 +35,9 @@ export default class TopNav extends Component {
             <LinkContainer to="/swap">
               <NavItem key={1}>Swap tokens</NavItem>
             </LinkContainer>
+            <LinkContainer to="/explore">
+              <NavItem key={1}>Explore tokens</NavItem>
+            </LinkContainer>
             <LinkContainer to="/pool/view">
               <NavItem key={2}>View pools</NavItem>
             </LinkContainer>

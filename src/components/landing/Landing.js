@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {Container, Row, Col, Button} from 'react-bootstrap'; 
 
 import SwapTokens from '../swap/SwapTokens';
-
+import ExploreTokensContainer from '../explore/ExploreTokensContainer';
 import PoolTokens from '../pool/PoolTokens';
 import {
   BrowserRouter as Router,
@@ -22,7 +22,7 @@ export default class Landing extends Component {
     this.state = {currentView: 'pending'};
   }
   componentWillMount() {
-    
+
     let web3 = window.web3;
     const self = this;
     window.addEventListener('load', async() => {
@@ -62,10 +62,13 @@ export default class Landing extends Component {
            this.setState({currentView: 'prompt'});
       }
     });
-
+    
+    
 
 
   }
+  
+
   
   
   render() {
@@ -98,6 +101,11 @@ class AppHome extends Component {
     this.web3 = window.web3;
   }
   
+  componentWillMount() {
+        this.props.getAllConvertibleTokens();
+        this.props.getConvertibleToSmartTokenMap();
+  }
+  
 
   render() {
     const web3 = window.web3;
@@ -110,6 +118,9 @@ class AppHome extends Component {
           </Route>
           <Route path="/pool">
             <PoolTokens />
+          </Route>
+          <Route path="/explore">
+            <ExploreTokensContainer/>
           </Route>
           <Route exact path="/">
             <SwapTokens/>
