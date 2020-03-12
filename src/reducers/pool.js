@@ -1,6 +1,8 @@
 import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN_RECEIPT, DEPLOY_SMART_TOKEN_CONFIRMATION
 ,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_CONVERTER_STATUS, SET_CONVERTER_CONTRACT_RECEIPT,
-SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR} from '../actions/pool';
+SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
+  SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW,
+} from '../actions/pool';
 
 const initialState = {
   smartTokenStatus: {},
@@ -15,10 +17,26 @@ const initialState = {
   poolCreationReceipt: {},
   currentSelectedPool: {},
   currentSelectedPoolError: false,
+  tokenList: []
 }
 
 export default function poolReducer (state = initialState, action) {
+  let currentTokenList;
   switch (action.type) {
+    
+    case SET_TOKEN_LIST_ROW:
+      currentTokenList = state.tokenList;
+      currentTokenList.push({});
+      return {...state, tokenList: currentTokenList};
+    case SET_TOKEN_LIST_DETAILS:
+       currentTokenList = state.tokenList;
+      let currentPayload = action.payload;
+      currentTokenList[currentPayload.idx].price = currentPayload.data.price;
+      currentTokenList[currentPayload.idx].address = currentPayload.data.address;
+      currentTokenList[currentPayload.idx].symbol = currentPayload.data.symbol;
+            
+      return {...state, tokenList: currentTokenList};
+      
     case DEPLOY_SMART_TOKEN_INIT:
       return {
         ...state,

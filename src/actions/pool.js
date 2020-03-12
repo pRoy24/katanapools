@@ -24,6 +24,26 @@ export const SET_CURRENT_SELECTED_POOL = 'SET_CURRENT_SELECTED_POOL';
 
 export const SET_CURRENT_SELECTED_POOL_ERROR = 'SET_CURRENT_SELECTED_POOL_ERROR';
 
+export const SET_TOKEN_LIST_DETAILS = 'SET_TOKEN_LIST_DETAILS';
+
+export const SET_TOKEN_LIST_ROW = 'SET_TOKEN_LIST_ROW';
+
+export function setTokenListRow() {
+  return {
+    type: SET_TOKEN_LIST_ROW,
+    payload: [],
+  }
+}
+
+export function setTokenListDetails(payload) {
+  return {
+    type: SET_TOKEN_LIST_DETAILS,
+    payload: payload
+  }
+}
+
+
+
 export function setCurrentSelectedPoolError(payload) {
   return {
     type: SET_CURRENT_SELECTED_POOL_ERROR,

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Form, Button, Container, Row, Col, Alert, InputGroup} from 'react-bootstrap';
+import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup} from 'react-bootstrap';
 import Stepper, { Step } from "react-material-stepper";
 import {
   StepperAction,
@@ -8,7 +8,7 @@ import {
 } from "react-material-stepper";
 import {isEmptyObject, isNonEmptyObject} from '../../../utils/ObjectUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faArrowRight,  faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import {  faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
 
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
@@ -18,7 +18,9 @@ export default class CreateNewPool extends Component {
   constructor(props) {
     super(props);
     this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: '',
-                  poolName: '', poolSymbol: '', showReceiptPage: false, isError: false, errorMessage: ''};
+                  poolName: '', poolSymbol: '', showReceiptPage: false, isError: false, errorMessage: '',
+      tokenAddressList: [], currentStep: 'step1',
+    };
     this.appStepper = React.createRef();
   }
   setStepOneReceipt = (val) => {
@@ -29,6 +31,9 @@ export default class CreateNewPool extends Component {
     this.props.deployPoolContract(vals);
   }
   
+  getAddressList = () => {
+    return this.state.tokenAddressList;
+  }
   deployConverterContract = (vals) => {
 
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
@@ -38,7 +43,7 @@ export default class CreateNewPool extends Component {
    
    let tokenAddressList = [];
    const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
-   tokenAddressList.push({'address': baseReserveAddress, 'weight': vals.baseReserveWeight, 'type': 'relay'});
+   tokenAddressList.push({'address': baseReserveAddress, 'weight': parseFloat(vals.baseReserveWeight), 'type': 'relay'});
    tokenArrayList.forEach(function(item){
      if (item.address && item.weight) {
        tokenAddressList.push({
@@ -52,16 +57,14 @@ export default class CreateNewPool extends Component {
    let totalWeight = 0;
    tokenAddressList.forEach(function(tokenItem){
      if (tokenItem.address) {
-       console.log(tokenItem.weight);
        totalWeight += tokenItem.weight;
      }
    });
-   console.log(totalWeight);
+
    if (totalWeight > 100) {
      this.setState({isError: true, errorMessage: 'Total weight cannot be more than 100'});
    } else {
-
-    this.setState({isError: false, errorMessage: ''});
+    this.setState({isError: false, errorMessage: '', tokenAddressList: tokenAddressList});
     const args = {
       maxFee: parseFloat(vals.reserveFee).toFixed(2),
       smartTokenAddress: smartTokenStatus.contractAddress,
@@ -121,14 +124,18 @@ export default class CreateNewPool extends Component {
     const {pool: {smartTokenContract, relayConverterStatus, poolFundedStatus, activationStatus}} = nextProps;
     
     if (!isEmptyObject(smartTokenContract) && isEmptyObject(this.props.pool.smartTokenContract)) {
+      this.setState({currentStep: 'step2'})
       this.appStepper.current.resolve();
+
     }
 
     if (isNonEmptyObject(relayConverterStatus) && relayConverterStatus.type === 'success' && this.props.pool.relayConverterStatus.type === 'pending') {
+          this.setState({currentStep: 'step3'})
       this.appStepper.current.resolve();    
     }
     
     if (isNonEmptyObject(poolFundedStatus) && poolFundedStatus.type === 'success' && this.props.pool.poolFundedStatus.type === 'pending') {
+          this.setState({currentStep: 'step4'})
       this.appStepper.current.resolve();          
     }
 
@@ -138,6 +145,12 @@ export default class CreateNewPool extends Component {
     }
   }
   
+  getTokenDetail = (val, idx) => {
+
+   this.props.getTokenDetailFromAddress(val, idx);
+   
+  }
+  
 
   render() {
     const STEP1 = "step-one";
@@ -145,9 +158,10 @@ export default class CreateNewPool extends Component {
     const STEP3 = "step-three";
     const STEP4 = "step-four";
     
-    const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage} = this.state;
+    const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
     const {pool: {isFetching, smartTokenStatus, relayConverterStatus, poolFundedStatus}, pool,} = this.props;
+
     let transactionStatusMessage = <span/>;
     
     if (isError) {
@@ -203,7 +217,7 @@ export default class CreateNewPool extends Component {
     let currentPage = <span/>;
     if (showReceiptPage === false) {
       currentPage = (
-        <Stepper contextRef={this.appStepper}>
+        <Stepper contextRef={this.appStepper} currentStep={currentStep} initialStep={STEP2}>
           <Step
             stepId={STEP1}
             data="Step 1 initial state"
@@ -215,10 +229,12 @@ export default class CreateNewPool extends Component {
             isResolved={isResolved}/>
           </Step>
           <Step stepId={STEP2} title="Converter details" description="Configure convertible token">
-              <Step2 tokenSymbol={poolSymbol} pool={pool} deployContract={this.deployConverterContract}/>
+              <Step2 tokenSymbol={poolSymbol} pool={pool} deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail}
+              setTokenListRow={this.props.setTokenListRow}/>
           </Step>
-          <Step stepId={STEP3} title="Funding and initial supply" description="Fund pool with initial supply">
-            <Step3 fundRelayWithSupply={this.fundRelayWithSupply}/>
+          <Step stepId={STEP3} title="Funding and initial supply" description="Fund pool with initial supply" 
+          data={tokenAddressList} tokenAddressList={tokenAddressList}>
+            <Step3 fundRelayWithSupply={this.fundRelayWithSupply} getAddressList={this.getAddressList}/>
           </Step>
           <Step stepId={STEP4} title="Pool Activation" description="Activate your pool">
             <Step4 activatePool={this.activatePool} />
@@ -230,6 +246,7 @@ export default class CreateNewPool extends Component {
       currentPage = <TransactioReceiptPage pool={this.props.pool}
       getConverterAndPoolDetails={this.props.getConverterAndPoolDetails}/>
     }
+
     return (
       <div>
         <CreateNewPoolToolbar/>
@@ -318,7 +335,8 @@ class Step2 extends Component {
   
   componentWillMount() {
     this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
-    baseReserveSelected: 'BNT', baseReserveWeight: 50})
+    baseReserveSelected: 'BNT', baseReserveWeight: 50});
+    this.props.setTokenListRow();
   }
   onSubmit = (e) => {
     e.preventDefault();
@@ -336,6 +354,7 @@ class Step2 extends Component {
     let currentRowList = this.state.tokenArrayList;
     currentRowList.push({'weight': '', 'address': ''});
     this.setState({tokenArrayList: currentRowList});
+    this.props.setTokenListRow();
   }
   
   weightChanged = (value, idx) => {
@@ -360,18 +379,23 @@ class Step2 extends Component {
   render() {
 
     const {baseReserveWeight, reserveFee, tokenArrayList} = this.state;
+    const {getTokenDetail} = this.props;
     let weightPromptMessage = <span/>;
     
     const self = this;
     
     let tokenArrayListDisplay = tokenArrayList.map(function(item, idx){
       return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight} idx={idx}
-      weightChanged={self.weightChanged} addressChanged={self.addressChanged}/>;
+      weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail}/>;
     })
 
     return (
         <div className="create-pool-form-container">
         <div className="create-form-container">
+        <ButtonGroup aria-label="Basic example">
+          <Button variant="primary">Require relay token</Button>
+          <Button variant="secondary">Any ERC20 token</Button>
+        </ButtonGroup>
         <Container>
         <Form onSubmit={this.onSubmit}> 
         <Row>
@@ -430,6 +454,7 @@ class Step2 extends Component {
 }
 
 class Step3 extends Component {
+  static contextType = StepperContext;  
   constructor() {
     super();
     this.state = {tokenAmount: '', connectorAmount: ''};
@@ -444,33 +469,35 @@ class Step3 extends Component {
   
   onSubmit = (evt) => {
     evt.preventDefault();
-    this.props.fundRelayWithSupply(this.state);
+    console.log(this.state.tokenAddressList);
+    
+  //  this.props.fundRelayWithSupply(this.state);
   }
   
+  componentWillMount(){
+    const currentAddressList = this.props.getAddressList();
+    this.setState({tokenAddressList: currentAddressList});
+  }
+  
+  setTokenAmount(val, idx) {
+    let tokenAddressList = this.state.tokenAddressList;
+    tokenAddressList[idx].amount = val;
+    this.setState({tokenAddressList, tokenAddressList});
+  } 
+
   render() {
-    const {tokenAmount, connectorAmount} = this.state;
-    
+    const {tokenAmount, connectorAmount, tokenAddressList} = this.state;
+
+    let tokenAmountDisplay = tokenAddressList.map(function(item, key){
+       return <TokenAmountRow key={`amount-row-${key}`} item={item} idx={key}/>      
+    });
+
     return (
         <div className="create-pool-form-container">
         <Container>
         <Form onSubmit={this.onSubmit}> 
-        <Form.Group controlId="formBasicEmail">
-          <Form.Label>Base token reserve amount to Transfer</Form.Label>
-          <Form.Control type="text" placeholder="enter amount of token to transfer"  value={tokenAmount} 
-          onChange={this.tokenAmountChanged}/>
-          <Form.Text className="text-muted">
-            Enter amount of convertible ERC20 token to transfer
-          </Form.Text>
-        </Form.Group>
         
-        <Form.Group controlId="formBasicEmail">
-          <Form.Label>Network token reserve amount to transfer</Form.Label>
-          <Form.Control type="text" placeholder="Enter amount of connector token to transfer"
-            value={connectorAmount} onChange={this.connectorAmountChanged}/>
-          <Form.Text className="text-muted">
-            Enter amount of network token (BNT) to transfer
-          </Form.Text>
-        </Form.Group>
+        {tokenAmountDisplay}
         
         <Form.Text className="text-muted">
             Please ensure that the USD value of both reserve tokens are roughly equal.
@@ -541,7 +568,6 @@ class TransactioReceiptPage extends Component {
   }
 }
 
-
 class TokenFormRow extends Component {
   constructor(props) {
     super(props);
@@ -549,6 +575,13 @@ class TokenFormRow extends Component {
   addressChanged = (evt) => {
     const {addressChanged, idx} = this.props;
     addressChanged(evt.target.value, idx);
+  }
+  
+  addressOrSymbolSet = (evt) => {
+    const {getTokenDetail, idx} = this.props;
+    const value = evt.target.value;
+
+    getTokenDetail(value, idx);
   }
   
   weightChanged = (evt) => {
@@ -562,7 +595,7 @@ class TokenFormRow extends Component {
         <Col lg={8}>
         <Form.Group controlId="formBasicEmail">
           <Form.Label>Convertible Reserve Token Address</Form.Label>
-          <Form.Control type="text" placeholder="address" value={address} onChange={this.addressChanged}/>
+          <Form.Control type="text" placeholder="address" value={address} onChange={this.addressChanged} onBlur={this.addressOrSymbolSet}/>
           <Form.Text className="text-muted">
             Enter the address of the ERC20 token contract for which you want to create pool.
           </Form.Text>
@@ -570,12 +603,52 @@ class TokenFormRow extends Component {
         </Col>
         <Col lg={4}>
           <div className="slidecontainer">
-            <Form.Label>{`Token reserve ratio - ${weight}`}</Form.Label>
+          <Row>
+            <Col lg={8}>
+            Token Reserve Ratio
+            </Col>
+            <Col lg={4}>
+            <Form.Control type="number" value={weight} onChange={this.weightChanged} className="amount-row"/>
+            </Col>
+            </Row>
+            <Row>
             <input type="range" min="0" max="100" value={weight} className="slider"
             id="myRange" onChange={this.weightChanged}/>
+            </Row>
           </div>           
         </Col>
         </Row>
+      )
+  }
+}
+
+class TokenAmountRow extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {tokenAmount: ''}
+  }
+  tokenAmountChanged = (evt) => {
+    const {idx} = this.props;
+    const tokenAmount = evt.target.value;
+    
+    this.setState({tokenAmount: tokenAmount});
+    this.props.setTokenAmount(tokenAmount, idx);
+  }
+  
+  render() {
+    const {item} = this.props;
+    const {tokenAmount} = this.state;
+    return (
+      <div>
+        <Form.Group controlId="formFundingCenter">
+          <Form.Label>Base token reserve amount to Transfer</Form.Label>
+          <Form.Control type="text" placeholder="enter amount of token to transfer" value={tokenAmount} 
+          onChange={this.tokenAmountChanged} />
+          <Form.Text className="text-muted">
+            Enter amount of ${item.type} ERC20 token to transfer
+          </Form.Text>
+        </Form.Group>      
+      </div>
       )
   }
 }

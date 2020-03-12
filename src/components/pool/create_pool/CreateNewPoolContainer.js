@@ -3,8 +3,9 @@ import CreateNewPool from './CreateNewPool';
 import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
-  setActivationStatus, setPoolCreationReceipt,
+  setActivationStatus, setPoolCreationReceipt, setTokenListDetails, setTokenListRow
 } from '../../../actions/pool';
+
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 const SmartToken = require('../../../contracts/SmartToken.json');
 const SmartTokenByteCode = require('../../../contracts/SmartTokenByteCode.js');
@@ -12,7 +13,7 @@ const RegistryUtils = require('../../../utils/RegistryUtils');
 const BancorConverter = require('../../../contracts/BancorConverter.json');
 const BancorConverterByteCode = require('../../../contracts/BancorConverterByteCode.js');
 const ContractRegistry = require('../../../contracts/ContractRegistry.json');
-
+const axios = require('axios');
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 
 const BigNumber = require('bignumber.js');
@@ -81,9 +82,10 @@ const mapDispatchToProps = (dispatch) => {
     
     const reserveWeight = args.reserveWeight * 10000;
     const convertibleWeight = args.convertibleWeight * 1000;
-    const conversionFee = args.conversionFee * 10000;
+    const conversionFee = maxFee;
     const smartTokenAddress = args.smartTokenAddress;
-
+    
+    
     // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
     
     RegistryUtils.getContractAddress('ContractRegistry').then(function(contractRegistryContractAddress){
@@ -128,32 +130,51 @@ const mapDispatchToProps = (dispatch) => {
 
           let convertibleTokenDeploy = args.tokenAddressList.map(function(item){
             if (item.type === 'convertible') {
-                
-                deployerContractInstance.methods.addConnector(item.address, item.weight, false).call()
-        .then(function(data){
-          dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Setting conversion fees`}));
-          deployerContractInstance.methods.setConversionFee(conversionFee).call().then(function(dataRes){
-
-          dispatch(deployRelayConverterStatus({type: 'success',
-          message: `Relay token is ready to be used`}));
-    
-            
-          });
-          
-        })
+              return   deployerContractInstance.methods.addConnector(item.address, item.weight, false).call()
+                .then(function(data){
+                dispatch(deployRelayConverterStatus({type: 'pending',
+                message: `Setting conversion fees`}));
+              })
               
             } else {
               return null;
             }
-          })
+          });
           
-
+          Promise.all(convertibleTokenDeploy).then(function(response){
+              deployerContractInstance.methods.setConversionFee(conversionFee).call().then(function(dataRes){
+                dispatch(deployRelayConverterStatus({type: 'success',
+                message: `Relay token is ready to be used`}));
+              });
+          });
       });
     
   });
+    },
+    
+    getTokenDetailFromAddress: (val, idx) => {
+      const web3 = window.web3;
       
+      const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
+      if (val && val.length > 0) {
       
+      ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+      //  return tokenSymbol;
+        axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
+          let tokenPrice = "";
+          if (dataResponse.data && dataResponse.data.USD) {
+            tokenPrice = dataResponse.data.USD;
+          }
+          const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice}};
+         dispatch(setTokenListDetails(poolData));  
+        })
+      })
+      }
+      
+    },
+    
+    setTokenListRow: () => {
+      dispatch(setTokenListRow());
     },
     
     fundRelayWithSupply: (args) => {
