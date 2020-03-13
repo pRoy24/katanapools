@@ -84,7 +84,7 @@ const mapDispatchToProps = (dispatch) => {
     const convertibleWeight = args.convertibleWeight * 1000;
     const conversionFee = maxFee;
     const smartTokenAddress = args.smartTokenAddress;
-    
+
     
     // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
     
@@ -93,6 +93,7 @@ const mapDispatchToProps = (dispatch) => {
       const bancorConverterContract = new web3.eth.Contract(BancorConverter);
       const bytecode ='0x' + BancorConverterByteCode.ByteCode;
 
+    
     const deployer = bancorConverterContract.deploy({data : bytecode, arguments: [
                       smartTokenAddress, 
                       contractRegistryContractAddress,
@@ -100,6 +101,8 @@ const mapDispatchToProps = (dispatch) => {
                       relayTokenAddress,
                       relayTokenWeight
                     ]});
+      
+      
       
       deployer.send({
         from: walletAddress

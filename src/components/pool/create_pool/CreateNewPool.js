@@ -330,7 +330,8 @@ class Step2 extends Component {
   
   constructor() {
     super();
-    this.state = {convertibleTokenAddress: '', reserveFee: 3, tokenArrayList: [], baseReserveSelected: '', baseReserveWeight: ''};
+    this.state = {convertibleTokenAddress: '', reserveFee: 3, tokenArrayList: [], baseReserveSelected: '',
+    baseReserveWeight: '', poolType: 'relay'};
   }
   
   componentWillMount() {
@@ -376,29 +377,39 @@ class Step2 extends Component {
   baseWeightValueChanged = (evt) => {
     this.setState({baseReserveWeight: evt.target.value});
   }
+  
+  togglePooltype = (val) => {
+    this.setState({poolType: val});
+    
+  }
   render() {
 
-    const {baseReserveWeight, reserveFee, tokenArrayList} = this.state;
+    const {baseReserveWeight, reserveFee, tokenArrayList, poolType} = this.state;
     const {getTokenDetail} = this.props;
     let weightPromptMessage = <span/>;
     
     const self = this;
     
+    let relaySelectButton = '';
+    let ercSelectButton = '';
+    
+    if (poolType === 'relay') {
+      relaySelectButton = 'button-active';
+      ercSelectButton = ''; 
+    } else {
+      ercSelectButton = 'button-active'; 
+    } 
+    
+    
     let tokenArrayListDisplay = tokenArrayList.map(function(item, idx){
       return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight} idx={idx}
       weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail}/>;
-    })
-
-    return (
-        <div className="create-pool-form-container">
-        <div className="create-form-container">
-        <ButtonGroup aria-label="Basic example">
-          <Button variant="primary">Require relay token</Button>
-          <Button variant="secondary">Any ERC20 token</Button>
-        </ButtonGroup>
-        <Container>
-        <Form onSubmit={this.onSubmit}> 
-        <Row>
+    });
+    
+    let relayTokenRow = <span/>;
+    if (poolType === 'relay') {
+      relayTokenRow = (
+      <Row>
         <Col lg={8}>
         <Form.Group controlId="formBasicEmail">
          <Form.Label>Select base token</Form.Label>
@@ -416,6 +427,31 @@ class Step2 extends Component {
           </div>        
         </Col>
         </Row>
+        )
+    }
+
+    return (
+        <div className="create-pool-form-container">
+      
+        <div className="create-form-container">
+           <Container className="add-pool-converter-form">
+        <Row>
+          <Col lg={6}>
+          <div>
+            Pool composition -
+          </div>
+          </Col>
+          <Col lg={6} className="btn-toggle-container">
+            <ButtonGroup aria-label="Basic example">
+              <Button variant="primary" onClick={()=>this.togglePooltype("relay")} className={`toggle-btn ${relaySelectButton}`}>Require relay token</Button>
+              <Button variant="secondary" onClick={()=>this.togglePooltype("any")} className={`toggle-btn ${ercSelectButton}`}>Any ERC20 token</Button>
+            </ButtonGroup>          
+          </Col>
+        </Row>
+        </Container>
+        <Container className="add-pool-converter-form">
+        <Form onSubmit={this.onSubmit}> 
+        {relayTokenRow}
         {tokenArrayListDisplay}
         <Button onClick={this.addReserveTokenRow}>Add another reserve token <FontAwesomeIcon icon={faPlus} /></Button>
         <Form.Group controlId="formBasicEmail">
@@ -425,9 +461,8 @@ class Step2 extends Component {
             <InputGroup.Append>
               <InputGroup.Text id="inputGroupPrepend">%</InputGroup.Text>
             </InputGroup.Append>
-
           </InputGroup>
-                    <Form.Text className="text-muted">
+          <Form.Text className="text-muted">
             Enter the max conversion fees when using this reserve (Recommended 3%)
           </Form.Text>
         </Form.Group>
@@ -470,8 +505,7 @@ class Step3 extends Component {
   onSubmit = (evt) => {
     evt.preventDefault();
     console.log(this.state.tokenAddressList);
-    
-  //  this.props.fundRelayWithSupply(this.state);
+
   }
   
   componentWillMount(){

@@ -196,9 +196,38 @@
   cursor: pointer;
 }
 
-.amount-row {
+.toggle-btn {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     height: 30px;
     margin-bottom: 6px;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #d3d3d3 !important;
+}
+
+.toggle-btn:selected {
+  outline: none !important;
+}
+
+button:focus {outline:0 !important;}
+
+.button-active {
+  background: #0D0D0D !important;
+  color: #fff !important;
+  
+}
+
+.amount-row {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  height: 30px !important;
+}
+
+.add-pool-converter-form {
+  margin-top: 20px !important;
+}
+
+.btn-toggle-container {
+  text-align: right;
 }
