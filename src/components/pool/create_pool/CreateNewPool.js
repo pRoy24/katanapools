@@ -8,7 +8,7 @@ import {
 } from "react-material-stepper";
 import {isEmptyObject, isNonEmptyObject} from '../../../utils/ObjectUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {  faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import {  faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
 
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
@@ -152,6 +152,8 @@ export default class CreateNewPool extends Component {
   }
   
 
+  
+
   render() {
     const STEP1 = "step-one";
     const STEP2 = "step-two";
@@ -222,15 +224,13 @@ export default class CreateNewPool extends Component {
             stepId={STEP1}
             data="Step 1 initial state"
             title="Pool name"
-            description="Pool name and symbol"
-          >
+            description="Pool name and symbol">
             <Step1 handler={this.setStepOneReceipt} smartTokenStatus={pool.smartTokenStatus}
-            isFetching={pool.isFetching} deployPoolContract={this.deployPoolContract} 
-            isResolved={isResolved}/>
+                   isFetching={pool.isFetching} deployPoolContract={this.deployPoolContract} 
+                   isResolved={isResolved}/>
           </Step>
-          <Step stepId={STEP2} title="Converter details" description="Configure convertible token">
-              <Step2 tokenSymbol={poolSymbol} pool={pool} deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail}
-              setTokenListRow={this.props.setTokenListRow}/>
+          <Step stepId={STEP2} data="Step 2 initial state" title="Converter details" description="Configure convertible token">
+              <Step2 deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail} setTokenListRow={this.props.setTokenListRow}/>
           </Step>
           <Step stepId={STEP3} title="Funding and initial supply" description="Fund pool with initial supply" 
           data={tokenAddressList} tokenAddressList={tokenAddressList}>
@@ -334,7 +334,7 @@ class Step2 extends Component {
     baseReserveWeight: '', poolType: 'relay'};
   }
   
-  componentWillMount() {
+  componentDidMount() {
     this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
     baseReserveSelected: 'BNT', baseReserveWeight: 50});
     this.props.setTokenListRow();
@@ -345,6 +345,8 @@ class Step2 extends Component {
     this.props.deployContract(this.state);
     
   }
+  
+
 
   
   reserveFeeChanged = (e) => {
@@ -382,6 +384,13 @@ class Step2 extends Component {
     this.setState({poolType: val});
     
   }
+  
+  removeTokenRow = (idx) => {
+    let currentTokenAddressList = this.state.tokenArrayList;
+    currentTokenAddressList.splice(idx, 1);
+    this.setState({tokenArrayList: currentTokenAddressList});
+  }
+  
   render() {
 
     const {baseReserveWeight, reserveFee, tokenArrayList, poolType} = this.state;
@@ -402,8 +411,8 @@ class Step2 extends Component {
     
     
     let tokenArrayListDisplay = tokenArrayList.map(function(item, idx){
-      return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight} idx={idx}
-      weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail}/>;
+      return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight ? item.weight : 0} idx={idx}
+      weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail} removeTokenRow={self.removeTokenRow}/>;
     });
     
     let relayTokenRow = <span/>;
@@ -419,9 +428,18 @@ class Step2 extends Component {
           </Form.Control>
         </Form.Group>
         </Col>
-        <Col lg={4}>
+        
+        
+        <Col lg={4} className="no-pad-col">
           <div className="slidecontainer">
-            <Form.Label>{`Token reserve ratio - ${baseReserveWeight}`}</Form.Label>
+          <Row>
+            <Col lg={8}>
+            Token Reserve Ratio
+            </Col>
+            <Col lg={4}>
+            <Form.Control type="number" value={baseReserveWeight} onChange={this.baseWeightValueChanged} className="amount-row"/>
+            </Col>
+            </Row>
             <input type="range" min="0" max="100" value={baseReserveWeight} className="slider"
             id="myRange" onChange={this.baseWeightValueChanged}/>
           </div>        
@@ -434,14 +452,14 @@ class Step2 extends Component {
         <div className="create-pool-form-container">
       
         <div className="create-form-container">
-           <Container className="add-pool-converter-form">
-        <Row>
+          <Container className="add-pool-converter-form">
+          <Row className="add-pool-form-header">
           <Col lg={6}>
-          <div>
-            Pool composition -
+          <div className="header">
+            Pool composition 
           </div>
           </Col>
-          <Col lg={6} className="btn-toggle-container">
+          <Col lg={6} className="btn-toggle-container no-pad-col">
             <ButtonGroup aria-label="Basic example">
               <Button variant="primary" onClick={()=>this.togglePooltype("relay")} className={`toggle-btn ${relaySelectButton}`}>Require relay token</Button>
               <Button variant="secondary" onClick={()=>this.togglePooltype("any")} className={`toggle-btn ${ercSelectButton}`}>Any ERC20 token</Button>
@@ -453,8 +471,8 @@ class Step2 extends Component {
         <Form onSubmit={this.onSubmit}> 
         {relayTokenRow}
         {tokenArrayListDisplay}
-        <Button onClick={this.addReserveTokenRow}>Add another reserve token <FontAwesomeIcon icon={faPlus} /></Button>
-        <Form.Group controlId="formBasicEmail">
+        <Button onClick={this.addReserveTokenRow} className="row-add-btn">Add another reserve token <FontAwesomeIcon icon={faPlus} /></Button>
+        <Form.Group controlId="formBasicEmail" className="fees-row">
           <Form.Label>Conversion fees</Form.Label>
             <InputGroup>
             <Form.Control type="text" placeholder="reserve fee" value={reserveFee} onChange={this.reserveFeeChanged}/>
@@ -504,8 +522,6 @@ class Step3 extends Component {
   
   onSubmit = (evt) => {
     evt.preventDefault();
-    console.log(this.state.tokenAddressList);
-
   }
   
   componentWillMount(){
@@ -635,7 +651,7 @@ class TokenFormRow extends Component {
           </Form.Text>
         </Form.Group>
         </Col>
-        <Col lg={4}>
+        <Col lg={4} className="token-weight-slider-container">
           <div className="slidecontainer">
           <Row>
             <Col lg={8}>
@@ -649,7 +665,8 @@ class TokenFormRow extends Component {
             <input type="range" min="0" max="100" value={weight} className="slider"
             id="myRange" onChange={this.weightChanged}/>
             </Row>
-          </div>           
+          </div>    
+          <FontAwesomeIcon icon={faTimes} className="remove-icon-btn" onClick={()=>this.props.removeTokenRow(idx)}/>
         </Col>
         </Row>
       )

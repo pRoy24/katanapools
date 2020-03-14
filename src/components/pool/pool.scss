@@ -231,3 +231,42 @@ button:focus {outline:0 !important;}
 .btn-toggle-container {
   text-align: right;
 }
+
+.no-pad-col {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.remove-icon-btn {
+      position: absolute;
+    right: -20px;
+    top: 56px;
+    color: #dc3545;
+    cursor: pointer;
+}
+
+.token-weight-slider-container {
+  padding-top: 10px !important;
+}
+
+.slider {
+  margin-top: 10px;
+}
+
+.add-pool-form-header {
+  border-bottom: 2px solid #a9a9a9 !important;
+  .header {
+    font-weight: 600;
+    margin-top: 6px;
+  }
+}
+
+.row-add-btn {
+      background: #fff !important;
+    border: 1px solid #a9a9a9 !important;
+    color: #28a745 !important;
+}
+
+.fees-row {
+  margin-top: 20px ;
+}
