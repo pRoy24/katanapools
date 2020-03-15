@@ -76,33 +76,38 @@ const mapDispatchToProps = (dispatch) => {
     
     const maxFee = args.maxFee * 10000;
     
-    const relayToken = args.tokenAddressList.find((a)=>(a.type === 'relay'));
+    let relayToken = args.tokenAddressList.find((a)=>(a.type === 'relay'));
+    let connectorAddedIndex = -1;
+    if (!relayToken || typeof relayToken === undefined) {
+      relayToken = args.tokenAddressList[0];
+      connectorAddedIndex = 0;
+    }
     const relayTokenAddress = relayToken.address;
     const relayTokenWeight = relayToken.weight;
     
-    const reserveWeight = args.reserveWeight * 10000;
-    const convertibleWeight = args.convertibleWeight * 1000;
     const conversionFee = maxFee;
     const smartTokenAddress = args.smartTokenAddress;
 
+    // Set converter details in reducer
     
-    // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
+    getTokenListData(args.tokenAddressList).then(function(tokenListDetails){
+      
+      dispatch(setTokenListDetails(tokenListDetails));
+      
+      // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
     
-    RegistryUtils.getContractAddress('ContractRegistry').then(function(contractRegistryContractAddress){
+      RegistryUtils.getContractAddress('ContractRegistry').then(function(contractRegistryContractAddress){
       const walletAddress = web3.currentProvider.selectedAddress;
       const bancorConverterContract = new web3.eth.Contract(BancorConverter);
       const bytecode ='0x' + BancorConverterByteCode.ByteCode;
 
-    
-    const deployer = bancorConverterContract.deploy({data : bytecode, arguments: [
-                      smartTokenAddress, 
-                      contractRegistryContractAddress,
-                      maxFee,
-                      relayTokenAddress,
-                      relayTokenWeight
-                    ]});
-      
-      
+      const deployer = bancorConverterContract.deploy({data : bytecode, arguments: [
+                        smartTokenAddress, 
+                        contractRegistryContractAddress,
+                        maxFee,
+                        relayTokenAddress,
+                        relayTokenWeight
+                      ]});
       
       deployer.send({
         from: walletAddress
@@ -131,8 +136,8 @@ const mapDispatchToProps = (dispatch) => {
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding network connector`}));
 
-          let convertibleTokenDeploy = args.tokenAddressList.map(function(item){
-            if (item.type === 'convertible') {
+          let convertibleTokenDeploy = args.tokenAddressList.map(function(item, idx){
+            if (item.type === 'convertible' && idx != connectorAddedIndex) {
               return   deployerContractInstance.methods.addConnector(item.address, item.weight, false).call()
                 .then(function(data){
                 dispatch(deployRelayConverterStatus({type: 'pending',
@@ -153,6 +158,9 @@ const mapDispatchToProps = (dispatch) => {
       });
     
   });
+  
+    });
+    
     },
     
     getTokenDetailFromAddress: (val, idx) => {
@@ -176,65 +184,40 @@ const mapDispatchToProps = (dispatch) => {
       
     },
     
-    setTokenListRow: () => {
-      dispatch(setTokenListRow());
+    setTokenList: (tokenList) => {
+
+      
     },
     
     fundRelayWithSupply: (args) => {
 
       const web3 = window.web3;
-      const convertibleTokenAddress = args.convertibleTokenAddress;
-      const convertibleTokenAmount = args.convertibleTokenAmount;
-      const convertibleTokenMinAmount = toDecimals(convertibleTokenAmount, 18);
-      
-      const networkTokenAmount = args.networkTokenAmount;
-
-      const networkTokenMinAmount = toDecimals(networkTokenAmount, 18);
       
       const smartTokenAddress = args.smartTokenAddress;
 
       const bancorConverterAddress = args.converterAddress;
       
+      const smartTokenContract = new web3.eth.Contract(SmartToken, smartTokenAddress);      
+
       const senderAddress = web3.currentProvider.selectedAddress;
       
-      const BNT_ADDRESS = getBNTAddress();
-
-      let convertibleTokenContract = new web3.eth.Contract(ERC20Token, convertibleTokenAddress);
-      let networkTokenContract = new web3.eth.Contract(ERC20Token, BNT_ADDRESS);
+      const supplyAmount = toDecimals(args.initialSupply, 18);
       
-      const smartTokenContract = new web3.eth.Contract(SmartToken, smartTokenAddress);
-      
-      networkTokenContract.methods.decimals().call().then(function(numDecimals){
-      let supplyAmount = toDecimals(networkTokenAmount * 2, 18);
-      dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to approve supply creation'}));
-      
+      const convertibleTokens = args.convertibleTokens;
+      dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Waiting for user approval of pool supply"}));
       smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
-          dispatch(setPoolFundedStatus({type: 'pending', message:'Creating pool token supply'}));
-      }).then(function(issueResponse){
-          dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user approval for convertible token transfer'}));
-          getApproval(convertibleTokenContract, senderAddress, bancorConverterAddress, convertibleTokenMinAmount, dispatch, false).then(function(approvalResponse){
-            dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to initiate convertible token transfer'}));
-            convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
-              dispatch(setPoolFundedStatus({type: 'pending', message:'Transferring convertible token from user balance to contract'}));
-            }).then(function(txResponse){
-              dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user approval for network token transfer'}));              
-              getApproval(networkTokenContract, senderAddress, bancorConverterAddress, networkTokenMinAmount, dispatch, false).then(function(approvalResponse){
-                dispatch(setPoolFundedStatus({type: 'pending', message:'Waiting for user to initiate for network token transfer'}));
-                networkTokenContract.methods.transfer(bancorConverterAddress, networkTokenMinAmount).send({from: senderAddress}, function(err, txHash){
-                    dispatch(setPoolFundedStatus({type: 'pending', message:'Transferring network token from user balance to contract'}));
-                })
-                .then(function(rsResponse){
-                dispatch(setPoolFundedStatus({type: 'success', message:'finished funding pool with initial liquidity'}));
-              })
-            })
-          })
-        })
-      })
-    }).catch(function(err){
-      dispatch(setPoolFundedStatus({type: 'error', message: err.message.toString()}));
-    })
-      
+      dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Creating initial pool supply"}));
+      }).then(function(response){
+        
+        (async () => {
+        let totalConversions = convertibleTokens.length - 1;
+        for (let job of convertibleTokens.map((x, idx) => () =>
+          approveAndFundPool(x, bancorConverterAddress, dispatch, idx, totalConversions)
+        ))
+        await job();
+        })();
 
+      });
     },
     
     activatePool: (args) => {
@@ -331,6 +314,95 @@ function getApproval(contract, owner, spender, amount, dispatch, isEth) {
     }
   });
   }
+}
+
+
+async function approveAndFundPool(convertibleToken, bancorConverterAddress, dispatch, idx, totalConversions) {
+
+      const web3 = window.web3;
+      const senderAddress = web3.currentProvider.selectedAddress;
+
+      const convertibleTokenContract = new web3.eth.Contract(ERC20Token, convertibleToken.address);  
+      
+      return convertibleTokenContract.methods.decimals().call().then(function(decimals){
+
+      const convertibleTokenAmount = parseFloat(convertibleToken.amount);
+      
+      let convertibleTokenApprovalAmount = convertibleTokenAmount;
+      
+      const convertibleTokenMinAmount = toDecimals(convertibleTokenAmount, decimals);
+      
+      const convertibleTokenMinApprovalAmount = toDecimals(convertibleTokenApprovalAmount, decimals);
+      
+      return convertibleTokenContract.methods.allowance(senderAddress, bancorConverterAddress).call().then(function(allowance) {
+        if (!allowance || typeof allowance === undefined) {
+          allowance = 0;
+        }
+
+        const required = new BigNumber(convertibleTokenMinApprovalAmount);
+
+        let diff = new BigNumber(allowance).minus(required);
+
+        if (diff.isNegative()) {
+          dispatch(setPoolFundedStatus({'type': 'pending', 'message': `waiting for user authorization of ${convertibleToken.symbol} transfer`}));
+          return convertibleTokenContract.methods.approve(bancorConverterAddress, convertibleTokenMinApprovalAmount).send({
+            from: senderAddress
+          }, function(err, txHash){
+            dispatch(setPoolFundedStatus({'type': 'pending', 'message': `Authorizing ${convertibleToken.symbol} transfer to contract`}));
+          }).then(function(approval){
+          return convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
+              dispatch(setPoolFundedStatus({'type': 'pending', 'message': `transferring ${convertibleToken.amount} ${convertibleToken.symbol} to contract`}));
+            }).then(function(txSuccess){
+
+              if (idx === totalConversions) {
+                dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
+              }
+              return;
+
+            });
+          });
+        
+      } else {
+        return convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
+          }).then(function(txSuccess){
+              if (idx === totalConversions) {
+                dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
+              }
+              return;
+          });
+      }
+          
+  })
+  });
+          
+}
+
+
+function getTokenListData(tokenList) {
+      const web3 = window.web3;
+      
+      let tokenDetailList = tokenList.map(function(item){
+      const val = item.address;
+      const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
+      if (val && val.length > 0) {
+        return  ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+          return  axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
+            let tokenPrice = "";
+            if (dataResponse.data && dataResponse.data.USD) {
+              tokenPrice = dataResponse.data.USD;
+            }
+            let returnData = Object.assign({}, item, {'symbol': tokenSymbol, 'price': tokenPrice});
+            return returnData;
+          })
+        });
+      } else {
+        return null;
+      }
+      });
+      
+      return Promise.all(tokenDetailList).then(function(detailListData){
+        return detailListData.filter(Boolean);
+      });  
 }
 
 

@@ -29,13 +29,7 @@ export default function poolReducer (state = initialState, action) {
       currentTokenList.push({});
       return {...state, tokenList: currentTokenList};
     case SET_TOKEN_LIST_DETAILS:
-       currentTokenList = state.tokenList;
-      let currentPayload = action.payload;
-      currentTokenList[currentPayload.idx].price = currentPayload.data.price;
-      currentTokenList[currentPayload.idx].address = currentPayload.data.address;
-      currentTokenList[currentPayload.idx].symbol = currentPayload.data.symbol;
-            
-      return {...state, tokenList: currentTokenList};
+      return {...state, tokenList: action.payload};
       
     case DEPLOY_SMART_TOKEN_INIT:
       return {

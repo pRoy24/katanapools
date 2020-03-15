@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup} from 'react-bootstrap';
+import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup, ListGroup, ListGroupItem} from 'react-bootstrap';
 import Stepper, { Step } from "react-material-stepper";
 import {
   StepperAction,
@@ -32,7 +32,9 @@ export default class CreateNewPool extends Component {
   }
   
   getAddressList = () => {
-    return this.state.tokenAddressList;
+    const {pool: {tokenList}} = this.props;
+
+    return tokenList;
   }
   deployConverterContract = (vals) => {
 
@@ -42,8 +44,12 @@ export default class CreateNewPool extends Component {
     const {tokenArrayList} = vals;
    
    let tokenAddressList = [];
-   const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
-   tokenAddressList.push({'address': baseReserveAddress, 'weight': parseFloat(vals.baseReserveWeight), 'type': 'relay'});
+   console.log(vals.poolType);
+   
+   if (vals.poolType === 'relay') {
+    const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
+    tokenAddressList.push({'address': baseReserveAddress, 'weight': parseFloat(vals.baseReserveWeight), 'type': 'relay'});
+   }
    tokenArrayList.forEach(function(item){
      if (item.address && item.weight) {
        tokenAddressList.push({
@@ -70,8 +76,7 @@ export default class CreateNewPool extends Component {
       smartTokenAddress: smartTokenStatus.contractAddress,
       tokenAddressList: tokenAddressList,
     }
-    
-    this.props.deployRelayConverter(args);
+     this.props.deployRelayConverter(args);
    }
   }
   
@@ -106,17 +111,18 @@ export default class CreateNewPool extends Component {
   }
   
   fundRelayWithSupply = (vals) => {
+
+    
     const {pool, pool: {relayContractReceipt, converterContractReceipt}} = this.props;
     const {relayTokenAddress, convertibleTokenAddress} = this.state;
 
     const args = {
-      convertibleTokenAddress: convertibleTokenAddress,
-      convertibleTokenAmount: vals.tokenAmount,
-      networkTokenAmount: vals.connectorAmount,
+      convertibleTokens: vals.tokenAddressList,
+      initialSupply: vals.initialSupply,
       smartTokenAddress: relayTokenAddress,
       converterAddress: converterContractReceipt.contractAddress
     }
-    
+
     this.props.fundRelayWithSupply(args);
   }
   
@@ -146,14 +152,9 @@ export default class CreateNewPool extends Component {
   }
   
   getTokenDetail = (val, idx) => {
-
-   this.props.getTokenDetailFromAddress(val, idx);
-   
+  // this.props.getTokenDetailFromAddress(val, idx);
   }
   
-
-  
-
   render() {
     const STEP1 = "step-one";
     const STEP2 = "step-two";
@@ -219,7 +220,7 @@ export default class CreateNewPool extends Component {
     let currentPage = <span/>;
     if (showReceiptPage === false) {
       currentPage = (
-        <Stepper contextRef={this.appStepper} currentStep={currentStep} initialStep={STEP2}>
+        <Stepper contextRef={this.appStepper} currentStep={currentStep}>
           <Step
             stepId={STEP1}
             data="Step 1 initial state"
@@ -337,17 +338,12 @@ class Step2 extends Component {
   componentDidMount() {
     this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
     baseReserveSelected: 'BNT', baseReserveWeight: 50});
-    this.props.setTokenListRow();
+  //  this.props.setTokenListRow();
   }
   onSubmit = (e) => {
     e.preventDefault();
-
     this.props.deployContract(this.state);
-    
   }
-  
-
-
   
   reserveFeeChanged = (e) => {
     this.setState({reserveFee: e.target.value});
@@ -357,7 +353,7 @@ class Step2 extends Component {
     let currentRowList = this.state.tokenArrayList;
     currentRowList.push({'weight': '', 'address': ''});
     this.setState({tokenArrayList: currentRowList});
-    this.props.setTokenListRow();
+  //  this.props.setTokenListRow();
   }
   
   weightChanged = (value, idx) => {
@@ -377,13 +373,23 @@ class Step2 extends Component {
   }
   
   baseWeightValueChanged = (evt) => {
-    this.setState({baseReserveWeight: evt.target.value});
+    const baseWeightValue = evt.target.value;
+    
+    this.setState({baseReserveWeight: baseWeightValue});
   }
   
   togglePooltype = (val) => {
     this.setState({poolType: val});
-    
+    if (val === 'relay') {
+      //this.props.setTokenListRow();
+    } else {
+      
+    }
   }
+   
+  componentDidUpdate() {
+    
+  } 
   
   removeTokenRow = (idx) => {
     let currentTokenAddressList = this.state.tokenArrayList;
@@ -522,24 +528,34 @@ class Step3 extends Component {
   
   onSubmit = (evt) => {
     evt.preventDefault();
+    this.props.fundRelayWithSupply({'tokenAddressList': this.state.tokenAddressList, initialSupply: this.state.numPoolTokens});
   }
   
   componentWillMount(){
     const currentAddressList = this.props.getAddressList();
-    this.setState({tokenAddressList: currentAddressList});
+    let initialNumPoolTokens = 0;
+    currentAddressList.forEach(function(currentAddresssItem){
+      initialNumPoolTokens += 1;
+    })
+    this.setState({tokenAddressList: currentAddressList, numPoolTokens: initialNumPoolTokens});
+    
   }
   
-  setTokenAmount(val, idx) {
+  setTokenAmount = (val, idx) => {
     let tokenAddressList = this.state.tokenAddressList;
     tokenAddressList[idx].amount = val;
     this.setState({tokenAddressList, tokenAddressList});
   } 
 
+  numPoolTokensChanged = (evt) => {
+    this.setState({numPoolTokens: evt.target.value});
+  }
   render() {
-    const {tokenAmount, connectorAmount, tokenAddressList} = this.state;
-
+    const {tokenAmount, connectorAmount, tokenAddressList, numPoolTokens} = this.state;
+    const self = this;
+    
     let tokenAmountDisplay = tokenAddressList.map(function(item, key){
-       return <TokenAmountRow key={`amount-row-${key}`} item={item} idx={key}/>      
+       return <TokenAmountRow key={`amount-row-${key}`} item={item} idx={key} setTokenAmount={self.setTokenAmount}/>      
     });
 
     return (
@@ -549,8 +565,17 @@ class Step3 extends Component {
         
         {tokenAmountDisplay}
         
+        <Form.Group controlId="formFundingCenter" className="pool-funding-form-row">
+          <Form.Label>Number of pool tokens to issue</Form.Label>
+          <Form.Control type="text" placeholder="enter amount of token to transfer" value={numPoolTokens} 
+          onChange={this.numPoolTokensChanged} />
+          <Form.Text className="text-muted">
+            Recommended to define an amount equal to the total $ value of all the reserves
+          </Form.Text>
+        </Form.Group>  
+        
         <Form.Text className="text-muted">
-            Please ensure that the USD value of both reserve tokens are roughly equal.
+            Please ensure that the USD value of all reserve tokens are roughly equal.
         </Form.Text>
           <Button variant="primary" type="submit">
             Next
@@ -593,19 +618,29 @@ class TransactioReceiptPage extends Component {
     this.props.getConverterAndPoolDetails(args);
   }
   render() {
-    const {pool: {poolCreationReceipt}} = this.props;
+    const {pool: {poolCreationReceipt, tokenList}} = this.props;
     let receiptObject = <span/>;
+    console.log(poolCreationReceipt);
+    
+    let poolConvertibleTokens = tokenList.map(function(item, idx){
+      return (<ListGroupItem>
+        <div>Symbol: {item.symbol} Address: {item.address}</div>
+        <div>Amount: {item.amount}</div>
+      </ListGroupItem>)
+    })
     if (isNonEmptyObject(poolCreationReceipt)) {
       receiptObject = (
-        <div>
+        <div className="create-pool-form-container">
+        <Container>
           <div className="h6">Your pool is now ready.</div>
-          <div>Pool Name: {poolCreationReceipt.poolName}</div>
-          <div>Pool Symbol: {poolCreationReceipt.poolSymbol}</div>
-          <div>Connector Address: {poolCreationReceipt.connectorAdress}</div>
-          <div>Weight: {poolCreationReceipt.connectorWeight}/{poolCreationReceipt.connectorWeight}</div>
-          <div>Connector Balance: {poolCreationReceipt.connectorBalance}</div>
-          <div></div>
+          <ListGroup>
+          <ListGroupItem>Pool Name: {poolCreationReceipt.poolName}</ListGroupItem>
+          <ListGroupItem>Pool Symbol: {poolCreationReceipt.poolSymbol}</ListGroupItem>
+          
+          {poolConvertibleTokens}
+          </ListGroup>
           <div>Provide your pool address to Bancor developers channel for verification and addition to registry.</div>
+        </Container>
         </div>
         )
     }
@@ -679,24 +714,32 @@ class TokenAmountRow extends Component {
     this.state = {tokenAmount: ''}
   }
   tokenAmountChanged = (evt) => {
-    const {idx} = this.props;
+    const {idx, item} = this.props;
     const tokenAmount = evt.target.value;
     
     this.setState({tokenAmount: tokenAmount});
     this.props.setTokenAmount(tokenAmount, idx);
+    this.setState({tokenUSDValue: (parseFloat(item.price) * tokenAmount).toFixed(2)})
   }
   
+  componentWillMount() {
+    const {item, idx} = this.props;
+    let tokenAmount = (1 / item.price).toFixed(2);
+    this.setState({tokenAmount: tokenAmount});
+    this.props.setTokenAmount(tokenAmount, idx);
+    this.setState({tokenUSDValue: parseFloat(1).toFixed(2)})
+  }
   render() {
     const {item} = this.props;
-    const {tokenAmount} = this.state;
+    const {tokenAmount, tokenUSDValue} = this.state;
     return (
       <div>
-        <Form.Group controlId="formFundingCenter">
-          <Form.Label>Base token reserve amount to Transfer</Form.Label>
+        <Form.Group controlId="formFundingCenter" className="pool-funding-form-row">
+          <Form.Label>Amount of {item.symbol} to transfer. 1 {item.symbol} = {item.price} USD.</Form.Label>
           <Form.Control type="text" placeholder="enter amount of token to transfer" value={tokenAmount} 
           onChange={this.tokenAmountChanged} />
           <Form.Text className="text-muted">
-            Enter amount of ${item.type} ERC20 token to transfer
+            Total USD value = {tokenUSDValue}
           </Form.Text>
         </Form.Group>      
       </div>
