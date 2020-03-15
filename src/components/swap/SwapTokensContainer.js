@@ -1,9 +1,5 @@
 import {connect} from 'react-redux';
-import ExploreTokens from './ExploreTokens';
-import {setUserEnvironment} from '../../actions/user';
-import {setPathListWithRates} from '../../actions/tokens';
-import {setPaths} from '../../actions/path';
-import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
+import SwapTokens from './SwapTokens';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
 } from '../../utils/ConverterUtils';
@@ -11,25 +7,22 @@ import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToke
 const mapStateToProps = state => {
   return {
     web3: state.web3,
-    tokens: state.tokens,
+
   }
 }
 
-const mapDispatchToProps = (dispatch, ownProps) => {
+const mapDispatchToProps = (dispatch) => {
   return {
-
-    fetchTokenPathsWithRates: (fromToken, toToken) => {
+    fetchTokenPathsWithRates: (fromToken, toToken, amount) => {
       let ethGraph = new Ethereum();
       ethGraph.init().then(function(initResponse){
-        ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, 1).then(function(fromPathWithPrice){
-        ethGraph.getAllPathsAndRates(toToken.address, fromToken.address, 1).then(function(toPathWithPrice){
+        ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
+
           
-        let pathList = fromPathWithPrice[0].concat(toPathWithPrice[0]);
-        let pathPrices = fromPathWithPrice[1].concat(toPathWithPrice[1]);
+        let pathList = fromPathWithPrice[0];
+        let pathPrices = fromPathWithPrice[1];
         let pathWithMeta = pathList.map(function(pathData, idx){
-
            return getNetworkPathMeta(pathData).then(function(pathMeta){
-
             return (Object.assign({}, {path: pathMeta}, {price: pathPrices[idx]}));
             
           }).catch(function(err){
@@ -39,20 +32,17 @@ const mapDispatchToProps = (dispatch, ownProps) => {
         Promise.all(pathWithMeta).then(function(metaData){
 
           metaData = metaData.filter(Boolean);
-         dispatch(setPathListWithRates(metaData));
+          console.log(metaData);
         })
       })
       
-        });
+ 
       })
     }
-      
-
   }
 }
-
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(ExploreTokens);
+)(SwapTokens);

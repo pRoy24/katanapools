@@ -11,3 +11,20 @@
 .item-symbol {
     display: inline-block;
 }
+
+.token-display-cell {
+    text-align: left;
+    cursor: pointer;
+    .item-symbol {
+        padding-left: 4px;
+    }
+}
+
+.cell-active {
+-webkit-box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
+-moz-box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
+box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
+    background: #A6A6A6 !important;
+    color: #0D0D0D;
+        
+}

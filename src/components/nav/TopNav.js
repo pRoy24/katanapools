@@ -28,7 +28,7 @@ export default class TopNav extends Component {
     return (
       <div>
       <Navbar  expand="lg" className="app-top-nav">
-        <Navbar.Brand href="/">Katana</Navbar.Brand>
+        <Navbar.Brand href="/">Katana Pools</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">

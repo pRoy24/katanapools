@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Container, Row, Col, Button} from 'react-bootstrap'; 
 
-import SwapTokens from '../swap/SwapTokens';
+import SwapTokensContainer from '../swap/SwapTokensContainer';
 import ExploreTokensContainer from '../explore/ExploreTokensContainer';
 import PoolTokens from '../pool/PoolTokens';
 import {
@@ -114,7 +114,7 @@ class AppHome extends Component {
       <div>
           <Switch>
           <Route path="/swap">
-            <SwapTokens/>
+            <SwapTokensContainer/>
           </Route>
           <Route path="/pool">
             <PoolTokens />
@@ -123,7 +123,7 @@ class AppHome extends Component {
             <ExploreTokensContainer/>
           </Route>
           <Route exact path="/">
-            <SwapTokens/>
+            <SwapTokensContainer/>
           </Route>
         </Switch>  
     </div>

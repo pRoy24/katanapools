@@ -37,15 +37,10 @@ export default class CreateNewPool extends Component {
     return tokenList;
   }
   deployConverterContract = (vals) => {
-
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
     this.setState({convertibleTokenAddress: vals.convertibleTokenAddress, relayTokenAddress: smartTokenStatus.contractAddress});
-
     const {tokenArrayList} = vals;
-   
    let tokenAddressList = [];
-   console.log(vals.poolType);
-   
    if (vals.poolType === 'relay') {
     const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
     tokenAddressList.push({'address': baseReserveAddress, 'weight': parseFloat(vals.baseReserveWeight), 'type': 'relay'});
@@ -327,8 +322,6 @@ class Step1 extends Component {
 }
 
 class Step2 extends Component {
-  static contextType = StepperContext;
-  
   constructor() {
     super();
     this.state = {convertibleTokenAddress: '', reserveFee: 3, tokenArrayList: [], baseReserveSelected: '',
@@ -338,7 +331,6 @@ class Step2 extends Component {
   componentDidMount() {
     this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
     baseReserveSelected: 'BNT', baseReserveWeight: 50});
-  //  this.props.setTokenListRow();
   }
   onSubmit = (e) => {
     e.preventDefault();
@@ -632,11 +624,40 @@ class TransactioReceiptPage extends Component {
       receiptObject = (
         <div className="create-pool-form-container">
         <Container>
-          <div className="h6">Your pool is now ready.</div>
+          <div className="h6">Pool Details.</div>
+          <div className="pool-details-block">
+            <Row>
+            <Col lg={6}>
+            <div className="cell-label">
+              Name:
+            </div>
+            <div className="cell-value">
+              {poolCreationReceipt.poolName}
+            </div>
+            </Col>
+            <Col lg={6}>
+            <div className="cell-label">Symbol: </div>
+            <div className="cell-value">
+              {poolCreationReceipt.poolSymbol}
+            </div>
+            </Col>
+            </Row>
+            <Row>
+            <Col lg={6}>
+            <div className="cell-label">Address: </div>
+            <div className="cell-value">
+              {poolCreationReceipt.poolAddress}
+            </div>
+            </Col>
+            <Col lg={6}>
+            <div className="cell-label">Supply: </div>
+            <div className="cell-value">
+            {poolCreationReceipt.poolSupply}
+            </div>
+            </Col>
+            </Row>
+          </div>
           <ListGroup>
-          <ListGroupItem>Pool Name: {poolCreationReceipt.poolName}</ListGroupItem>
-          <ListGroupItem>Pool Symbol: {poolCreationReceipt.poolSymbol}</ListGroupItem>
-          
           {poolConvertibleTokens}
           </ListGroup>
           <div>Provide your pool address to Bancor developers channel for verification and addition to registry.</div>

@@ -274,3 +274,17 @@ button:focus {outline:0 !important;}
 .pool-funding-form-row {
   text-align: left;
 }
+
+.pool-details-block {
+  background: #fff;
+  text-align: left;
+  padding-left: 20px;
+  .cell-label {
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .cell-value {
+    font-weight: 500;
+    font-size: 14px;    
+  }
+}

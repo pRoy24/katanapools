@@ -8,13 +8,15 @@ import {isEmptyArray, isNonEmptyArray} from '../../utils/ObjectUtils';
 
 
 export default class ExploreTokens extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {selectedFromIdx: 0, selectedToIdx: 1};
+    }
     componentWillMount() {
         const {tokens: {convertibleTokens}}  = this.props;
-      if (isNonEmptyArray(convertibleTokens)) {
-          
+        if (isNonEmptyArray(convertibleTokens)) {
             this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1]);
-      }
-      
+        }
     }
     
     componentWillReceiveProps(nextProps) {
@@ -26,28 +28,46 @@ export default class ExploreTokens extends Component {
     
     fetchTokenPathsWithRates(fromToken, toToken) {
         const {tokens: {convertibleTokensBySmartTokens}} = this.props;
-        this.props.fetchTokenPathsWithRates(fromToken, toToken, convertibleTokensBySmartTokens);
+        this.props.fetchTokenPathsWithRates(fromToken, toToken);
+    }
+    
+    fromTokenChanged (idx) {
+        const {tokens: {convertibleTokens}} = this.props;  
+        const {selectedToIdx} = this.state;
+        console.log(selectedToIdx);
+
+        this.setState({selectedFromIdx: idx});
+        this.props.fetchTokenPathsWithRates(convertibleTokens[idx], convertibleTokens[selectedToIdx]);
     }
     
     render() {
         const {tokens: {convertibleTokens, pathListWithRate}} = this.props;
-
+        const {selectedFromIdx, selectedToIdx} = this.state;
+        const self = this;
         let fromTokenSelector = convertibleTokens.map(function(item, idx){
+            let itemActive = "";
+            if (idx === selectedFromIdx) {
+                itemActive = "cell-active";
+            }
             let itemName =  item.name.length > 10 ? item.name.substr(0, 10) + "..." :  item.name;
-            return (<ListGroupItem key={`from-${idx}`}>
+            return (<ListGroupItem key={`from-${idx}`} className={`token-display-cell ${itemActive}`} onClick={self.fromTokenChanged.bind(self, idx)}>
             <div>
             <img src={item.imageURI} className="symbol-image"/>
             <div className="item-symbol">{item.symbol}</div>
             </div>
-            <div>
+            <div className="">
                {itemName}
             </div>
             </ListGroupItem>)
         });
         
         let toTokenSelector = convertibleTokens.map(function(item, idx){
+            let itemActive = "";
+            if (idx === selectedToIdx) {
+                itemActive = "cell-active";
+            }            
             let itemName =  item.name.length > 10 ? item.name.substr(0, 10) + "..." :  item.name;
-            return (<ListGroupItem key={`to-${idx}`}>
+            return (<ListGroupItem key={`to-${idx}`} className={`token-display-cell ${itemActive}`}>
             <div>
             <img src={item.imageURI} className="symbol-image"/>
             <div className="item-symbol">{item.symbol}</div>

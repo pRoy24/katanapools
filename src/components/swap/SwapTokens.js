@@ -59,11 +59,8 @@ export default class SwapToken extends Component {
   render() {
     return (
       <div className="swap-token-app">
- 
         <SwapTokenToolbar refetchTokenList={this.refetchTokenList}/>
-  
-        <SwapTokenWidget {...this.state}/>
-  
+        <SwapTokenWidget {...this.state} fetchTokenPathsWithRates={this.props.fetchTokenPathsWithRates}/>
       </div>
       )
   }

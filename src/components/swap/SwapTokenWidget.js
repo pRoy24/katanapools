@@ -4,12 +4,7 @@ import './swapToken.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Autosuggest from 'react-autosuggest';
-
-
-
-
 import {toDecimals, fromDecimals} from '../../utils/eth';
-
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken
 } from '../../utils/ConverterUtils';
@@ -39,7 +34,6 @@ export default class SwapTokenWidget extends Component {
           })
           
           getExpectedReturn(networkPath, fromAmount).then(function(expectedReturn){
-            
             let networkFee = fromDecimals(expectedReturn[1], toToken.decimals);
             if (networkFee) {
               networkFee = parseFloat(networkFee).toFixed(3)
@@ -76,11 +70,6 @@ export default class SwapTokenWidget extends Component {
                 this.getConversionData(this.state.selectedTransferToken, val, transferAmount);
     }
     
-  componentDidUpdate(prevProps, prevState, snapshot){
-    const {transferAmount} = this.state;
-
-  }  
-  
   componentWillReceiveProps(nextProps) {
     const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = nextProps;
     if (toAmount !== this.props.toAmount) {
@@ -105,11 +94,7 @@ export default class SwapTokenWidget extends Component {
       this.getConversionData(this.state.selectedTransferToken, this.state.selectedReceiveToken, newTransferAmount);
     }
   }
-  
-  receiveAmountChanged = (evt) => {
-    
-  }
-    
+
   submitSwapTransaction = () => {
     const {networkPath, transferAmount, selectedTransferToken} = this.state;
     const self = this;
@@ -125,7 +110,6 @@ export default class SwapTokenWidget extends Component {
       if (availableBalance >= transferAmount) {
           self.setState({'widgetError': ''});
         submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
-          console.log(response);
 
         }).catch(function(err){
           if (err.message) {
