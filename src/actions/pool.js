@@ -28,6 +28,15 @@ export const SET_TOKEN_LIST_DETAILS = 'SET_TOKEN_LIST_DETAILS';
 
 export const SET_TOKEN_LIST_ROW = 'SET_TOKEN_LIST_ROW';
 
+export const SET_POOL_HISTORY = 'SET_POOL_HISTORY';
+
+export function setPoolHistory(payload) {
+  return {
+    payload: payload,
+    type: SET_POOL_HISTORY
+  }  
+}
+
 export function setTokenListRow() {
   return {
     type: SET_TOKEN_LIST_ROW,

@@ -280,43 +280,6 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-function getBNTAddress() {
-    const web3 = window.web3;
-    const currentNetwork = web3.currentProvider.networkVersion;
-    
-    let BNT_ADDRESS = process.env.REACT_APP_BNT_ID_MAINNET;
-    
-    if (currentNetwork.toString() === '3') {
-      BNT_ADDRESS = process.env.REACT_APP_BNT_ID_ROPSTEN;
-    }
-    return BNT_ADDRESS;  
-}
-
-function getApproval(contract, owner, spender, amount, dispatch, isEth) {
-  if (isEth) {
-    return new Promise((resolve)=>(resolve()));
-  } else {
-  return contract.methods.allowance(owner, spender).call().then(function(allowance) {
-    if (!allowance || typeof allowance === undefined) {
-      allowance = 0;
-    }
-    let diff = new BigNumber(allowance).minus(new BigNumber(amount));
-    if (diff.isNegative()) {
-    return contract.methods.approve(spender, allowance).send({
-      from: owner
-    }, function(err, txHash){
-      dispatch(setPoolFundedStatus({type: 'pending', message:'Processing user approval of fund transfer'}));
-    }).then(function(allowanceResponse){
-      return allowanceResponse;
-    })
-    } else {
-      return allowance;
-    }
-  });
-  }
-}
-
-
 async function approveAndFundPool(convertibleToken, bancorConverterAddress, dispatch, idx, totalConversions) {
 
       const web3 = window.web3;

@@ -34,12 +34,16 @@ export default class ExploreTokens extends Component {
     fromTokenChanged (idx) {
         const {tokens: {convertibleTokens}} = this.props;  
         const {selectedToIdx} = this.state;
-        console.log(selectedToIdx);
-
         this.setState({selectedFromIdx: idx});
         this.props.fetchTokenPathsWithRates(convertibleTokens[idx], convertibleTokens[selectedToIdx]);
     }
     
+    toTokenChanged(idx) {
+        const {tokens: {convertibleTokens}} = this.props;  
+        const {selectedFromIdx} = this.state;
+        this.setState({selectedToIdx: idx});
+        this.props.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[idx]);        
+    }
     render() {
         const {tokens: {convertibleTokens, pathListWithRate}} = this.props;
         const {selectedFromIdx, selectedToIdx} = this.state;
@@ -67,7 +71,7 @@ export default class ExploreTokens extends Component {
                 itemActive = "cell-active";
             }            
             let itemName =  item.name.length > 10 ? item.name.substr(0, 10) + "..." :  item.name;
-            return (<ListGroupItem key={`to-${idx}`} className={`token-display-cell ${itemActive}`}>
+            return (<ListGroupItem key={`to-${idx}`} className={`token-display-cell ${itemActive}`} onClick={self.toTokenChanged.bind(self, idx)}>
             <div>
             <img src={item.imageURI} className="symbol-image"/>
             <div className="item-symbol">{item.symbol}</div>
@@ -81,23 +85,19 @@ export default class ExploreTokens extends Component {
             <div>
             <ExploreTokensToolbar/>
             <Container className="explore-tokens-container">
-           
-            <div className="h4">Explore tokens and conversions paths</div>
-            <div>
-              View Paths
-            </div>
+
              <Row>
              <Col lg={2}>
-               <ListGroup>
+               <ListGroup className="token-selector-list">
                
                {fromTokenSelector}
                </ListGroup>
              </Col>
              <Col lg={8}>
-               <ViewPaths pathListWithRate={pathListWithRate}/>
+               <ViewPaths pathListWithRate={pathListWithRate} fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]}/>
              </Col>
              <Col lg={2}>
-                 <ListGroup>
+                 <ListGroup className="token-selector-list">
                {toTokenSelector}
                     </ListGroup>
              </Col>

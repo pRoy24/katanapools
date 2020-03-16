@@ -15,11 +15,12 @@ import ViewPoolsContainer from './view_pools/ViewPoolsContainer';
 import {getConvertibleTokensBySmartTokens} from '../../utils/ConverterUtils';
 
 var RegistryUtils = require('../../utils/RegistryUtils');
+const BancorConverter = require('../../contracts/BancorConverter.json');
 
 export default class PoolTokens extends Component {
   constructor(props) {
     super(props);
-    this.state = {poolData: [], currentSelectedPool: {}, currentView: 'select'};
+    this.state = {poolData: [], currentView: 'select'};
   }
   
   setCurrentView = (newView) => {
@@ -28,7 +29,7 @@ export default class PoolTokens extends Component {
   
   componentWillMount() {
     this.web3 = window.web3;
-            const self = this;
+    const self = this;
     RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
       RegistryUtils.getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
         
@@ -47,9 +48,14 @@ export default class PoolTokens extends Component {
 
               let reservesForToken = convertibleTokensForSmartToken.reserves.map(function(res){
                 return {address: res}
-              })
+              });
+              
+              const converterAddress = converters[0];
+
               let tokenDataWithReserves = Object.assign({}, tokenData, {reserves: reservesForToken});
-                return Object.assign({}, tokenDataWithReserves, {'convertibles': converters}, {'converter': converters[0]});
+              
+              return Object.assign({}, tokenDataWithReserves, {'converter': converterAddress});
+
             })
           }).catch(function(err){
                 return null;

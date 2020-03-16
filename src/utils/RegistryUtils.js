@@ -201,18 +201,14 @@ function fetchTokenMeta(tokenAddress) {
       const web3 = window.web3;
     
     let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
-    return CurrentToken.methods.name().call().then(function(tokenName){
-      return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
         return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
           return CurrentToken.methods.totalSupply().call().then(function(totalSupply){
-            
-      
+            return CurrentToken.methods.name().call().then(function(tokenName){
+            return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
           return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
-
             const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
             const [name, ext] = imgFile.split(".");
             let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
-  
             return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress,totalSupply: totalSupply,
                                 decimals: tokenDecimals, imageURI: imgURI, meta: tokenApiMeta.data.data});
           }).catch(function(err){

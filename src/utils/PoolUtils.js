@@ -158,6 +158,10 @@ module.exports = {
   });
       
     })
+  },
+  
+  getUserTokenBalance: function(tokenAddress) {
+    
   }
 }
 

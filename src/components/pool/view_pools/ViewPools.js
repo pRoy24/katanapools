@@ -41,12 +41,17 @@ export default class ViewPool extends Component {
 }
 
 class ViewPoolWidget extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {selectedPoolIndex: -1};
+  }
   componentWillMount() {
     const {poolData} = this.props;
   }
   
-  setSelectedPool (selectedPool) {
+  setSelectedPool (selectedPool, idx) {
     this.props.getPoolDetails(selectedPool);
+    this.setState({selectedPoolIndex: idx});
   }
   
   componentWillReceiveProps(nextProps) {
@@ -55,17 +60,19 @@ class ViewPoolWidget extends Component {
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
       
           let selectedPoolIndex = poolData.findIndex(function(item){
-            return item.symbol === 'BNT-USD';
+            return item.symbol === 'ETHBNT';
           });
           if (selectedPoolIndex === -1) {
             selectedPoolIndex = 0;
           }
+          this.setState({selectedPoolIndex: selectedPoolIndex});
           this.props.getPoolDetails(poolData[selectedPoolIndex]);
     }
   }
   
   render() {
     const {poolData, pool: {currentSelectedPool}} = this.props;
+    const {selectedPoolIndex} = this.state;
     const self = this;
     let poolDataList = <span/>;
     
@@ -79,7 +86,11 @@ class ViewPoolWidget extends Component {
         </ListGroupItem>
        {
          poolData.map(function(poolRow, idx){
-           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow)} key={'pool-select-'+idx} className="select-pool-toolbar">
+         let cellActive = '';
+         if (idx === selectedPoolIndex) {
+           cellActive = 'cell-active';
+         }
+           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow, idx)} key={'pool-select-'+idx} className={`select-pool-toolbar ${cellActive}`}>
               {poolRow.symbol}
            </ListGroupItem>
          })

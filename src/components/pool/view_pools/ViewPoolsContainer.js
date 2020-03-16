@@ -2,9 +2,11 @@ import ViewPools from './ViewPools';
 
 import {connect} from 'react-redux';
 
-import {setCurrentSelectedPool, setCurrentSelectedPoolError} from '../../../actions/pool';
-import {getConvertibleTokensBySmartTokens} from '../../../utils/ConverterUtils';
-
+import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory} from '../../../actions/pool';
+import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
+import axios from 'axios';
+import  {toDecimals, fromDecimals} from '../../../utils/eth';
+import moment from 'moment'
 const SmartToken = require('../../../contracts/SmartToken.json');
 
 const BancorConverter = require('../../../contracts/BancorConverter.json');
@@ -43,37 +45,41 @@ const mapDispatchToProps = (dispatch) => {
         return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
           return getReserveRatio(BancorConverterContract, reserveTokenAddress).then(function(reserveRatio){
            return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
-              return Object.assign({}, tokenData, {reserveBalance: reserveTokenBalance}, {reserveRatio: reserveRatio});
+             if (tokenData === null || tokenData === undefined) {
+               return null;
+             }
+             let isEth = false;
+             if (tokenData && tokenData.symbol === 'ETH') {
+               isEth = true;
+             }
+             return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
+              const availableReserveBalance = fromDecimals(reserveTokenBalance, tokenData.decimals);
+              const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
+              return Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
+              {userBalance: availableUserBalance});
             })
+           })
           });
         }) ;
      })
 
-      
-    
-    
     RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
 
      SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
 
       Promise.all(reserveTokenList).then(function(reserveTokenDetails){
-        
+        reserveTokenDetails = reserveTokenDetails.filter(Boolean);
         let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
         dispatch(setCurrentSelectedPool(finalPayload));
       })
-    
-    })
-   })
-      
+      })
+      })
       }).catch(function(err){
-
         dispatch(setCurrentSelectedPoolError(err.toString()));
       });
     },
     
-    getPoolFundingDetails:(amount) => {
-      
-    },
+
     
     submitPoolBuy: (args) => {
 
@@ -96,9 +102,10 @@ const mapDispatchToProps = (dispatch) => {
         reserve2Contract = new web3.eth.Contract(EtherToken, args.reserve2.address);
       }
       
-
       getApproval(reserve1Contract, senderAddress,  args.converterAddress, args.reserve1.amount, args.reserve1.isEth).then(function(res){
+        
         getApproval(reserve2Contract, senderAddress, args.converterAddress, args.reserve2.amount, args.reserve2.isEth).then(function(res2){
+          
           ConverterContract.methods.fund(args.poolTokenNeeded).send({
             from: senderAddress
           }).then(function(fundRes){
@@ -122,6 +129,33 @@ const mapDispatchToProps = (dispatch) => {
         console.log(sendResponse);
       })
       });
+    },
+    
+    fetchConversionVolume: (selectedPool) => {
+      const  toCurrencyCode = selectedPool.symbol;
+      let  fromCurrencyCode = '';
+      if (selectedPool.reserves.length >= 1) {
+       fromCurrencyCode = selectedPool.reserves[1].symbol;
+      } else if (selectedPool.reserves.length === 1) {
+        fromCurrencyCode = selectedPool.reserves[0].symbol;
+      }
+
+      
+      const conversionVolumeURL = `https://api.bancor.network/0.1/currencies/volumeHistory?toCurrencyCode=${toCurrencyCode}&fromCurrencyCode=${fromCurrencyCode}&timeFrame=year`;
+
+      axios.get(conversionVolumeURL).then(function(dataResponse){
+        if (dataResponse.data && dataResponse.data.data) {
+          const graphResponse = dataResponse.data.data.data;
+          let graphReturnData = graphResponse.slice(graphResponse.length - 30, graphResponse.length - 1).map(function(item){
+            return Object.assign({}, {timeStamp: item.timeStamp}, {data: item.volume.eth});
+          });
+          dispatch(setPoolHistory(graphReturnData));
+          
+        } else {
+          return [];
+        }
+        
+      })
     }
   }
 }
@@ -145,15 +179,32 @@ function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
 
 function getApproval(contract, owner, spender, amount, isEth) {
   if (isEth) {
-    return new Promise((resolve)=>(resolve()));
+     return contract.methods.decimals().call().then(function(amountDecimals){
+       let minAmount = toDecimals(amount, amountDecimals);
+    return contract.methods.deposit().send({
+      from: owner
+    }).then(function(depositResponse){
+      return depositResponse;
+    })
+
+    
+    });
   } else {
+  return contract.methods.decimals().call().then(function(amountDecimals){
+    
+
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
     if (!allowance || typeof allowance === undefined) {
       allowance = 0;
     }
-    let diff = new BigNumber(allowance).minus(new BigNumber(amount));
+
+    let minAmount = toDecimals(amount, amountDecimals);
+    let minAllowance = toDecimals(allowance, amountDecimals);
+
+    let diff = new BigNumber(minAllowance).minus(new BigNumber(minAmount));
+
     if (diff.isNegative()) {
-    return contract.methods.approve(spender, allowance).send({
+    return contract.methods.approve(spender, minAllowance).send({
       from: owner
     }).then(function(allowanceResponse){
       return allowanceResponse;
@@ -161,6 +212,7 @@ function getApproval(contract, owner, spender, amount, isEth) {
     } else {
       return null;
     }
+  });
   });
   }
 }
