@@ -15,20 +15,22 @@ export default class ExploreTokens extends Component {
     componentWillMount() {
         const {tokens: {convertibleTokens}}  = this.props;
         if (isNonEmptyArray(convertibleTokens)) {
-            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1]);
+            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
+            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
         }
     }
     
     componentWillReceiveProps(nextProps) {
         const {tokens: {convertibleTokens}}  = nextProps;
+
         if (isEmptyArray(this.props.tokens.convertibleTokens) && isNonEmptyArray(convertibleTokens)) {
-            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1]);
+            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
+            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
         }
     }
     
-    fetchTokenPathsWithRates(fromToken, toToken) {
-        const {tokens: {convertibleTokensBySmartTokens}} = this.props;
-        this.props.fetchTokenPathsWithRates(fromToken, toToken);
+    fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
+         this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
     }
     
     fromTokenChanged (idx) {
@@ -45,7 +47,7 @@ export default class ExploreTokens extends Component {
         this.props.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[idx]);        
     }
     render() {
-        const {tokens: {convertibleTokens, pathListWithRate}} = this.props;
+        const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate}} = this.props;
         const {selectedFromIdx, selectedToIdx} = this.state;
         const self = this;
         let fromTokenSelector = convertibleTokens.map(function(item, idx){
@@ -87,16 +89,17 @@ export default class ExploreTokens extends Component {
             <Container className="explore-tokens-container">
 
              <Row>
-             <Col lg={2}>
+             <Col lg={2} style={{'paddingRight': 0}}>
                <ListGroup className="token-selector-list">
-               
                {fromTokenSelector}
                </ListGroup>
              </Col>
-             <Col lg={8}>
-               <ViewPaths pathListWithRate={pathListWithRate} fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]}/>
+             <Col lg={8} className="explore-paths-container">
+               <ViewPaths 
+               fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]} fromPathListWithRate={fromPathListWithRate}
+               toPathListWithRate={toPathListWithRate}/>
              </Col>
-             <Col lg={2}>
+             <Col lg={2} style={{'paddingLeft': 0}}>
                  <ListGroup className="token-selector-list">
                {toTokenSelector}
                     </ListGroup>

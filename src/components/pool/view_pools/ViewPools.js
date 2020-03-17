@@ -106,7 +106,7 @@ class ViewPoolWidget extends Component {
     }
     return (
       <div className="app-toolbar-container">
-        <Row>
+        <Row >
         <Col lg={2}>
         <ListGroup className="select-pool-group">
           {poolDataList}

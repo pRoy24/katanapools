@@ -9,8 +9,7 @@ export default class BottomNav extends Component {
         <Row>
         <Col lg={2}></Col>
           <Col lg={8}  xs={12} className="app-disclaimer-container">
-            App is currently in Alpha, Please use with caution. 
-            Switch to Ropsten network for testing.
+            App is currently in public Beta, Please use with caution. 
           </Col>
           <Col lg={2} className="powered-by-container" xs={12}>
             Powered by <a href="https://www.bancor.network/" target="_blank">Bancor protocol</a>

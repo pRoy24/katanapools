@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import ExploreTokens from './ExploreTokens';
 import {setUserEnvironment} from '../../actions/user';
-import {setPathListWithRates} from '../../actions/tokens';
+import {setFromPathListWithRates, setToPathListWithRates} from '../../actions/tokens';
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
@@ -18,17 +18,19 @@ const mapStateToProps = state => {
 const mapDispatchToProps = (dispatch, ownProps) => {
   return {
 
-    fetchTokenPathsWithRates: (fromToken, toToken) => {
+
+    fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
+
       let ethGraph = new Ethereum();
       ethGraph.init().then(function(initResponse){
-        ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, 1).then(function(fromPathWithPrice){
-        ethGraph.getAllPathsAndRates(toToken.address, fromToken.address, 1).then(function(toPathWithPrice){
-          
-        let pathList = fromPathWithPrice[0].concat(toPathWithPrice[0]);
-        let pathPrices = fromPathWithPrice[1].concat(toPathWithPrice[1]);
+        ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
+
+        let pathList = fromPathWithPrice[0];
+        let pathPrices = fromPathWithPrice[1];
         let pathWithMeta = pathList.map(function(pathData, idx){
 
            return getNetworkPathMeta(pathData).then(function(pathMeta){
+
 
             return (Object.assign({}, {path: pathMeta}, {price: pathPrices[idx]}));
             
@@ -37,13 +39,18 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           })
         }, pathPrices);
         Promise.all(pathWithMeta).then(function(metaData){
-
+          console.log('***');
           metaData = metaData.filter(Boolean);
-         dispatch(setPathListWithRates(metaData));
+          console.log(metaData)
+          if (type === 'from') {
+         dispatch(setFromPathListWithRates(metaData));
+          } else {
+         dispatch(setToPathListWithRates(metaData));            
+          }
         })
       })
       
-        });
+
       })
     }
       
