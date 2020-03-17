@@ -13,6 +13,7 @@ const RegistryUtils = require('../../../utils/RegistryUtils');
 const BancorConverter = require('../../../contracts/BancorConverter.json');
 const BancorConverterByteCode = require('../../../contracts/BancorConverterByteCode.js');
 const ContractRegistry = require('../../../contracts/ContractRegistry.json');
+const BancorConverterRegistry = require('../../../contracts/BancorConverterRegistry.json');
 const axios = require('axios');
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 
@@ -73,24 +74,17 @@ const mapDispatchToProps = (dispatch) => {
     
     deployRelayConverter: (args) => {
     const web3 = window.web3;
-    console.log(args);
-    
-    const conversionFee = 1000;
+
+    const conversionFee = args.reserveFee * 10000;
     const maxFee = 3 * 10000;
-    let relayToken = args.tokenAddressList.find((a)=>(a.type === 'relay'));
-    let connectorAddedIndex = -1;
-    if (!relayToken || typeof relayToken === undefined) {
-      relayToken = args.tokenAddressList[0];
-      connectorAddedIndex = 0;
-    }
-    const relayTokenAddress = relayToken.address;
-    const relayTokenWeight = relayToken.weight;
-    
+
+    let tokenAddressList = args.tokenAddressList;     
+
     const smartTokenAddress = args.smartTokenAddress;
 
     // Set converter details in reducer
     
-    getTokenListData(args.tokenAddressList).then(function(tokenListDetails){
+    getTokenListData(tokenAddressList).then(function(tokenListDetails){
       
       dispatch(setTokenListDetails(tokenListDetails));
       
@@ -105,8 +99,8 @@ const mapDispatchToProps = (dispatch) => {
                         smartTokenAddress, 
                         contractRegistryContractAddress,
                         maxFee,
-                        relayTokenAddress,
-                        relayTokenWeight
+                        '0x0000000000000000000000000000000000000000',
+                        0
                       ]});
       
       deployer.send({
@@ -135,28 +129,19 @@ const mapDispatchToProps = (dispatch) => {
       .then(function(deployerContractInstance){
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding network connector`}));
-
-          let convertibleTokenDeploy = args.tokenAddressList.map(function(item, idx){
-            if (item.type === 'convertible' && idx != connectorAddedIndex) {
-              return   deployerContractInstance.methods.addReserve(item.address, item.weight).call()
-                .then(function(data){
-                dispatch(deployRelayConverterStatus({type: 'pending',
-                message: `Setting conversion fees`}));
-              })
-              
-            } else {
-              return null;
-            }
+          let convertibleTokenDeploy = tokenAddressList.map(function(item, idx){
+              let itemWeight = item.weight * 10000;
+              return  deployerContractInstance.methods.addReserve(item.address, itemWeight).send({
+                  from: walletAddress
+              }).then(function(data){
+                  return data;
+              });
           });
           
           Promise.all(convertibleTokenDeploy).then(function(response){
-            console.log(conversionFee);
-            console.log('***');
-            
-              deployerContractInstance.methods.setConversionFee(conversionFee).call().then(function(dataRes){
-                
-                dispatch(deployRelayConverterStatus({type: 'success',
-                message: `Relay token is ready to be used`}));
+                dispatch(deployRelayConverterStatus({type: 'pending', message: `Setting conversion fees`}));
+              deployerContractInstance.methods.setConversionFee(conversionFee).send({from: walletAddress}).then(function(dataRes){
+                dispatch(deployRelayConverterStatus({type: 'success', message: `Relay token is ready to be used`}));
               });
           });
       });
@@ -187,12 +172,7 @@ const mapDispatchToProps = (dispatch) => {
       }
       
     },
-    
-    setTokenList: (tokenList) => {
 
-      
-    },
-    
     fundRelayWithSupply: (args) => {
 
       const web3 = window.web3;
@@ -225,6 +205,8 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     activatePool: (args) => {
+      console.log(args);
+      
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
             
@@ -238,7 +220,14 @@ const mapDispatchToProps = (dispatch) => {
         converterContract.methods.acceptTokenOwnership().send({
           from: senderAddress 
         }).then(function(senderAcceptResponse){
-          dispatch(setActivationStatus({'type': 'success', 'message': 'Finished activating pool'}));
+          RegistryUtils.getConverterRegistryAddress().then(function(contractRegistryContractAddress){
+          const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, contractRegistryContractAddress);
+          ConverterRegistryContract.methods.addConverter(args.converterAddress).send({
+            from: senderAddress
+          }).then(function(converterRegistryAddedResponse){
+            dispatch(setActivationStatus({'type': 'success', 'message': 'Finished activating pool'}));
+          });
+          });
         })
       })
       

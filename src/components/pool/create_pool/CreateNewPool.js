@@ -103,7 +103,9 @@ export default class CreateNewPool extends Component {
       converterAddress: converterContractReceipt.contractAddress
     }
     
-    this.props.activatePool(args);
+    const args1 = {smartTokenAddress: "0x7b7cae4424B6132E1Cdec9350Bf274c3bbb1a57b", converterAddress: "0xe31056356b3774d387a1A203418ae1D5Ad01d783"}
+    
+    this.props.activatePool(args1);
   }
   
   fundRelayWithSupply = (vals) => {
@@ -215,7 +217,7 @@ export default class CreateNewPool extends Component {
     let currentPage = <span/>;
     if (showReceiptPage === false) {
       currentPage = (
-        <Stepper contextRef={this.appStepper} currentStep={currentStep}>
+        <Stepper contextRef={this.appStepper} currentStep={currentStep} initialStep={STEP4}>
           <Step
             stepId={STEP1}
             data="Step 1 initial state"
@@ -504,7 +506,7 @@ function renderFeeTooltip(props) {
             </InputGroup.Append>
           </InputGroup>
           <Form.Text className="text-muted">
-            Enter the max conversion fees when using this reserve (Maximum 3%)
+            Enter the conversion fees when using this reserve (Maximum 3%)
           </Form.Text>
         </Form.Group>
         
@@ -615,6 +617,7 @@ class Step4 extends Component {
             <div className="activation-text">In order to activate the liquidity pool - </div> 
             <div className="activation-text">You need to transfer pool ownership to the converter</div>
             <div className="activation-text">The converter contract needs to accept ownership of the pool</div>
+            <div className="activation-text">The converter contract needs to be added to the converter registry</div>
             <div className="activation-sub-text">Click below to activate your pool now.</div>
             </div>
           </Col>
@@ -637,8 +640,7 @@ class TransactioReceiptPage extends Component {
   render() {
     const {pool: {poolCreationReceipt, tokenList}} = this.props;
     let receiptObject = <span/>;
-    console.log(poolCreationReceipt);
-    
+
     let poolConvertibleTokens = tokenList.map(function(item, idx){
       return (<ListGroupItem>
         <div>Symbol: {item.symbol} Address: {item.address}</div>
@@ -685,7 +687,7 @@ class TransactioReceiptPage extends Component {
           <ListGroup>
           {poolConvertibleTokens}
           </ListGroup>
-          <div>Provide your pool address to Bancor developers channel for verification and addition to registry.</div>
+          <div>Provide your pool address to <a href="https://web.telegram.org/#/im?p=@BancorDevelopers" target="_blank">Bancor developers channel</a> for verification.</div>
         </Container>
         </div>
         )

@@ -39,6 +39,10 @@ const mapDispatchToProps = (dispatch) => {
 
       BancorConverterContract.methods.connectorTokenCount().call().then(function(numReserveTokens){
 
+BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
+  
+  const conversinFeePercent = conversionFee / 10000;
+
       let reserveTokenList =
      poolRow.reserves.map(function(item){
        let reserveTokenAddress = item.address;
@@ -69,11 +73,12 @@ const mapDispatchToProps = (dispatch) => {
 
       Promise.all(reserveTokenList).then(function(reserveTokenDetails){
         reserveTokenDetails = reserveTokenDetails.filter(Boolean);
-        let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails});
+        let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails}, {conversionFee: conversinFeePercent});
         dispatch(setCurrentSelectedPool(finalPayload));
       })
       })
       })
+})
       }).catch(function(err){
         dispatch(setCurrentSelectedPoolError(err.toString()));
       });

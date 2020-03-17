@@ -27,7 +27,7 @@ export default class SelectedPool extends Component {
   
   calculateLiquidateAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
-
+    
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const removeSupply = new BigNumber(inputFund);
 
@@ -112,6 +112,8 @@ export default class SelectedPool extends Component {
   
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
+
+        
     let reserveRatio = '';
     if (!currentSelectedPool.reserves) {
       return <span/>;
@@ -200,6 +202,10 @@ export default class SelectedPool extends Component {
           </Col>
         </Row>
         <Row className="selected-pool-meta-row">
+          <Col lg={3}>
+            <div className="cell-label">Conversion fee generated</div> 
+            <div className="cell-data">{currentSelectedPool.conversionFee} %</div>           
+          </Col>
           <Col lg={3}>
             <div className="cell-label">Your pool token holdings</div> 
             <div className="cell-data">{poolHoldings} {currentSelectedPool.symbol}</div> 

@@ -19,8 +19,8 @@ const axios = require('axios');
     if (currentNetwork.toString() === '3') {
       CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
     }
-    let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
-    return converterRegistry.methods
+    let ContractRegistryContract = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
+    return ContractRegistryContract.methods
       .addressOf(web3.utils.utf8ToHex("BancorConverterRegistry")).call().then(function(converterRegistryAddress){
         return converterRegistryAddress;
       });
