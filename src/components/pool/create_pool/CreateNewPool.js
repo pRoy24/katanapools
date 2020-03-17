@@ -103,9 +103,7 @@ export default class CreateNewPool extends Component {
       converterAddress: converterContractReceipt.contractAddress
     }
     
-    const args1 = {smartTokenAddress: "0x7b7cae4424B6132E1Cdec9350Bf274c3bbb1a57b", converterAddress: "0xe31056356b3774d387a1A203418ae1D5Ad01d783"}
-    
-    this.props.activatePool(args1);
+    this.props.activatePool(args);
   }
   
   fundRelayWithSupply = (vals) => {
@@ -217,7 +215,7 @@ export default class CreateNewPool extends Component {
     let currentPage = <span/>;
     if (showReceiptPage === false) {
       currentPage = (
-        <Stepper contextRef={this.appStepper} currentStep={currentStep} initialStep={STEP4}>
+        <Stepper contextRef={this.appStepper} currentStep={currentStep}>
           <Step
             stepId={STEP1}
             data="Step 1 initial state"
