@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {isNonEmptyArray, isNonEmptyObject} from '../../../utils/ObjectUtils';
-import {ListGroupItem, ListGroup, Row, Col, Button, Form} from 'react-bootstrap';
+import {ListGroupItem, ListGroup, Row, Col, Button, Form, InputGroup} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faChevronDown, faChevronUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import AddressDisplay from '../../common/AddressDisplay';
@@ -15,12 +15,14 @@ export default class ViewPaths extends Component {
         let toPathListItems = <span/>;
         if (isNonEmptyArray(fromPathListWithRate)) {
             const sortedPathList = fromPathListWithRate.sort((a, b)=>(b.price - a.price));
-            fromPathListItems = <ConversionPathList fromToken={fromToken} toToken={toToken} pathList={sortedPathList}/>
+            fromPathListItems = <ConversionPathList fromToken={fromToken} toToken={toToken}
+            pathList={sortedPathList} type={"from"} transferAmountChanged={this.props.transferAmountChanged}/>
         }
 
         if (isNonEmptyArray(toPathListWithRate)) {
             const sortedPathList = toPathListWithRate.sort((a, b)=>(b.price - a.price));            
-            toPathListItems = <ConversionPathList fromToken={toToken} toToken={fromToken} pathList={sortedPathList}/>
+            toPathListItems = <ConversionPathList fromToken={toToken} toToken={fromToken} pathList={sortedPathList}
+            type={"to"} transferAmountChanged={this.props.transferAmountChanged}/>
         }
         
         let tokenPairDescription = <span/>;
@@ -127,7 +129,7 @@ export default class ViewPaths extends Component {
 class ConversionPathList extends Component {
     constructor(props) {
         super(props);
-        this.state = {showMain: true};
+        this.state = {showMain: true, transferAmount: 1};
     }
     toggleHidePath = () => {
         this.setState({showMain: false});
@@ -135,20 +137,31 @@ class ConversionPathList extends Component {
     toggleShowPath = () => {
         this.setState({showMain: true});
     }
+    
+    tranferAmountChanged = (evt) => {
+        const {type} = this.props;
+        const amount = evt.target.value;
+        this.setState({transferAmount: amount});
+        this.props.transferAmountChanged(amount, type);
+    }
     render() {
         let {fromToken, toToken, pathList} = this.props;
-        const {showMain} = this.state;
+        const {showMain, transferAmount} = this.state;
         if (showMain) {
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>
-            <Col lg={6}>
+            <Col lg={8} xs={6}>
             Conversion paths  from {fromToken.symbol} to {toToken.symbol}
             </Col>
-            <Col lg={6}>
-             Amount 
-             <Form.Control type="number" placeholder="Amount" className="swap-amount-input"/>
-             {fromToken.symbol}                
+            <Col lg={4} xs={6} className="path-label-container">
+               <InputGroup className="mb-3">
+                <Form.Control type="text" placeholder="Amount" className="swap-amount-input"
+                value={transferAmount} onChange={this.tranferAmountChanged}/>
+                <InputGroup.Append>
+                  <InputGroup.Text id="basic-addon2">{fromToken.symbol}</InputGroup.Text>
+                </InputGroup.Append>
+              </InputGroup>
             </Col>
             </Row>
             </div>
@@ -177,7 +190,7 @@ class ConversionPathList extends Component {
                       {pointerArrow}
                     </div>
                 })}
-                <div className="path-conversion-price">1 {item.path[0].meta.symbol} = {item.price} {item.path[item.path.length - 1].meta.symbol}</div>
+                <div className="path-conversion-price">{transferAmount} {item.path[0].meta.symbol} = {item.price} {item.path[item.path.length - 1].meta.symbol}</div>
                 </Col>
                 <Col lg={2}>
 
@@ -213,10 +226,10 @@ class ConversionPathList extends Component {
                       {pointerArrow}
                     </div>
                 })}
-                <div className="path-conversion-price">1 {item.path[0].meta.symbol} = {item.price} {item.path[item.path.length - 1].meta.symbol}</div>
+                <div className="path-conversion-price">{transferAmount} {item.path[0].meta.symbol} = {item.price} {item.path[item.path.length - 1].meta.symbol}</div>
                 </Col>
                 <Col lg={2}>
-                <Form.Control type="number" placeholder="Amount" className="swap-amount-input"/>
+                <Form.Control type="text" placeholder="Amount" className="swap-amount-input"/>
                 <Button className="path-swap-btn">Swap</Button>
                 </Col>
                 </Row>

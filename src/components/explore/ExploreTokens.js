@@ -37,14 +37,28 @@ export default class ExploreTokens extends Component {
         const {tokens: {convertibleTokens}} = this.props;  
         const {selectedToIdx} = this.state;
         this.setState({selectedFromIdx: idx});
-        this.props.fetchTokenPathsWithRates(convertibleTokens[idx], convertibleTokens[selectedToIdx]);
+        this.fetchTokenPathsWithRates(convertibleTokens[idx], convertibleTokens[selectedToIdx], 'from', 1);
+        this.fetchTokenPathsWithRates(convertibleTokens[selectedToIdx], convertibleTokens[idx], 'to', 1);
+            
     }
     
     toTokenChanged(idx) {
         const {tokens: {convertibleTokens}} = this.props;  
         const {selectedFromIdx} = this.state;
         this.setState({selectedToIdx: idx});
-        this.props.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[idx]);        
+        this.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[idx], 'from', 1);
+        this.fetchTokenPathsWithRates(convertibleTokens[idx], convertibleTokens[selectedFromIdx], 'to', 1);       
+    }
+    
+    transferAmountChanged = (amount, type) => {
+        const {tokens: {convertibleTokens}} = this.props; 
+        const {selectedFromIdx, selectedToIdx} = this.state;
+        amount = parseFloat(amount);
+        if (type === 'from') {
+            this.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[selectedToIdx], 'from', amount);
+        } else if (type === 'to') {
+             this.fetchTokenPathsWithRates( convertibleTokens[selectedToIdx], convertibleTokens[selectedFromIdx], 'to', amount);           
+        }
     }
     render() {
         const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate}} = this.props;
@@ -87,7 +101,6 @@ export default class ExploreTokens extends Component {
             <div>
             <ExploreTokensToolbar/>
             <Container className="explore-tokens-container">
-
              <Row>
              <Col lg={2} style={{'paddingRight': 0}}>
                <ListGroup className="token-selector-list">
@@ -96,8 +109,9 @@ export default class ExploreTokens extends Component {
              </Col>
              <Col lg={8} className="explore-paths-container">
                <ViewPaths 
-               fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]} fromPathListWithRate={fromPathListWithRate}
-               toPathListWithRate={toPathListWithRate}/>
+               fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]}
+               fromPathListWithRate={fromPathListWithRate}
+               toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}/>
              </Col>
              <Col lg={2} style={{'paddingLeft': 0}}>
                  <ListGroup className="token-selector-list">

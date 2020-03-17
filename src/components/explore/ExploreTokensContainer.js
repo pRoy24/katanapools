@@ -39,9 +39,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           })
         }, pathPrices);
         Promise.all(pathWithMeta).then(function(metaData){
-          console.log('***');
           metaData = metaData.filter(Boolean);
-          console.log(metaData)
           if (type === 'from') {
          dispatch(setFromPathListWithRates(metaData));
           } else {

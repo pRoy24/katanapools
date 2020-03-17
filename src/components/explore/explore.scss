@@ -49,13 +49,7 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     }
 }
 
-.swap-amount-input {
-    font-size: 12px !important;
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-    height: 28px !important;
-    margin-bottom: 10px;
-}
+
 
 .explore-paths-container {
     padding-left: 2px !important;
@@ -92,8 +86,9 @@ margin-top: 10px;
 
 .conversion-path-header {
     text-align: left;
-    margin-top: 10px;
-    margin-bottom: 4px;
+    margin-top: 20px;
+
+    margin-bottom: 0;
 }
 
 .view-toggle-container {
@@ -112,4 +107,30 @@ box-shadow: 2px 2px 2px 0px rgba(40,167,69,1);
 
 .path-row {
     border-radius: 2px !important;
+}
+
+.path-label-container {
+    .input-group {
+        float: right;
+        margin-bottom: 0 !important;
+    }
+.input-group-text {
+     font-size: 12px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    height: 28px !important;
+    margin-bottom: 10px;
+    display: inline-block;   
+}
+.path-label {
+    display: inline-block;
+}
+.swap-amount-input {
+    font-size: 12px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    height: 28px !important;
+    margin-bottom: 10px;
+    display: inline-block;
+}
 }
