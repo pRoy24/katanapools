@@ -7,6 +7,7 @@ import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUti
 import {Ethereum} from '../../utils/sdk/sdkUtils';
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
 } from '../../utils/ConverterUtils';
+import {toDecimals, fromDecimals} from '../../utils/eth';
 
 const mapStateToProps = state => {
   return {
@@ -50,9 +51,33 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       
 
       })
-    }
+    },
+    
+    submitSwap: (networkPath, transferAmount, selectedTransferToken) => {
+      let isEth = false;
+      if (selectedTransferToken.symbol === 'ETH') {
+        isEth = true;
+      }
+  
+      const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
       
-
+      getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
+        
+        let availableBalance = fromDecimals(balanceResponse,selectedTransferToken.decimals);
+        if (availableBalance >= transferAmount) {
+  
+          submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
+        
+          }).catch(function(err){
+            if (err.message) {
+  
+            }
+          })
+        } else {
+  
+        }
+      });      
+      }
   }
 }
 

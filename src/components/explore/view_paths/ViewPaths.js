@@ -16,13 +16,14 @@ export default class ViewPaths extends Component {
         if (isNonEmptyArray(fromPathListWithRate)) {
             const sortedPathList = fromPathListWithRate.sort((a, b)=>(b.price - a.price));
             fromPathListItems = <ConversionPathList fromToken={fromToken} toToken={toToken}
-            pathList={sortedPathList} type={"from"} transferAmountChanged={this.props.transferAmountChanged}/>
+            pathList={sortedPathList} type={"from"} transferAmountChanged={this.props.transferAmountChanged}
+            submitSwap={this.props.submitSwap}/>
         }
 
         if (isNonEmptyArray(toPathListWithRate)) {
             const sortedPathList = toPathListWithRate.sort((a, b)=>(b.price - a.price));            
             toPathListItems = <ConversionPathList fromToken={toToken} toToken={fromToken} pathList={sortedPathList}
-            type={"to"} transferAmountChanged={this.props.transferAmountChanged}/>
+            type={"to"} transferAmountChanged={this.props.transferAmountChanged} submitSwap={this.props.submitSwap}/>
         }
         
         let tokenPairDescription = <span/>;
@@ -131,6 +132,12 @@ class ConversionPathList extends Component {
         super(props);
         this.state = {showMain: true, transferAmount: 1};
     }
+    componentWillReceiveProps(nextProps) {
+        const {fromToken, toToken} = nextProps;
+        if (this.props.fromToken.symbol !== fromToken.symbol || this.props.toToken.symbol !== toToken.symbol) {
+            this.setState({showMain: true, transferAmount: 1});
+        }
+    }
     toggleHidePath = () => {
         this.setState({showMain: false});
     }
@@ -144,10 +151,23 @@ class ConversionPathList extends Component {
         this.setState({transferAmount: amount});
         this.props.transferAmountChanged(amount, type);
     }
+    
+    submitSwap(idx) {
+        const {pathList, fromToken} = this.props;
+        const {transferAmount} = this.state;
+        const currentPath = pathList[idx];
+        const pathTokens = currentPath.path.map((i) => (i.address));
+        this.props.submitSwap(pathTokens, transferAmount, fromToken);
+    }
     render() {
         let {fromToken, toToken, pathList} = this.props;
         const {showMain, transferAmount} = this.state;
+        const self = this;
         if (showMain) {
+         let viewAllPaths = <span/>;
+         if (pathList.length > 2) {
+             viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
+         }
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>
@@ -194,12 +214,12 @@ class ConversionPathList extends Component {
                 </Col>
                 <Col lg={2}>
 
-                <Button className="path-swap-btn">Swap</Button>
+                <Button className="path-swap-btn" onClick={self.submitSwap.bind(self, idx)}>Swap</Button>
                 </Col>
                 </Row>
                 </ListGroupItem>)
             })}
-            <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/>.</div>
+            {viewAllPaths}
             </div>)              
         }
         return (
@@ -230,7 +250,7 @@ class ConversionPathList extends Component {
                 </Col>
                 <Col lg={2}>
                 <Form.Control type="text" placeholder="Amount" className="swap-amount-input"/>
-                <Button className="path-swap-btn">Swap</Button>
+                <Button className="path-swap-btn" onClick={self.submitSwap.bind(self, idx)}>Swap</Button>
                 </Col>
                 </Row>
                 </ListGroupItem>)

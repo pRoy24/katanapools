@@ -111,7 +111,8 @@ export default class ExploreTokens extends Component {
                <ViewPaths 
                fromToken={convertibleTokens[selectedFromIdx]} toToken={convertibleTokens[selectedToIdx]}
                fromPathListWithRate={fromPathListWithRate}
-               toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}/>
+               toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}
+               submitSwap={this.props.submitSwap}/>
              </Col>
              <Col lg={2} style={{'paddingLeft': 0}}>
                  <ListGroup className="token-selector-list">
