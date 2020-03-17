@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
+        ListGroup, ListGroupItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Stepper, { Step } from "react-material-stepper";
 import {
   StepperAction,
@@ -8,9 +9,9 @@ import {
 } from "react-material-stepper";
 import {isEmptyObject, isNonEmptyObject} from '../../../utils/ObjectUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {  faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons'
+import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
-
+import AddressDisplay from '../../common/AddressDisplay';
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
 
 export default class CreateNewPool extends Component {
@@ -67,7 +68,7 @@ export default class CreateNewPool extends Component {
    } else {
     this.setState({isError: false, errorMessage: '', tokenAddressList: tokenAddressList});
     const args = {
-      maxFee: parseFloat(vals.reserveFee).toFixed(2),
+      reserveFee: parseFloat(vals.reserveFee),
       smartTokenAddress: smartTokenStatus.contractAddress,
       tokenAddressList: tokenAddressList,
     }
@@ -107,7 +108,6 @@ export default class CreateNewPool extends Component {
   
   fundRelayWithSupply = (vals) => {
 
-    
     const {pool, pool: {relayContractReceipt, converterContractReceipt}} = this.props;
     const {relayTokenAddress, convertibleTokenAddress} = this.state;
 
@@ -131,7 +131,7 @@ export default class CreateNewPool extends Component {
     }
 
     if (isNonEmptyObject(relayConverterStatus) && relayConverterStatus.type === 'success' && this.props.pool.relayConverterStatus.type === 'pending') {
-          this.setState({currentStep: 'step3'})
+      this.setState({currentStep: 'step3'})
       this.appStepper.current.resolve();    
     }
     
@@ -174,7 +174,7 @@ export default class CreateNewPool extends Component {
           message = smartTokenStatus.message;
         }
         if (smartTokenStatus.transactionHash) {
-          message = "Transaction broadcast " + smartTokenStatus.transactionHash;
+          message = <div className="broadcast-container">Transaction broadcast <AddressDisplay address={smartTokenStatus.transactionHash}/></div>;
         }
         transactionStatusMessage = (
             <Alert  variant={"info"}>
@@ -281,7 +281,6 @@ class Step1 extends Component {
   }
   render() {
     const {poolName, poolSymbol, poolDecimals} = this.state;
-    const {smartTokenStatus, isFetching} = this.props;
 
     return (
       <div className="create-pool-form-container">
@@ -324,7 +323,7 @@ class Step1 extends Component {
 class Step2 extends Component {
   constructor() {
     super();
-    this.state = {convertibleTokenAddress: '', reserveFee: 3, tokenArrayList: [], baseReserveSelected: '',
+    this.state = {convertibleTokenAddress: '', reserveFee: 0.1, tokenArrayList: [], baseReserveSelected: '',
     baseReserveWeight: '', poolType: 'relay'};
   }
   
@@ -342,10 +341,24 @@ class Step2 extends Component {
   }
   
   addReserveTokenRow = () => {
+    const {poolType} = this.state;
     let currentRowList = this.state.tokenArrayList;
+    let currentRowLength = currentRowList.length + 1;
+    if (poolType === 'relay') {
+      currentRowLength ++;
+    }
+    let newWeight = Math.floor(100 /  currentRowLength);
+
     currentRowList.push({'weight': '', 'address': ''});
+    currentRowList = currentRowList.map(function(item){
+      return Object.assign({}, item, {weight: newWeight});
+    });
+    
+    if (poolType === 'relay') {
+      this.setState({baseReserveWeight: newWeight});
+    }
+    
     this.setState({tokenArrayList: currentRowList});
-  //  this.props.setTokenListRow();
   }
   
   weightChanged = (value, idx) => {
@@ -366,23 +379,23 @@ class Step2 extends Component {
   
   baseWeightValueChanged = (evt) => {
     const baseWeightValue = evt.target.value;
-    
     this.setState({baseReserveWeight: baseWeightValue});
   }
   
   togglePooltype = (val) => {
+    let {tokenArrayList} = this.state;
+    
     this.setState({poolType: val});
     if (val === 'relay') {
       //this.props.setTokenListRow();
     } else {
-      
+      if (tokenArrayList.length == 0) {
+        tokenArrayList.push({address: '', weight: 50});
+        this.setState({tokenArrayList: tokenArrayList});
+      }
     }
   }
-   
-  componentDidUpdate() {
-    
-  } 
-  
+
   removeTokenRow = (idx) => {
     let currentTokenAddressList = this.state.tokenArrayList;
     currentTokenAddressList.splice(idx, 1);
@@ -407,10 +420,10 @@ class Step2 extends Component {
       ercSelectButton = 'button-active'; 
     } 
     
-    
     let tokenArrayListDisplay = tokenArrayList.map(function(item, idx){
       return <TokenFormRow key={`token-form-row-${idx}`} address={item.address} weight={item.weight ? item.weight : 0} idx={idx}
-      weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail} removeTokenRow={self.removeTokenRow}/>;
+      weightChanged={self.weightChanged} addressChanged={self.addressChanged} getTokenDetail={getTokenDetail}
+      removeTokenRow={self.removeTokenRow} poolType={poolType}/>;
     });
     
     let relayTokenRow = <span/>;
@@ -426,8 +439,6 @@ class Step2 extends Component {
           </Form.Control>
         </Form.Group>
         </Col>
-        
-        
         <Col lg={4} className="no-pad-col">
           <div className="slidecontainer">
           <Row>
@@ -445,6 +456,13 @@ class Step2 extends Component {
         </Row>
         )
     }
+
+function renderFeeTooltip(props) {
+  return <Tooltip {...props}>
+    <div>Low fee will encourage more conversions.</div>
+    <div>A higher fee will encourage more liquidity to the pool.</div>
+    </Tooltip>;
+}
 
     return (
         <div className="create-pool-form-container">
@@ -471,7 +489,14 @@ class Step2 extends Component {
         {tokenArrayListDisplay}
         <Button onClick={this.addReserveTokenRow} className="row-add-btn">Add another reserve token <FontAwesomeIcon icon={faPlus} /></Button>
         <Form.Group controlId="formBasicEmail" className="fees-row">
-          <Form.Label>Conversion fees</Form.Label>
+          <Form.Label>Conversion fees&nbsp; 
+            <OverlayTrigger
+              placement="top"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderFeeTooltip}>
+              <FontAwesomeIcon icon={faQuestionCircle}/>
+            </OverlayTrigger>
+          </Form.Label>
             <InputGroup>
             <Form.Control type="text" placeholder="reserve fee" value={reserveFee} onChange={this.reserveFeeChanged}/>
             <InputGroup.Append>
@@ -479,7 +504,7 @@ class Step2 extends Component {
             </InputGroup.Append>
           </InputGroup>
           <Form.Text className="text-muted">
-            Enter the max conversion fees when using this reserve (Recommended 3%)
+            Enter the max conversion fees when using this reserve (Maximum 3%)
           </Form.Text>
         </Form.Group>
         
@@ -695,7 +720,11 @@ class TokenFormRow extends Component {
     weightChanged(evt.target.value, idx);
   }
   render() {
-    const {address, weight, idx, addressChanged, weightChanged} = this.props;
+    const {address, weight, idx, addressChanged, weightChanged, poolType} = this.props;
+    let removeRow = <FontAwesomeIcon icon={faTimes} className="remove-icon-btn" onClick={()=>this.props.removeTokenRow(idx)}/>;
+    if (idx === 0 && poolType === 'any') {
+      removeRow = <span/>;
+    }
     return (
         <Row>
         <Col lg={8}>
@@ -722,7 +751,7 @@ class TokenFormRow extends Component {
             id="myRange" onChange={this.weightChanged}/>
             </Row>
           </div>    
-          <FontAwesomeIcon icon={faTimes} className="remove-icon-btn" onClick={()=>this.props.removeTokenRow(idx)}/>
+          {removeRow}
         </Col>
         </Row>
       )

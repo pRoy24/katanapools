@@ -73,9 +73,10 @@ const mapDispatchToProps = (dispatch) => {
     
     deployRelayConverter: (args) => {
     const web3 = window.web3;
+    console.log(args);
     
-    const maxFee = args.maxFee * 10000;
-    
+    const conversionFee = 1000;
+    const maxFee = 3 * 10000;
     let relayToken = args.tokenAddressList.find((a)=>(a.type === 'relay'));
     let connectorAddedIndex = -1;
     if (!relayToken || typeof relayToken === undefined) {
@@ -85,7 +86,6 @@ const mapDispatchToProps = (dispatch) => {
     const relayTokenAddress = relayToken.address;
     const relayTokenWeight = relayToken.weight;
     
-    const conversionFee = maxFee;
     const smartTokenAddress = args.smartTokenAddress;
 
     // Set converter details in reducer
@@ -138,7 +138,7 @@ const mapDispatchToProps = (dispatch) => {
 
           let convertibleTokenDeploy = args.tokenAddressList.map(function(item, idx){
             if (item.type === 'convertible' && idx != connectorAddedIndex) {
-              return   deployerContractInstance.methods.addConnector(item.address, item.weight, false).call()
+              return   deployerContractInstance.methods.addReserve(item.address, item.weight).call()
                 .then(function(data){
                 dispatch(deployRelayConverterStatus({type: 'pending',
                 message: `Setting conversion fees`}));
@@ -150,7 +150,11 @@ const mapDispatchToProps = (dispatch) => {
           });
           
           Promise.all(convertibleTokenDeploy).then(function(response){
+            console.log(conversionFee);
+            console.log('***');
+            
               deployerContractInstance.methods.setConversionFee(conversionFee).call().then(function(dataRes){
+                
                 dispatch(deployRelayConverterStatus({type: 'success',
                 message: `Relay token is ready to be used`}));
               });
