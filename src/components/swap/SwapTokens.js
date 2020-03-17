@@ -19,39 +19,37 @@ export default class SwapToken extends Component {
   
   componentWillMount() {
     const {smartTokenCheck, convertibleTokenCheck} = this.state;
-    this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
+    this.props.getAllConvertibleTokens();
+    this.props.getAllSmartTokens();
     
+    this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
   }
   
-  fetchTokenList = (smartTokenCheck, convertibleTokenCheck) => {
-    const self = this;
-      let fetchTokenFlag = "convertibletokens";
-      if (smartTokenCheck && convertibleTokenCheck) {
-        fetchTokenFlag = "alltokens";
-      }
-      else if (smartTokenCheck && !convertibleTokenCheck) {
-        fetchTokenFlag = "smarttokens";
-      }
-      else if (!smartTokenCheck && convertibleTokenCheck) {
-        fetchTokenFlag = "convertibletokens";
-      } else {
-        fetchTokenFlag = "notokens";
-      }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const {tokens: {convertibleTokens, smartTokens}} = this.props;
+    const {smartTokenCheck, convertibleTokenCheck} = this.state;    
+    if ((prevProps.tokens.convertibleTokens.length === 0 && convertibleTokens.length > 0) ||
+    (prevProps.tokens.smartTokens.length === 0 && smartTokens.length > 0 )) {
+      this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
+    }
+    
+  }
 
-      const transferAmount = this.state.transferAmount;  
-      RegistryUtils.getConverterRegistryAddress().then(function(convertibleTokenAddress){
- 
-      RegistryUtils.getTokenList( convertibleTokenAddress, fetchTokenFlag).then(function(tokenList){
-      RegistryUtils.getTokenData( tokenList, fetchTokenFlag).then(function(tokenDataResponse){
-        if (tokenDataResponse && tokenDataResponse.length > 0){
-        const initialFromToken = tokenDataResponse[0];
-        const initialToToken = tokenDataResponse[1];
-        self.setState({tokenData: tokenDataResponse, selectedTransferToken: initialFromToken, selectedReceiveToken: initialToToken });
-        }
-      });
-    });
-  });
-}
+  fetchTokenList = (smartTokenCheck, convertibleTokenCheck) => {
+    const {tokens: {smartTokens, convertibleTokens}} = this.props;
+    let tokenList = [];
+
+    if (convertibleTokenCheck) {
+      tokenList = tokenList.concat(convertibleTokens);
+    }
+    if (smartTokenCheck) {
+      tokenList = tokenList.concat(smartTokens);
+    }
+    const initialFromToken = tokenList[0];
+    const initialToToken = tokenList[1];
+    this.setState({tokenData: tokenList, selectedTransferToken: initialFromToken, selectedReceiveToken: initialToToken });
+    
+  }
   
   refetchTokenList = (smartTokenCheck, convertibleTokenCheck) => {
     this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);

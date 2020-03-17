@@ -1,9 +1,17 @@
+export const FETCH_TOKENS = 'FETCH_TOKENS';
+
 export const APPROVE_STEP_PENDING = 'APPROVE_STEP_PENDING';
 
 export const APPROVE_STEP_SUCCESS = 'APPROVE_STEP_SUCCESS';
 
 export const APPROVE_STEP_FAILURE = 'APPROVE_STEP_FAILURE';
 
+export function fetchTokens(payload) {
+  return {
+    type: FETCH_TOKENS,
+    payload: payload
+  }
+}
 
 export function approvePending(payload) {
   return {

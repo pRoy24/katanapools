@@ -3,11 +3,12 @@ import SwapTokens from './SwapTokens';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
 } from '../../utils/ConverterUtils';
+import {fetchTokens} from '../../actions/swap';
 
 const mapStateToProps = state => {
   return {
     web3: state.web3,
-
+    tokens: state.tokens,
   }
 }
 
@@ -17,8 +18,6 @@ const mapDispatchToProps = (dispatch) => {
       let ethGraph = new Ethereum();
       ethGraph.init().then(function(initResponse){
         ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
-
-          
         let pathList = fromPathWithPrice[0];
         let pathPrices = fromPathWithPrice[1];
         let pathWithMeta = pathList.map(function(pathData, idx){
@@ -30,15 +29,13 @@ const mapDispatchToProps = (dispatch) => {
           })
         }, pathPrices);
         Promise.all(pathWithMeta).then(function(metaData){
-
           metaData = metaData.filter(Boolean);
           console.log(metaData);
         })
       })
-      
- 
       })
-    }
+    },
+
   }
 }
 

@@ -4,7 +4,7 @@ import {Container, Row, Col, Button} from 'react-bootstrap';
 
 import SwapTokensContainer from '../swap/SwapTokensContainer';
 import ExploreTokensContainer from '../explore/ExploreTokensContainer';
-import PoolTokens from '../pool/PoolTokens';
+import PoolTokensContainer from '../pool/PoolTokensContainer';
 import {
   BrowserRouter as Router,
   Switch,
@@ -102,8 +102,8 @@ class AppHome extends Component {
   }
   
   componentWillMount() {
-        this.props.getAllConvertibleTokens();
-        this.props.getConvertibleToSmartTokenMap();
+
+      //  this.props.getConvertibleToSmartTokenMap();
   }
   
 
@@ -114,16 +114,18 @@ class AppHome extends Component {
       <div>
           <Switch>
           <Route path="/swap">
-            <SwapTokensContainer/>
+            <SwapTokensContainer  getAllConvertibleTokens={this.props.getAllConvertibleTokens}
+        getAllSmartTokens={this.props.getAllSmartTokens}/>
           </Route>
           <Route path="/pool">
-            <PoolTokens />
+            <PoolTokensContainer getSmartTokensWithSymbols={this.props.getSmartTokensWithSymbols}/>
           </Route>
           <Route path="/explore">
-            <ExploreTokensContainer/>
+            <ExploreTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}/>
           </Route>
           <Route exact path="/">
-            <SwapTokensContainer/>
+            <SwapTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}
+        getAllSmartTokens={this.props.getAllSmartTokens}/>
           </Route>
         </Switch>  
     </div>

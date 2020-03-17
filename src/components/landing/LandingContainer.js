@@ -1,15 +1,18 @@
 import {connect} from 'react-redux';
 import Landing from './Landing';
 import {setUserEnvironment} from '../../actions/user';
-import {setConvertibleTokens, setConvertibleTokensBySmartTokensMap} from '../../actions/tokens';
+import {setConvertibleTokens, setSmartTokens, setConvertibleTokensBySmartTokensMap,
+  setSmartTokensWithReserves
+} from '../../actions/tokens';
 import {getAllPathsWithRates} from '../../utils/PathUtils';
-import {getConvertibleTokensInRegistry, getConvertibleTokensBySmartTokens} from '../../utils/ConverterUtils';
+import {getConvertibleTokensInRegistry, getSmartTokensInRegistry,
+getSmartTokensWithSymbolsInRegistry, getConvertibleTokensBySmartTokens} from '../../utils/ConverterUtils';
 import {getTokenData} from '../../utils/RegistryUtils';
 
 const mapStateToProps = state => {
   return {
     web3: state.web3,
-
+    
   }
 }
 
@@ -20,11 +23,27 @@ const mapDispatchToProps = (dispatch) => {
       const args = {'selectedAddress': web3.currentProvider.selectedAddress, 'selectedNetwork': web3.currentProvider.networkVersion};
       dispatch(setUserEnvironment(args))
     },
+    
     getAllConvertibleTokens: () => {
       getConvertibleTokensInRegistry().then(function(dataResponse){
         getTokenData(dataResponse).then(function(tokenDetailList){
           dispatch(setConvertibleTokens(tokenDetailList));
         })
+      })
+    },
+    
+    getAllSmartTokens: () => {
+      getSmartTokensInRegistry().then(function(dataResponse){
+        getTokenData(dataResponse).then(function(tokenDetailList){
+          dispatch(setSmartTokens(tokenDetailList));
+        })
+      })      
+    },
+    
+    getSmartTokensWithSymbols: () => {
+      getSmartTokensWithSymbolsInRegistry().then(function(dataResponse){
+      
+        dispatch(setSmartTokensWithReserves(dataResponse));
       })
     },
     

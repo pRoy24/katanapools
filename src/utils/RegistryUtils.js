@@ -80,6 +80,10 @@ const axios = require('axios');
     return fetchTokenMeta(tokenAddress);
   }
   
+  export function getTokenLightDetails(tokenAddress) {
+    return fetchTokenLightData(tokenAddress);
+  }
+  
   export function getNetworkPathContractAddress() {
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
@@ -222,4 +226,20 @@ function fetchTokenMeta(tokenAddress) {
     }).catch(function(err){
           return null;
   });
+}
+
+
+function fetchTokenLightData(tokenAddress) {
+    const web3 = window.web3;
+    let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
+    return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
+      return CurrentToken.methods.totalSupply().call().then(function(totalSupply){
+        return CurrentToken.methods.name().call().then(function(tokenName){
+        return CurrentToken.methods.decimals().call().then(function(tokenDecimals){
+       return Object.assign({}, {name: tokenName, symbol: tokenSymbol, address: tokenAddress, totalSupply: totalSupply,
+                            decimals: tokenDecimals});   
+        });
+      });
+    });
+});
 }

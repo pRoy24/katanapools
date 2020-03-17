@@ -10,17 +10,21 @@ import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetw
 } from '../../utils/ConverterUtils';
 var RegistryUtils = require('../../utils/RegistryUtils');
 
+const Initial_State = {'showTransaferSelect': false, 'showReceiveSelect': false, selectedTransferToken: {}, selectedReceiveToken: {},
+          transferAmount: 1000, receiveAmount: 0, totalFee: 0, transactionFee: 0, 'ConverterRegistryContractAddress': '',
+           networkPath: [], pathMeta: [], widgetError: ''
+        };
+        
 export default class SwapTokenWidget extends Component {
 
   constructor(props, context) {
     super(props);
     this.web3 = window.web3;
-        this.state = {'showTransaferSelect': false, 'showReceiveSelect': false, selectedTransferToken: {}, selectedReceiveToken: {},
-          transferAmount: 1000, receiveAmount: 0, totalFee: 0, transactionFee: 0, 'ConverterRegistryContractAddress': '',
-           networkPath: [], pathMeta: [], widgetError: ''
-        };
+        this.state = Initial_State;
   }
 
+
+  
   getConversionData = (fromToken, toToken, amount) => {
     const self = this;
 
@@ -70,6 +74,17 @@ export default class SwapTokenWidget extends Component {
                 this.getConversionData(this.state.selectedTransferToken, val, transferAmount);
     }
     
+  componentWillMount() {
+    const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = this.props;
+    if ( tokenData.length > 0) {
+      const self = this;
+      const {transferAmount} = this.state;
+      this.setState({selectedTransferToken: tokenData[0], selectedReceiveToken: tokenData[1]});
+      if (transferAmount > 0) {
+      self.getConversionData(tokenData[0], tokenData[1],
+                    transferAmount)}
+    }    
+  }  
   componentWillReceiveProps(nextProps) {
     const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = nextProps;
     if (toAmount !== this.props.toAmount) {
@@ -85,6 +100,10 @@ export default class SwapTokenWidget extends Component {
                     transferAmount)}
     }
   }
+  
+  componentWillUnmount() {
+    this.setState(Initial_State);
+  }  
   
   transferAmountChanged = (evt) => {
     const {transferAmount} = this.state;
@@ -122,6 +141,10 @@ export default class SwapTokenWidget extends Component {
     });
 
   } 
+  
+  receiveAmountChanged = (evt) => {
+    // Do nothing as this is readonly
+  }
   
   render() {
     const {tokenData} = this.props;

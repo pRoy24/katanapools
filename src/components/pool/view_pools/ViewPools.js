@@ -71,12 +71,12 @@ class ViewPoolWidget extends Component {
   }
   
   render() {
-    const {poolData, pool: {currentSelectedPool}} = this.props;
+    const {poolData, pool: {currentSelectedPool}, smartTokensWithReserves} = this.props;
+
     const {selectedPoolIndex} = this.state;
     const self = this;
     let poolDataList = <span/>;
-    
-    if (poolData.length === 0) {
+    if (smartTokensWithReserves.length === 0) {
       poolDataList =  <span/>;
     } else {
       poolDataList = 
@@ -85,7 +85,7 @@ class ViewPoolWidget extends Component {
               Symbol
         </ListGroupItem>
        {
-         poolData.map(function(poolRow, idx){
+         smartTokensWithReserves.map(function(poolRow, idx){
          let cellActive = '';
          if (idx === selectedPoolIndex) {
            cellActive = 'cell-active';

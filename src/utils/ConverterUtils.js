@@ -5,10 +5,6 @@ const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
 const SwapActions = require('../actions/swap');
 
-
-
-
-
   export function getConvertibleTokensInRegistry() {
     let web3 = window.web3;
     
@@ -23,6 +19,39 @@ const SwapActions = require('../actions/swap');
       
     })
   }
+  
+  export function getSmartTokensInRegistry() {
+    let web3 = window.web3;
+    
+    return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
+      let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
+      return converterRegistry.methods.getSmartTokens().call()
+      .then(function(data){
+        return data;
+      }).catch(function(err){
+        throw err;
+      })
+      
+    })    
+  }
+  
+  export function getSmartTokensWithSymbolsInRegistry() {
+    let web3 = window.web3;
+    return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
+      let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
+      return converterRegistry.methods.getSmartTokens().call()
+      .then(function(data){
+        return Promise.all(fetchTokenSymbol(data)).then(function(tokenData){
+          return tokenData;
+        })
+    
+      }).catch(function(err){
+        throw err;
+      })
+      
+    })      
+  }
+  
   
   export function getReturnValueData(toAddress, fromAddress) {
         let web3 = window.web3;
@@ -227,4 +256,14 @@ function getConvertibleToSmartTokenMapping() {
       });
     })
   })
+}
+
+function fetchTokenSymbol(dataList) {
+  const web3 = window.web3;
+  return dataList.map(function(tokenAddress){
+    let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
+        return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
+              return Object.assign({}, {symbol: tokenSymbol, address: tokenAddress})
+        })
+  }) 
 }

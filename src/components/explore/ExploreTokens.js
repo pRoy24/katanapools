@@ -13,6 +13,8 @@ export default class ExploreTokens extends Component {
         this.state = {selectedFromIdx: 0, selectedToIdx: 1};
     }
     componentWillMount() {
+        this.props.getAllConvertibleTokens();
+        
         const {tokens: {convertibleTokens}}  = this.props;
         if (isNonEmptyArray(convertibleTokens)) {
             this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);

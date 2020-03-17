@@ -28,60 +28,81 @@ const mapDispatchToProps = (dispatch) => {
   return {
     
     getPoolDetails: (poolRow) => {
+
       const web3 = window.web3;
+      
       const senderAddress = web3.currentProvider.selectedAddress;
-      const poolSmartTokenAddress = poolRow.address;
-      const poolConverterAddress = poolRow.converter;
 
-      const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
-
-      const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
-
-      BancorConverterContract.methods.connectorTokenCount().call().then(function(numReserveTokens){
-
-BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
+      const self = this;
+      RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
+        RegistryUtils.getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
+          
+        const poolSmartTokenAddress = poolRow.address;
+        RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
+          RegistryUtils.getERC20DData(poolSmartTokenAddress).then(function(tokenData){
+        
+        const poolConverterAddress = converters[0];
   
-  const conversinFeePercent = conversionFee / 10000;
-
-      let reserveTokenList =
-     poolRow.reserves.map(function(item){
-       let reserveTokenAddress = item.address;
-        return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
-          return getReserveRatio(BancorConverterContract, reserveTokenAddress).then(function(reserveRatio){
-           return RegistryUtils.getTokenDetails(reserveTokenAddress).then(function(tokenData){
-             if (tokenData === null || tokenData === undefined) {
-               return null;
-             }
-             let isEth = false;
-             if (tokenData && tokenData.symbol === 'ETH') {
-               isEth = true;
-             }
-             return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
-              const availableReserveBalance = fromDecimals(reserveTokenBalance, tokenData.decimals);
-              const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
-              return Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
-              {userBalance: availableUserBalance});
-            })
-           })
+        const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
+  
+        const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
+  
+        BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
+          
+          let reserveTokenList = [];
+          for (let a =0; a < numReserveTokens; a++) {
+          const reserveTokenAddress = BancorConverterContract.methods.reserveTokens(a).call().then(function(resTokenAddress){
+            return resTokenAddress;
           });
-        }) ;
-     })
-
-    RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
-
-     SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
-
-      Promise.all(reserveTokenList).then(function(reserveTokenDetails){
-        reserveTokenDetails = reserveTokenDetails.filter(Boolean);
-        let finalPayload = Object.assign({}, smartTokenDetails,{senderBalance: balanceData}, {converter: poolConverterAddress}, {reserves: reserveTokenDetails}, {conversionFee: conversinFeePercent});
-        dispatch(setCurrentSelectedPool(finalPayload));
-      })
-      })
-      })
-})
-      }).catch(function(err){
-        dispatch(setCurrentSelectedPoolError(err.toString()));
+          reserveTokenList.push(reserveTokenAddress);
+          }
+          Promise.all(reserveTokenList).then(function(reserveTokenAddressList){
+            let reserveTokenData = reserveTokenAddressList.map(function(reserveTokenAddress){
+                  return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
+                    return getReserveRatio(BancorConverterContract, reserveTokenAddress).then(function(reserveRatio){
+                     return RegistryUtils.getTokenLightDetails(reserveTokenAddress).then(function(tokenData){
+                       if (tokenData === null || tokenData === undefined) {
+                         return null;
+                       }
+                       let isEth = false;
+                       if (tokenData && tokenData.symbol === 'ETH') {
+                         isEth = true;
+                       }
+                       return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
+                        const availableReserveBalance = fromDecimals(reserveTokenBalance, tokenData.decimals);
+                        const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
+                        let reserveData = Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
+                        {userBalance: availableUserBalance});
+                      
+                        return reserveData;
+                      })
+                     })
+                    });
+                  })
+          });
+          RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
+          BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
+            const conversinFeePercent = conversionFee / 10000;
+               SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
+                   Promise.all(reserveTokenData).then(function(reserveDetail){
+                      reserveDetail = reserveDetail.filter(Boolean);
+                      const finalPayload = Object.assign({}, tokenData, {senderBalance: balanceData}, {converter: poolConverterAddress},
+                      {reserves: reserveDetail}, {conversionFee: conversinFeePercent});
+                      dispatch(setCurrentSelectedPool(finalPayload));
+                   })
+                    })
+                  });
+                });
+          }).catch(function(err){
+          dispatch(setCurrentSelectedPool({}));
+        });
       });
+    });
+  
+  });
+  });
+  
+  });
     },
     
 
