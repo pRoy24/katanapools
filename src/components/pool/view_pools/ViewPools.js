@@ -9,32 +9,34 @@ import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/Ob
 export default class ViewPool extends Component {
   constructor(props) {
     super(props);
-    this.state = {poolData: []};
+    this.state = {smartTokensWithReserves: []};
   }
   filterInputList = (searchVal) => {
+
     const searchString = searchVal && searchVal.length > 0 ?searchVal.toLowerCase() : '';
-    const {poolData} = this.state;
+    const {smartTokensWithReserves} = this.state;
     let filteredPoolData = [];
-    if (searchString){
-     filteredPoolData = poolData.filter(function(item){
+    if (searchString && smartTokensWithReserves.length > 0){
+     filteredPoolData = smartTokensWithReserves.filter(function(item){
       return item.symbol.toLowerCase().includes(searchString) || item.name.toLowerCase().includes(searchString)
     });
     } else {
-       filteredPoolData = this.props.poolData;
+       filteredPoolData = this.props.smartTokensWithReserves;
     }
-    this.setState({poolData: filteredPoolData});
+    this.setState({smartTokensWithReserves: filteredPoolData});
   }
   componentWillReceiveProps(nextProps) {
-    const {poolData} = nextProps;
-    if (nextProps.poolData && nextProps.poolData.length !== this.props.poolData.length) {
-      this.setState({poolData: poolData});
+    const {smartTokensWithReserves} = nextProps;
+
+    if (nextProps.smartTokensWithReserves && nextProps.smartTokensWithReserves.length !== this.props.smartTokensWithReserves.length) {
+    //  this.setState({smartTokensWithReserve: smartTokensWithReserves});
     }
   }
   render() {
     return (
       <div>
         <ViewPoolToolbar filterInputList={this.filterInputList}/>
-        <ViewPoolWidget {...this.props} poolData={this.state.poolData}/>
+        <ViewPoolWidget {...this.props}/>
       </div>
       )
   }
@@ -45,33 +47,30 @@ class ViewPoolWidget extends Component {
     super(props);
     this.state = {selectedPoolIndex: -1};
   }
-  componentWillMount() {
-    const {poolData} = this.props;
-  }
-  
+
   setSelectedPool (selectedPool, idx) {
     this.props.getPoolDetails(selectedPool);
     this.setState({selectedPoolIndex: idx});
   }
   
   componentWillReceiveProps(nextProps) {
-    const {poolData} = nextProps;
+    const {smartTokensWithReserves} = nextProps;
     
-    if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
+    if (isEmptyArray(this.props.smartTokensWithReserves) && isNonEmptyArray(smartTokensWithReserves)) {
       
-          let selectedPoolIndex = poolData.findIndex(function(item){
+          let selectedPoolIndex = smartTokensWithReserves.findIndex(function(item){
             return item.symbol === 'ETHBNT';
           });
           if (selectedPoolIndex === -1) {
             selectedPoolIndex = 0;
           }
           this.setState({selectedPoolIndex: selectedPoolIndex});
-          this.props.getPoolDetails(poolData[selectedPoolIndex]);
+          this.props.getPoolDetails(smartTokensWithReserves[selectedPoolIndex]);
     }
   }
   
   render() {
-    const {poolData, pool: {currentSelectedPool}, smartTokensWithReserves} = this.props;
+    const { pool: {currentSelectedPool}, smartTokensWithReserves} = this.props;
 
     const {selectedPoolIndex} = this.state;
     const self = this;

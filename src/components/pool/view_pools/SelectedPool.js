@@ -134,6 +134,7 @@ export default class SelectedPool extends Component {
       </div>)
     }
     const {reserve1Needed, reserve2Needed, reserve1Added, reserve2Added, fundAmount, liquidateAmount} = this.state;
+
     let minTotalSupply = parseFloat(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals)).toFixed(4);
     let reserveTokenList = currentSelectedPool.reserves.map(function(item, idx){
       return <div key={`token-${idx}`}>

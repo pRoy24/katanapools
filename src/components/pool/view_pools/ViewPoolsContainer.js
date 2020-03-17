@@ -33,9 +33,8 @@ const mapDispatchToProps = (dispatch) => {
       
       const senderAddress = web3.currentProvider.selectedAddress;
 
-      const self = this;
       RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
-        RegistryUtils.getSmartTokens(converterContractRegistryAddress).then(function(smartTokenList){
+
           
         const poolSmartTokenAddress = poolRow.address;
         RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
@@ -81,12 +80,14 @@ const mapDispatchToProps = (dispatch) => {
                   })
           });
           RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
+
+            
           BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
             const conversinFeePercent = conversionFee / 10000;
                SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
                    Promise.all(reserveTokenData).then(function(reserveDetail){
                       reserveDetail = reserveDetail.filter(Boolean);
-                      const finalPayload = Object.assign({}, tokenData, {senderBalance: balanceData}, {converter: poolConverterAddress},
+                      const finalPayload = Object.assign({}, smartTokenDetails, {senderBalance: balanceData}, {converter: poolConverterAddress},
                       {reserves: reserveDetail}, {conversionFee: conversinFeePercent});
                       dispatch(setCurrentSelectedPool(finalPayload));
                    })
@@ -101,8 +102,7 @@ const mapDispatchToProps = (dispatch) => {
   
   });
   });
-  
-  });
+
     },
     
 

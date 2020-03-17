@@ -26,7 +26,6 @@ export default class PoolTokens extends Component {
   
   componentWillMount() {
     this.props.getSmartTokensWithSymbols();
-    
   }
   
   render() {
