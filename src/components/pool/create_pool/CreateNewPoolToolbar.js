@@ -6,7 +6,7 @@ export default class CreateNewPoolToolbar extends Component {
     return (
       <div>
             <Row className="toolbar-row">
-        <div className="h4 left-align-text">Create new liquidity pool</div>
+        <div className="h5 page-header left-align-text">Create new liquidity pool</div>
         </Row>
       </div>
       )

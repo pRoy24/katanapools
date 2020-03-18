@@ -27,7 +27,7 @@ export default class SwapTokenToolbar extends Component {
       <div>
       <Row className="toolbar-row">
         <Col lg={8} >
-          <div className="h4 left-align-text">Swap Tokens</div>
+          <div className="h5 page-header left-align-text">Swap Tokens</div>
         </Col>
         <Col lg={2} className="toolbar-options-check">
           <Form.Check type="checkbox" label="Convertible Tokens" onChange={this.converibleTokenToggle} checked={convertibleTokenCheck}/>

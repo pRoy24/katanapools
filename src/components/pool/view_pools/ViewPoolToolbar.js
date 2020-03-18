@@ -21,7 +21,7 @@ export default class ViewPoolToolbar extends Component {
       <div>
       <Row className="toolbar-row">
         <Col lg={2}>
-              <div className="h4 left-align-text">View pools</div>
+              <div className="h5 page-header left-align-text">View pools</div>
         </Col>
         <Col lg={6}>
           <Form.Control type="text" placeholder="search by pool token name or symbol" onChange={this.searchInputChanged} value={searchInput}/>
