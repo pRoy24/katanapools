@@ -2,8 +2,11 @@ import ViewPools from './ViewPools';
 
 import {connect} from 'react-redux';
 
-import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory} from '../../../actions/pool';
+import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
+  setPoolTransactionStatus
+} from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
+
 import axios from 'axios';
 import  {toDecimals, fromDecimals} from '../../../utils/eth';
 import moment from 'moment'
@@ -28,14 +31,12 @@ const mapDispatchToProps = (dispatch) => {
   return {
     
     getPoolDetails: (poolRow) => {
-
+      dispatch(setCurrentSelectedPool({}));
       const web3 = window.web3;
       
       const senderAddress = web3.currentProvider.selectedAddress;
 
       RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
-
-          
         const poolSmartTokenAddress = poolRow.address;
         RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
           RegistryUtils.getERC20DData(poolSmartTokenAddress).then(function(tokenData){
@@ -106,37 +107,39 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     submitPoolBuy: (args) => {
-
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
     
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
-
-      let reserve1Contract = null;
-      let reserve2Contract = null;
-      if (!args.reserve1.isEth) {
-        reserve1Contract = new web3.eth.Contract(ERC20Token, args.reserve1.address);
-      } else {
-        reserve1Contract = new web3.eth.Contract(EtherToken, args.reserve2.address);
-      }
-      
-      if (!args.reserve2.isEth) {
-        reserve2Contract = new web3.eth.Contract(ERC20Token, args.reserve2.address);
-      } else {
-        reserve2Contract = new web3.eth.Contract(EtherToken, args.reserve2.address);
-      }
-      
-      getApproval(reserve1Contract, senderAddress,  args.converterAddress, args.reserve1.amount, args.reserve1.isEth).then(function(res){
-        
-        getApproval(reserve2Contract, senderAddress, args.converterAddress, args.reserve2.amount, args.reserve2.isEth).then(function(res2){
-          
-          ConverterContract.methods.fund(args.poolTokenNeeded).send({
-            from: senderAddress
-          }).then(function(fundRes){
-            console.log(fundRes);
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'waiting for user approval'}));
+      let resNeededApproval = args.reservesNeeded.map(function(item){
+        let reserveContract = {};
+        if (item.symbol === 'ETH') {
+          reserveContract = new web3.eth.Contract(EtherToken, item.address);
+          const reserveAmount = item.neededMin;
+          return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}).then(function(response){
+            return response;
           })
-        })
+        } else {
+          reserveContract = new web3.eth.Contract(ERC20Token, item.address);
+          const reserveAmount = item.neededMin;
+          return getApproval(reserveContract, senderAddress,  args.converterAddress, reserveAmount).then(function(res){
+            return res;
+          })
+        }
+      });
+      
+      Promise.all(resNeededApproval).then(function(approvalResponse){
+          ConverterContract.methods.fund(args.poolTokenProvided).send({
+            from: senderAddress
+          }, function(err, txHash){
+            dispatch(setPoolTransactionStatus({type: 'pending', message: 'Funding pool with reserve tokens'}));
+          }).then(function(fundRes){
+            dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Funding pool with reserve tokens'}));
+          })        
       })
+      
+ 
     },
     
     submitPoolSell: (args) => {
@@ -144,15 +147,13 @@ const mapDispatchToProps = (dispatch) => {
       const senderAddress = web3.currentProvider.selectedAddress;
     
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
-      const PoolTokenContract = new web3.eth.Contract(SmartToken, args.poolAddress);
-      getApproval(PoolTokenContract, senderAddress,  args.converterAddress, args.poolTokenSold, false).then(function(res){
-        
+
       ConverterContract.methods.liquidate(args.poolTokenSold).send({
         from: senderAddress
       }).then(function(sendResponse){
         console.log(sendResponse);
       })
-      });
+
     },
     
     fetchConversionVolume: (selectedPool) => {
@@ -201,34 +202,19 @@ function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
   });  
 }
 
-function getApproval(contract, owner, spender, amount, isEth) {
-  if (isEth) {
-     return contract.methods.decimals().call().then(function(amountDecimals){
-       let minAmount = toDecimals(amount, amountDecimals);
-    return contract.methods.deposit().send({
-      from: owner
-    }).then(function(depositResponse){
-      return depositResponse;
-    })
+function getApproval(contract, owner, spender, amount) {
 
-    
-    });
-  } else {
   return contract.methods.decimals().call().then(function(amountDecimals){
-    
-
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
     if (!allowance || typeof allowance === undefined) {
       allowance = 0;
     }
-
-    let minAmount = toDecimals(amount, amountDecimals);
+    let minAmount = amount;
     let minAllowance = toDecimals(allowance, amountDecimals);
-
     let diff = new BigNumber(minAllowance).minus(new BigNumber(minAmount));
 
     if (diff.isNegative()) {
-    return contract.methods.approve(spender, minAllowance).send({
+    return contract.methods.approve(spender, minAmount).send({
       from: owner
     }).then(function(allowanceResponse){
       return allowanceResponse;
@@ -238,7 +224,6 @@ function getApproval(contract, owner, spender, amount, isEth) {
     }
   });
   });
-  }
 }
 
 

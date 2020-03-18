@@ -9,34 +9,41 @@ import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/Ob
 export default class ViewPool extends Component {
   constructor(props) {
     super(props);
-    this.state = {smartTokensWithReserves: []};
+    this.state = {poolData: []};
   }
   filterInputList = (searchVal) => {
-
     const searchString = searchVal && searchVal.length > 0 ?searchVal.toLowerCase() : '';
-    const {smartTokensWithReserves} = this.state;
+    const {poolData} = this.state;
     let filteredPoolData = [];
-    if (searchString && smartTokensWithReserves.length > 0){
-     filteredPoolData = smartTokensWithReserves.filter(function(item){
+    if (searchString && searchString.length > 0 && poolData.length > 0){
+     filteredPoolData = poolData.filter(function(item){
       return item.symbol.toLowerCase().includes(searchString) || item.name.toLowerCase().includes(searchString)
     });
     } else {
        filteredPoolData = this.props.smartTokensWithReserves;
     }
-    this.setState({smartTokensWithReserves: filteredPoolData});
+    this.setState({poolData: filteredPoolData});
+  }
+  componentWillMount() {
+    const {smartTokensWithReserves} = this.props;
+    this.setState({poolData: smartTokensWithReserves});
+  }
+  componentWillUnmount() {
+    this.setState({poolData: [], })
   }
   componentWillReceiveProps(nextProps) {
     const {smartTokensWithReserves} = nextProps;
 
-    if (nextProps.smartTokensWithReserves && nextProps.smartTokensWithReserves.length !== this.props.smartTokensWithReserves.length) {
-    //  this.setState({smartTokensWithReserve: smartTokensWithReserves});
+    if (nextProps.smartTokensWithReserves.length > 0 && nextProps.smartTokensWithReserves.length !== this.props.smartTokensWithReserves.length) {
+      this.setState({poolData: smartTokensWithReserves});
     }
   }
   render() {
+    const {poolData} = this.state;
     return (
       <div>
         <ViewPoolToolbar filterInputList={this.filterInputList}/>
-        <ViewPoolWidget {...this.props}/>
+        <ViewPoolWidget {...this.props} poolData={poolData}/>
       </div>
       )
   }
@@ -51,31 +58,31 @@ class ViewPoolWidget extends Component {
   setSelectedPool (selectedPool, idx) {
     this.props.getPoolDetails(selectedPool);
     this.setState({selectedPoolIndex: idx});
+    
   }
   
   componentWillReceiveProps(nextProps) {
-    const {smartTokensWithReserves} = nextProps;
+    const {poolData} = nextProps;
     
-    if (isEmptyArray(this.props.smartTokensWithReserves) && isNonEmptyArray(smartTokensWithReserves)) {
+    if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
       
-          let selectedPoolIndex = smartTokensWithReserves.findIndex(function(item){
+          let selectedPoolIndex = poolData.findIndex(function(item){
             return item.symbol === 'ETHBNT';
           });
-          if (selectedPoolIndex === -1) {
-            selectedPoolIndex = 0;
+          if (selectedPoolIndex !== -1) {
+            this.setState({selectedPoolIndex: selectedPoolIndex});
+            this.props.getPoolDetails(poolData[selectedPoolIndex]);
           }
-          this.setState({selectedPoolIndex: selectedPoolIndex});
-          this.props.getPoolDetails(smartTokensWithReserves[selectedPoolIndex]);
     }
   }
   
   render() {
-    const { pool: {currentSelectedPool}, smartTokensWithReserves} = this.props;
+    const { pool: {currentSelectedPool}, poolData} = this.props;
 
     const {selectedPoolIndex} = this.state;
     const self = this;
     let poolDataList = <span/>;
-    if (smartTokensWithReserves.length === 0) {
+    if (poolData.length === 0) {
       poolDataList =  <span/>;
     } else {
       poolDataList = 
@@ -84,7 +91,7 @@ class ViewPoolWidget extends Component {
               Symbol
         </ListGroupItem>
        {
-         smartTokensWithReserves.map(function(poolRow, idx){
+         poolData.map(function(poolRow, idx){
          let cellActive = '';
          if (idx === selectedPoolIndex) {
            cellActive = 'cell-active';
@@ -105,7 +112,7 @@ class ViewPoolWidget extends Component {
     }
     return (
       <div className="app-toolbar-container">
-        <Row >
+        <Row style={{'marginBottom': '40px'}}>
         <Col lg={2}>
         <ListGroup className="select-pool-group">
           {poolDataList}

@@ -41,7 +41,7 @@ const SwapActions = require('../actions/swap');
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
       return converterRegistry.methods.getSmartTokens().call()
       .then(function(data){
-        return Promise.all(fetchTokenSymbol(data)).then(function(tokenData){
+        return Promise.all(fetchTokenSymbolAndName(data)).then(function(tokenData){
           return tokenData;
         })
     
@@ -258,12 +258,14 @@ function getConvertibleToSmartTokenMapping() {
   })
 }
 
-function fetchTokenSymbol(dataList) {
+function fetchTokenSymbolAndName(dataList) {
   const web3 = window.web3;
   return dataList.map(function(tokenAddress){
     let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
         return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
-              return Object.assign({}, {symbol: tokenSymbol, address: tokenAddress})
+          return CurrentToken.methods.name().call().then(function(tokenName){
+              return Object.assign({}, {symbol: tokenSymbol, address: tokenAddress, name: tokenName});
+          });
         })
   }) 
 }

@@ -30,6 +30,14 @@ export const SET_TOKEN_LIST_ROW = 'SET_TOKEN_LIST_ROW';
 
 export const SET_POOL_HISTORY = 'SET_POOL_HISTORY';
 
+export const SET_POOL_TRANSACTION_STATUS = 'SET_POOL_TRANSACTION_STATUS';
+
+export function setPoolTransactionStatus(payload) {
+  return {
+    type: SET_POOL_TRANSACTION_STATUS,
+    payload: payload
+  }
+}
 export function setPoolHistory(payload) {
   return {
     payload: payload,

@@ -4,7 +4,6 @@ import PoolTokens from './PoolTokens';
 const mapStateToProps = state => {
   return {
      smartTokensWithReserves: state.tokens.smartTokensWithReserves,
-    
   }
 }
 

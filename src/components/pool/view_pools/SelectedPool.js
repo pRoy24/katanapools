@@ -15,7 +15,7 @@ export default class SelectedPool extends Component {
 
   onFundInputChanged = (evt) => {
     let inputFund = evt.target.value;
-    this.calculateAmount(inputFund);
+    this.calculateFundingAmount(inputFund);
     this.setState({fundAmount: inputFund});
   }
   
@@ -33,86 +33,73 @@ export default class SelectedPool extends Component {
 
     
     const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
+
+
+    const currentReserves = currentSelectedPool.reserves;
     
-    const reserve1CurrentSupply = new BigNumber(currentSelectedPool.reserves[0].reserveBalance);
+    const reservesAdded = currentReserves.map(function(item){
+      const currentReserveSupply = new BigNumber(item.reserveBalance);
+      const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
+      const currentReserveAddedMin = toDecimals(currentReserveAdded, item.decimals);
+      const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
+      return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
+    });
     
-    let reserve1Added = pcDecreaseSupply.multipliedBy(reserve1CurrentSupply);
+    this.setState({reservesAdded: reservesAdded});
     
-    const reserve2CurrentSupply = new BigNumber(currentSelectedPool.reserves[1].reserveBalance);
-    let reserve2Added = pcDecreaseSupply.multipliedBy(reserve2CurrentSupply);    
-    
-    const reserve1AddeddMin = toDecimals(reserve1Added, 18);
-    const reserve2AddedMin = toDecimals(reserve2Added, 18);
-    
-     reserve1Added = reserve1Added.toPrecision(4, 0);
-     reserve2Added = reserve2Added.toPrecision(4, 0);
-    this.setState({
-      reserve1AddedMin: reserve1AddeddMin,
-      reserve1Added: reserve1Added, reserve2AddedMin: reserve2AddedMin,
-      reserve2Added: reserve2Added, }) ;
+
    
   }
   
-  calculateAmount = (inputFund) => {
+  calculateFundingAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
 
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const addSupply = new BigNumber(inputFund);
 
+
     const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
-
-    const reserve1CurrentSupply = new BigNumber(currentSelectedPool.reserves[0].reserveBalance);
-
-    let reserve1Needed = pcIncreaseSupply.multipliedBy(reserve1CurrentSupply);
-
-    const reserve2CurrentSupply = new BigNumber(currentSelectedPool.reserves[1].reserveBalance);
-    let reserve2Needed = pcIncreaseSupply.multipliedBy(reserve2CurrentSupply);
+    const currentReserves = currentSelectedPool.reserves;
     
-    const reserve1NeededMin = toDecimals(reserve1Needed, 18);
-    const reserve2NeededMin = toDecimals(reserve2Needed, 18);
-    
-   reserve1Needed = reserve1Needed.toPrecision(4, 0);
-    reserve2Needed = reserve2Needed.toPrecision(4, 0);
+    const reservesNeeded = currentReserves.map(function(item){
+      const currentReserveSupply = new BigNumber(item.reserveBalance);
+      const currentReserveNeeded = pcIncreaseSupply.multipliedBy(currentReserveSupply);
+      const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(6), item.decimals);
 
+      const currentReserveNeededDisplay = currentReserveNeeded.toPrecision(6, 0);
+      return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
+    });
     
-   this.setState({
-     reserve1NeededMin: reserve1NeededMin,
-    reserve1Needed: reserve1Needed, reserve2NeededMin: reserve2NeededMin,
-   reserve2Needed: reserve2Needed, }) ;
+    this.setState({reservesNeeded: reservesNeeded});
   }
 
   
   submitBuyPoolToken = () => {
 
-    const {reserve1NeededMin, reserve2NeededMin, fundAmount} = this.state;
+    const {fundAmount, reservesNeeded} = this.state;
     const {pool: {currentSelectedPool}} = this.props;
 
-    const reserve1 = {'address': currentSelectedPool.reserves[0].address, 'amount': reserve1NeededMin,
-      isEth: currentSelectedPool.reserves[0].symbol.toLowerCase() === 'eth'};
-    
-    const reserve2 = {'address': currentSelectedPool.reserves[1].address, 'amount': reserve1NeededMin,
-      isEth: currentSelectedPool.reserves[1].symbol.toLowerCase() === 'eth'};
-      
-    const args = {'reserve1':  reserve1, 'reserve2': reserve2, poolTokenNeeded: toDecimals(fundAmount, 18),
-    'converterAddress': currentSelectedPool.converter
-    }
+    const args = {poolTokenProvided: toDecimals(fundAmount, currentSelectedPool.decimals),
+    reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
     this.props.submitPoolBuy(args);
   }
   
   submitSellPoolToken = () => {
     const {pool: {currentSelectedPool, currentSelectedPoolError}} = this.props;
         
-    const {liquidateAmount} = this.state;
+    const {liquidateAmount, reservesAdded} = this.state;
+
     const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
-      'converterAddress': currentSelectedPool.converter,
-      'poolAddress': currentSelectedPool.address,
+    reservesAdded: reservesAdded, converterAddress: currentSelectedPool.converter,
+      'poolAddress': currentSelectedPool.address
     };
+    
     this.props.submitPoolSell(args);
   }
   
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
-
+    const {reservesNeeded, reservesAdded} = this.state;
         
     let reserveRatio = '';
     if (!currentSelectedPool.reserves) {
@@ -146,7 +133,7 @@ export default class SelectedPool extends Component {
     let userHoldingsList = currentSelectedPool.reserves.map(function(item, idx){
       return (<div key={`token-${idx}`}>
         <div className="holdings-label">{item.name}</div>
-        <div className="holdings-data">&nbsp;{parseInt(item.userBalance)}</div>
+        <div className="holdings-data">&nbsp;{parseFloat(item.userBalance).toFixed(4)}</div>
       </div>)
     });
     
@@ -157,8 +144,9 @@ export default class SelectedPool extends Component {
       liquidateInfo = (
         <div>
           <div>You will receive</div>
-          <div>{reserve1Added} {currentSelectedPool.reserves[0].symbol}</div>
-          <div>{reserve2Added} {currentSelectedPool.reserves[1].symbol}</div>
+            {reservesAdded.map(function(item, idx){
+              return <div key={`reserve-added-${idx}`}>{item.addedDisplay} {item.symbol}</div>
+            })}
         </div>    
         )
     }
@@ -168,8 +156,9 @@ export default class SelectedPool extends Component {
       fundInfo = (
         <div>
             <div>You will needs to stake</div>
-            <div>{reserve1Needed} {currentSelectedPool.reserves[0].symbol}</div>
-            <div>{reserve2Needed} {currentSelectedPool.reserves[1].symbol}</div>
+            {reservesNeeded.map(function(item, idx){
+              return <div key={`reserve-needed-${idx}`}>{item.neededDisplay} {item.symbol}</div>
+            })}
         </div>    
         )
     }
@@ -273,6 +262,7 @@ class VolumeGraph extends Component {
     const {poolHistory, selectedPool: {symbol}} = this.props;
 
     let graphData = poolHistory.map(function(item){
+      
       return {x: moment(item.timeStamp).format('MM-DD'), y: parseInt(item.data)}
     });
 
@@ -300,7 +290,7 @@ class VolumeGraph extends Component {
       <VictoryAxis fixLabelOverlap={true}/> 
       
     </VictoryChart>
-    <div className="h6 text-center">Daily conversions from tokens to {symbol}</div>
+    <div className="h7 text-center">Daily conversion vol from reserve to {symbol} (ETH)</div>
     </div>
       
       )

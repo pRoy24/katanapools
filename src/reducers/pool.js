@@ -1,7 +1,7 @@
 import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN_RECEIPT, DEPLOY_SMART_TOKEN_CONFIRMATION
 ,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_CONVERTER_STATUS, SET_CONVERTER_CONTRACT_RECEIPT,
 SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
-  SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY
+  SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS
 } from '../actions/pool';
 
 const initialState = {
@@ -18,7 +18,8 @@ const initialState = {
   currentSelectedPool: {},
   currentSelectedPoolError: false,
   tokenList: [],
-  poolHistory: []
+  poolHistory: [],
+  poolTransactionStatus: {}
 }
 
 export default function poolReducer (state = initialState, action) {
@@ -99,6 +100,8 @@ export default function poolReducer (state = initialState, action) {
       return {...state, currentSelectedPool: action.payload, currentSelectedPoolError: false}
     case SET_CURRENT_SELECTED_POOL_ERROR:
       return {...state, currentSelectedPool: {}, currentSelectedPoolError: true}
+    case SET_POOL_TRANSACTION_STATUS:
+      return {...state, poolTransactionStatus: action.payload}
     default:
       return state
   }

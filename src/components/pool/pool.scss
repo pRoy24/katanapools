@@ -90,7 +90,9 @@
 }
 
 .select-pool-group {
-  height: 70vh;
+  height: auto;
+  max-height: 80vh;
+  overflow-x: hidden;
   width: 100%;
   overflow-y: scroll;
   background: #fff;
