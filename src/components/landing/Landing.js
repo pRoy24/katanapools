@@ -62,10 +62,6 @@ export default class Landing extends Component {
            this.setState({currentView: 'prompt'});
       }
     });
-    
-    
-
-
   }
   
 
@@ -101,12 +97,6 @@ class AppHome extends Component {
     this.web3 = window.web3;
   }
   
-  componentWillMount() {
-
-      //  this.props.getConvertibleToSmartTokenMap();
-  }
-  
-
   render() {
     const web3 = window.web3;
 
