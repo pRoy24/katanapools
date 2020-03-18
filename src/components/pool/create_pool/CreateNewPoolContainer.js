@@ -5,7 +5,7 @@ import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, 
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
   setActivationStatus, setPoolCreationReceipt, setTokenListDetails, setTokenListRow
 } from '../../../actions/pool';
-
+import {isNonEmptyObject} from '../../../utils/ObjectUtils';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 const SmartToken = require('../../../contracts/SmartToken.json');
 const SmartTokenByteCode = require('../../../contracts/SmartTokenByteCode.js');
@@ -82,10 +82,17 @@ const mapDispatchToProps = (dispatch) => {
 
     const smartTokenAddress = args.smartTokenAddress;
 
+    const relayToken = tokenAddressList.find((i)=>(i.type === 'relay'));
+    let relayTokenAddress = '0x0000000000000000000000000000000000000000';
+    let relayTokenWeight = 0;
+    if (isNonEmptyObject(relayToken)) {
+      relayTokenAddress = relayToken.address;
+      relayTokenWeight = relayToken.weight * 10000;
+    }
     // Set converter details in reducer
     
     getTokenListData(tokenAddressList).then(function(tokenListDetails){
-      
+
       dispatch(setTokenListDetails(tokenListDetails));
       
       // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
@@ -99,8 +106,8 @@ const mapDispatchToProps = (dispatch) => {
                         smartTokenAddress, 
                         contractRegistryContractAddress,
                         maxFee,
-                        '0x0000000000000000000000000000000000000000',
-                        0
+                        relayTokenAddress,
+                        relayTokenWeight
                       ]});
       
       deployer.send({
@@ -129,7 +136,7 @@ const mapDispatchToProps = (dispatch) => {
       .then(function(deployerContractInstance){
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding network connector`}));
-          let convertibleTokenDeploy = tokenAddressList.map(function(item, idx){
+          let convertibleTokenDeploy = tokenAddressList.filter((a)=>(a.type === 'convertible')).map(function(item, idx){
               let itemWeight = item.weight * 10000;
               return  deployerContractInstance.methods.addReserve(item.address, itemWeight).send({
                   from: walletAddress
@@ -153,13 +160,20 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     getTokenDetailFromAddress: (val, idx) => {
+
       const web3 = window.web3;
-      
+      const senderAddress = web3.currentProvider.selectedAddress;
       const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
       if (val && val.length > 0) {
       
       ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
-      //  return tokenSymbol;
+        let isEth = false;
+        if (tokenSymbol === 'ETH') {
+          isEth = true;
+        }
+
+        ERC20TokenContract.methods.balanceOf(senderAddress).call().then(function(senderBalance){
+
         axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
           let tokenPrice = "";
           if (dataResponse.data && dataResponse.data.USD) {
@@ -167,6 +181,7 @@ const mapDispatchToProps = (dispatch) => {
           }
           const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice}};
          dispatch(setTokenListDetails(poolData));  
+        })
         })
       })
       }
@@ -205,8 +220,7 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     activatePool: (args) => {
-      console.log(args);
-      
+
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
             
@@ -336,24 +350,35 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
 
 function getTokenListData(tokenList) {
       const web3 = window.web3;
-      
+      const senderAddress = web3.currentProvider.selectedAddress;      
       let tokenDetailList = tokenList.map(function(item){
       const val = item.address;
       const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
-      if (val && val.length > 0) {
+
         return  ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+          
+     return ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+        let isEth = false;
+        if (tokenSymbol === 'ETH') {
+          isEth = true;
+        }
+      return  ERC20TokenContract.methods.decimals().call().then(function(decimals){
+      return  ERC20TokenContract.methods.balanceOf(senderAddress).call().then(function(senderBalance){
+          let senderDecimalBalance = fromDecimals(senderBalance, decimals);
           return  axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
             let tokenPrice = "";
             if (dataResponse.data && dataResponse.data.USD) {
               tokenPrice = dataResponse.data.USD;
             }
-            let returnData = Object.assign({}, item, {'symbol': tokenSymbol, 'price': tokenPrice});
+            let returnData = Object.assign({}, item, {'symbol': tokenSymbol, 'price': tokenPrice, 'senderBalance': senderDecimalBalance});
             return returnData;
           })
+        })
+      });
         });
-      } else {
-        return null;
-      }
+
+      });
+      
       });
       
       return Promise.all(tokenDetailList).then(function(detailListData){

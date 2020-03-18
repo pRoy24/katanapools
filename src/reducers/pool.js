@@ -58,7 +58,7 @@ export default function poolReducer (state = initialState, action) {
         ...state,
         smartTokenStatus:  action.payload,
         isError: false,
-        isFetching: true
+        isFetching: false
       }
     case DEPLOY_SMART_TOKEN_CONFIRMATION:
       return {

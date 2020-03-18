@@ -7,7 +7,8 @@ import {
   StepperContent,
   StepperContext
 } from "react-material-stepper";
-import {isEmptyObject, isNonEmptyObject} from '../../../utils/ObjectUtils';
+
+import {isEmptyObject, isNonEmptyObject, isEmptyString} from '../../../utils/ObjectUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
@@ -28,17 +29,27 @@ export default class CreateNewPool extends Component {
     this.setState({stepOneReceipt: val});
   }
   deployPoolContract = (vals) => {
-    this.setState({poolName: vals.poolName, poolSymbol: vals.poolSymbol});
-    this.props.deployPoolContract(vals);
+    if (isEmptyString(vals.poolName)) {
+      this.setState({isError: true, errorMessage: 'Pool name cannot be empty'});
+    } else if (isEmptyString(vals.poolSymbol)) {
+      this.setState({isError: true, errorMessage: 'Pool symbol cannot be empty'});      
+    } else {
+      this.setState({isError: false});
+      this.setState({poolName: vals.poolName, poolSymbol: vals.poolSymbol});
+      this.props.deployPoolContract(vals);
+    }
   }
   
   getAddressList = () => {
     const {pool: {tokenList}} = this.props;
-
     return tokenList;
   }
+  
   deployConverterContract = (vals) => {
+    const web3 = window.web3;
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
+    let isValidationError = false;
+    const self = this;
     this.setState({convertibleTokenAddress: vals.convertibleTokenAddress, relayTokenAddress: smartTokenStatus.contractAddress});
     const {tokenArrayList} = vals;
    let tokenAddressList = [];
@@ -46,13 +57,19 @@ export default class CreateNewPool extends Component {
     const baseReserveAddress = this.getBaseReserveAddress(vals.baseReserveSelected); 
     tokenAddressList.push({'address': baseReserveAddress, 'weight': parseFloat(vals.baseReserveWeight), 'type': 'relay'});
    }
-   tokenArrayList.forEach(function(item){
-     if (item.address && item.weight) {
-       tokenAddressList.push({
-         'address': item.address,
-         'weight': parseFloat(item.weight),
-         'type': 'convertible'
-       })
+   tokenArrayList.forEach(function(item, idx){
+     if (!isEmptyString(item.address) && item.weight && item.weight > 0) {
+       try {
+         const itemAddress = web3.utils.toChecksumAddress(item.address);
+         tokenAddressList.push({
+           'address': itemAddress,
+           'weight': parseFloat(item.weight),
+           'type': 'convertible'
+         })
+       } catch(e) {
+         isValidationError = true;
+         self.setState({isError: true, errorMessage: `Address at row ${idx + 1} is not a valid ERC20 address`});
+       }
      }
    })
      
@@ -65,7 +82,7 @@ export default class CreateNewPool extends Component {
 
    if (totalWeight > 100) {
      this.setState({isError: true, errorMessage: 'Total weight cannot be more than 100'});
-   } else {
+   } else if (!isValidationError) {
     this.setState({isError: false, errorMessage: '', tokenAddressList: tokenAddressList});
     const args = {
       reserveFee: parseFloat(vals.reserveFee),
@@ -107,18 +124,30 @@ export default class CreateNewPool extends Component {
   }
   
   fundRelayWithSupply = (vals) => {
-
+    const self = this;
     const {pool, pool: {relayContractReceipt, converterContractReceipt}} = this.props;
     const {relayTokenAddress, convertibleTokenAddress} = this.state;
+    const tokenList = vals.tokenAddressList;
 
+    let isValidationError = false;
+    tokenList.forEach(function(tokenItem, idx){
+      if (parseFloat(tokenItem.amount) > parseFloat(tokenItem.senderBalance)) {
+        self.setState({isError: true, errorMessage: `Amount entered for ${tokenItem.symbol}
+        is greater than wallet balance for ${tokenItem.symbol}`});
+        isValidationError = true;
+      }  
+    });
+    
     const args = {
       convertibleTokens: vals.tokenAddressList,
       initialSupply: vals.initialSupply,
       smartTokenAddress: relayTokenAddress,
       converterAddress: converterContractReceipt.contractAddress
     }
-
-    this.props.fundRelayWithSupply(args);
+    if (!isValidationError) {
+        this.setState({isError: false, errorMessage: ''});      
+      this.props.fundRelayWithSupply(args);
+    }
   }
   
   componentWillReceiveProps(nextProps) {
@@ -298,6 +327,9 @@ class Step1 extends Component {
         <Form.Group controlId="formBasicPassword">
           <Form.Label>Pool Symbol</Form.Label>
           <Form.Control type="text" placeholder="symbol" value={poolSymbol} onChange={this.formSymbolChanged}/>
+          <Form.Text className="text-muted" >
+            Enter the pool symbol eg. XXXYYY for a relay with XXX and YYY
+          </Form.Text>          
         </Form.Group>
         <Form.Group controlId="formBasicPassword">
           <Form.Label>Pool Decimals</Form.Label>
@@ -570,7 +602,6 @@ class Step3 extends Component {
   render() {
     const {tokenAmount, connectorAmount, tokenAddressList, numPoolTokens} = this.state;
     const self = this;
-    
     let tokenAmountDisplay = tokenAddressList.map(function(item, key){
        return <TokenAmountRow key={`amount-row-${key}`} item={item} idx={key} setTokenAmount={self.setTokenAmount}/>      
     });
@@ -637,7 +668,7 @@ class TransactioReceiptPage extends Component {
   }
   render() {
     const {pool: {poolCreationReceipt, tokenList}} = this.props;
-    let receiptObject = <span/>;
+    let receiptObject = <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>;
 
     let poolConvertibleTokens = tokenList.map(function(item, idx){
       return (<ListGroupItem>
@@ -652,7 +683,7 @@ class TransactioReceiptPage extends Component {
           <div className="h6">Pool Details.</div>
           <div className="pool-details-block">
             <Row>
-            <Col lg={6}>
+            <Col lg={3} xs={6}>
             <div className="cell-label">
               Name:
             </div>
@@ -660,7 +691,7 @@ class TransactioReceiptPage extends Component {
               {poolCreationReceipt.poolName}
             </div>
             </Col>
-            <Col lg={6}>
+            <Col lg={3} xs={6}>
             <div className="cell-label">Symbol: </div>
             <div className="cell-value">
               {poolCreationReceipt.poolSymbol}
@@ -668,13 +699,13 @@ class TransactioReceiptPage extends Component {
             </Col>
             </Row>
             <Row>
-            <Col lg={6}>
+            <Col lg={3} xs={6}>
             <div className="cell-label">Address: </div>
             <div className="cell-value">
               {poolCreationReceipt.poolAddress}
             </div>
             </Col>
-            <Col lg={6}>
+            <Col lg={3} xs={6}>
             <div className="cell-label">Supply: </div>
             <div className="cell-value">
             {poolCreationReceipt.poolSupply}
@@ -789,7 +820,7 @@ class TokenAmountRow extends Component {
           <Form.Control type="text" placeholder="enter amount of token to transfer" value={tokenAmount} 
           onChange={this.tokenAmountChanged} />
           <Form.Text className="text-muted">
-            Total USD value = {tokenUSDValue}
+            Total USD value = {tokenUSDValue}. Your wallet balance {item.senderBalance}
           </Form.Text>
         </Form.Group>      
       </div>

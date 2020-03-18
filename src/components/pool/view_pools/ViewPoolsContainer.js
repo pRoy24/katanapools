@@ -105,8 +105,6 @@ const mapDispatchToProps = (dispatch) => {
 
     },
     
-
-    
     submitPoolBuy: (args) => {
 
       const web3 = window.web3;
@@ -160,7 +158,7 @@ const mapDispatchToProps = (dispatch) => {
     fetchConversionVolume: (selectedPool) => {
       const  toCurrencyCode = selectedPool.symbol;
       let  fromCurrencyCode = '';
-      if (selectedPool.reserves.length >= 1) {
+      if (selectedPool.reserves.length > 1) {
        fromCurrencyCode = selectedPool.reserves[1].symbol;
       } else if (selectedPool.reserves.length === 1) {
         fromCurrencyCode = selectedPool.reserves[0].symbol;
