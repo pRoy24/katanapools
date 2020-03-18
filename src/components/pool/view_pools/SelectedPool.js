@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Container, Row, Col, Form, Button} from 'react-bootstrap';
+import {Container, Row, Col, Form, Button, Alert} from 'react-bootstrap';
 import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
@@ -12,7 +12,6 @@ export default class SelectedPool extends Component {
     this.state= {fundAmount: 0, liquidateAmount: 0, reserve1Needed: 0, reserve2Needed: 0}
   }
   
-
   onFundInputChanged = (evt) => {
     let inputFund = evt.target.value;
     this.calculateFundingAmount(inputFund);
@@ -30,25 +29,18 @@ export default class SelectedPool extends Component {
     
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const removeSupply = new BigNumber(inputFund);
-
-    
     const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
-
-
     const currentReserves = currentSelectedPool.reserves;
     
     const reservesAdded = currentReserves.map(function(item){
       const currentReserveSupply = new BigNumber(item.reserveBalance);
       const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
-      const currentReserveAddedMin = toDecimals(currentReserveAdded, item.decimals);
+      const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(6), item.decimals);
       const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
       return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
     });
     
     this.setState({reservesAdded: reservesAdded});
-    
-
-   
   }
   
   calculateFundingAmount = (inputFund) => {
@@ -56,11 +48,8 @@ export default class SelectedPool extends Component {
 
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const addSupply = new BigNumber(inputFund);
-
-
     const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
     const currentReserves = currentSelectedPool.reserves;
-    
     const reservesNeeded = currentReserves.map(function(item){
       const currentReserveSupply = new BigNumber(item.reserveBalance);
       const currentReserveNeeded = pcIncreaseSupply.multipliedBy(currentReserveSupply);
@@ -78,23 +67,42 @@ export default class SelectedPool extends Component {
 
     const {fundAmount, reservesNeeded} = this.state;
     const {pool: {currentSelectedPool}} = this.props;
-
+    const self = this;
     const args = {poolTokenProvided: toDecimals(fundAmount, currentSelectedPool.decimals),
     reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
-    this.props.submitPoolBuy(args);
+
+    let isError = false;
+    reservesNeeded.forEach(function(reserveItem){
+      if (reserveItem.userBalance < reserveItem.neededDisplay) {
+        isError = true;
+        self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
+      }
+    })
+    if (!isError) {
+      this.props.resetErrorMessage();
+      this.props.submitPoolBuy(args);
+    }
   }
   
   submitSellPoolToken = () => {
-    const {pool: {currentSelectedPool, currentSelectedPoolError}} = this.props;
-        
-    const {liquidateAmount, reservesAdded} = this.state;
+    const {pool: {currentSelectedPool}} = this.props;
 
+    const existingPoolTokenBalance = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
+    const {liquidateAmount, reservesAdded} = this.state;
     const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
     reservesAdded: reservesAdded, converterAddress: currentSelectedPool.converter,
       'poolAddress': currentSelectedPool.address
     };
+    let isError = false;
+    if(parseFloat(liquidateAmount) > parseFloat(existingPoolTokenBalance)) {
+      isError = true;
+      this.props.setErrorMessage(`User balance for ${currentSelectedPool.symbol} is less than needed amount of ${liquidateAmount}`);
+    }
     
-    this.props.submitPoolSell(args);
+    if (!isError){
+      this.props.resetErrorMessage();
+      this.props.submitPoolSell(args);
+    }
   }
   
   render() {
@@ -120,7 +128,7 @@ export default class SelectedPool extends Component {
       <div>Currently only pool contracts which expose reserveTokenCount() and reserveTokens() methods are supported.</div>
       </div>)
     }
-    const {reserve1Needed, reserve2Needed, reserve1Added, reserve2Added, fundAmount, liquidateAmount} = this.state;
+    const { fundAmount, liquidateAmount, isError, errorMessage } = this.state;
 
     let minTotalSupply = parseFloat(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals)).toFixed(4);
     let reserveTokenList = currentSelectedPool.reserves.map(function(item, idx){
@@ -162,6 +170,7 @@ export default class SelectedPool extends Component {
         </div>    
         )
     }
+
     return (
       <div>
         <Row className="select-pool-row-1">

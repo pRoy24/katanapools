@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import './common.scss';
+import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 export default class AddressDisplay extends Component {
   render() {
@@ -10,7 +11,11 @@ export default class AddressDisplay extends Component {
     return (
       <div className="address-display-container">
         {addressDisplay} 
-        <span className="copy-clipboard-icon"><FontAwesomeIcon icon={faClipboard}/></span>
+        <span className="copy-clipboard-icon">
+          <CopyToClipboard text={address} onCopy={() => this.setState({copied: true})}>
+            <FontAwesomeIcon icon={faClipboard}/>
+          </CopyToClipboard>
+        </span>
       </div>
       )
   }

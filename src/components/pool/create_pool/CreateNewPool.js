@@ -171,6 +171,7 @@ export default class CreateNewPool extends Component {
 
     if (isNonEmptyObject(this.props.pool.activationStatus) && activationStatus.type === 'success' &&
     this.props.pool.activationStatus.type === 'pending') {
+      this.props.getSmartTokensWithSymbols();
       this.setState({showReceiptPage: true});
     }
   }
@@ -697,8 +698,6 @@ class TransactioReceiptPage extends Component {
               {poolCreationReceipt.poolSymbol}
             </div>
             </Col>
-            </Row>
-            <Row>
             <Col lg={3} xs={6}>
             <div className="cell-label">Address: </div>
             <div className="cell-value">

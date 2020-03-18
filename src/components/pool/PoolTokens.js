@@ -35,7 +35,7 @@ export default class PoolTokens extends Component {
       <Container>
           <Switch>
           <Route path="/pool/create">
-            <CreateNewPoolContainer/>
+            <CreateNewPoolContainer getSmartTokensWithSymbols={this.props.getSmartTokensWithSymbols}/>
           </Route>
           <Route path="/pool/view">
             <ViewPoolsContainer smartTokensWithReserves={smartTokensWithReserves}/>
