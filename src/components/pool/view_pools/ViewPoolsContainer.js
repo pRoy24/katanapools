@@ -51,6 +51,11 @@ const mapDispatchToProps = (dispatch) => {
         if (item.symbol === 'ETH') {
           reserveContract = new web3.eth.Contract(EtherToken, item.address);
           const reserveAmount = item.neededMin;
+          // get deposit amount from eth token
+          
+          // if amount to deposit is > balance then deposit remainder
+          
+          
           return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
           }).then(function(response){
