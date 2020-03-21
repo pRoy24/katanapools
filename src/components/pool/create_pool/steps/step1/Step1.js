@@ -35,7 +35,7 @@ export default class Step1 extends Component {
   }
   render() {
     const {poolName, poolSymbol, poolDecimals} = this.state;
-    const {isFetching} = this.props;
+    const {isFetching, isCreationStepPending} = this.props;
 
 function renderNameTooltip(props) {
   return <Tooltip {...props} className="wizard-tooltip">
@@ -113,7 +113,7 @@ function renderDecimalTooltip(props) {
         </Form.Group>
         <Row>
         <Col lg={4}>
-        <Button className="pool-wizard-submit-btn" variant="primary" type="submit" disabled={isFetching}>
+        <Button className="pool-wizard-submit-btn" variant="primary" type="submit" disabled={isCreationStepPending}>
           Next
         </Button>
         </Col>

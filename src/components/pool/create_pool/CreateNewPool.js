@@ -183,6 +183,10 @@ export default class CreateNewPool extends Component {
   // this.props.getTokenDetailFromAddress(val, idx);
   }
 
+  componentWillUnmount() {
+    this.props.resetPoolStatus();
+  }
+
   render() {
     const STEP1 = "step-one";
     const STEP2 = "step-two";

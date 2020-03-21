@@ -3,7 +3,8 @@ import CreateNewPool from './CreateNewPool';
 import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
-  setActivationStatus, setPoolCreationReceipt, setTokenListDetails, setTokenListRow
+  setActivationStatus, setPoolCreationReceipt, setTokenListDetails, setTokenListRow, resetPoolStatus,
+  deployRelayConverterSuccess, setPoolFundedSuccess
 } from '../../../actions/pool';
 import {isNonEmptyObject} from '../../../utils/ObjectUtils';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
@@ -76,6 +77,10 @@ const mapDispatchToProps = (dispatch) => {
         });
 
     },
+
+   resetPoolStatus: () => {
+     dispatch(resetPoolStatus());
+   },
 
     deployRelayConverter: (args) => {
     const web3 = window.web3;
@@ -156,6 +161,7 @@ const mapDispatchToProps = (dispatch) => {
                 dispatch(deployRelayConverterStatus({type: 'pending', message: `Setting conversion fees`}));
               deployerContractInstance.methods.setConversionFee(conversionFee).send({from: walletAddress}).then(function(dataRes){
                 dispatch(deployRelayConverterStatus({type: 'success', message: `Relay token is ready to be used`}));
+                dispatch(deployRelayConverterSuccess());
               });
           });
       });
@@ -219,7 +225,10 @@ const mapDispatchToProps = (dispatch) => {
           return  approveAndFundPool(x, bancorConverterAddress, dispatch, idx, totalConversions);
         });
         Promise.all(approveAndFundPromiseList).then(function(response){
+
           dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
+
+          dispatch(setPoolFundedSuccess());
         })
 
 
@@ -315,7 +324,6 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
       const convertibleTokenMinAmount = toDecimals(convertibleTokenAmount, decimals);
 
       const convertibleTokenMinApprovalAmount = toDecimals(convertibleTokenApprovalAmount, decimals);
-      console.log('getting deposit status');
 
       return getPoolDepositStatus(convertibleTokenAddress, convertibleTokenAmount,
       isEth, dispatch).then(function(depositStatus){
@@ -341,12 +349,7 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
           return convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
               dispatch(setPoolFundedStatus({'type': 'pending', 'message': `transferring ${convertibleToken.amount} ${convertibleToken.symbol} to contract`}));
             }).then(function(txSuccess){
-
-              if (idx === totalConversions) {
-                dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
-              }
               return;
-
             });
           });
 

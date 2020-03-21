@@ -1,7 +1,8 @@
 import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN_RECEIPT, DEPLOY_SMART_TOKEN_CONFIRMATION
 ,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_CONVERTER_STATUS, SET_CONVERTER_CONTRACT_RECEIPT,
 SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
-  SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS
+  SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS, RESET_POOL_STATUS,
+  DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS
 } from '../actions/pool';
 
 const initialState = {
@@ -9,6 +10,7 @@ const initialState = {
   smartTokenContract: {},
   isError: false,
   isFetching: false,
+  isCreationStepPending: false,
   tokenSymbol: '',
   relayConverterStatus: {},
   converterContractReceipt: {},
@@ -25,6 +27,10 @@ const initialState = {
 export default function poolReducer (state = initialState, action) {
   let currentTokenList;
   switch (action.type) {
+    case RESET_POOL_STATUS:
+      return {...state, smartTokenStatus: {}, smartTokenContract: {}, relayConverterStatus: {}, converterContractReceipt: {},
+        poolFundedStatus: {}, activationStatus: {}, poolCreationReceipt: {}, isCreationStepPending: false,
+      }
     case SET_POOL_HISTORY:
       return {...state, poolHistory: action.payload}
 
@@ -50,9 +56,12 @@ export default function poolReducer (state = initialState, action) {
         smartTokenStatus: {'transactionHash': action.payload},
         smartTokenContract: {},
         isError: false,
-        isFetching: true
+        isFetching: true,
+        isCreationStepPending: true,
 
       }
+
+
     case DEPLOY_SMART_TOKEN_RECEIPT:
 
       return {
@@ -79,7 +88,11 @@ export default function poolReducer (state = initialState, action) {
         smartTokenContract: action.payload,
         isError: false,
         isFetching: false,
+        isCreationStepPending: false,
       }
+    case DEPLOY_RELAY_CONVERTER_SUCCESS:
+      return {...state, isCreationStepPending: false}
+
     case DEPLOY_RELAY_CONVERTER_STATUS:
       let isFetchingStatus = false;
       if (action.payload.type === 'pending') {
@@ -88,15 +101,27 @@ export default function poolReducer (state = initialState, action) {
       return {
         ...state,
         isFetching: isFetchingStatus,
-        relayConverterStatus: action.payload
+        relayConverterStatus: action.payload,
+        isCreationStepPending: true,
       }
     case SET_CONVERTER_CONTRACT_RECEIPT:
       return {...state, isFetching: false, converterContractReceipt: action.payload}
 
     case SET_POOL_FUNDED_STATUS:
-      return {...state, poolFundedStatus: action.payload}
+      let isCreationStepPending = false;
+
+      if (action.payload.type === 'pending') {
+        isCreationStepPending = true;
+      }
+      return {...state, poolFundedStatus: action.payload, isFetching: isCreationStepPending, isCreationStepPending: isCreationStepPending}
+
+    case SET_POOL_FUNDED_SUCCESS:
+      return {...state, isCreationStepPending: false}
+
     case SET_ACTIVATION_STATUS:
-      return {...state, activationStatus: action.payload}
+      return {...state, activationStatus: action.payload, isCreationStepPending: true}
+    case SET_ACTIVATION_SUCCESS:
+      return {...state, isCreationStepPending: false}
     case SET_POOL_CREATION_RECEIPT:
       return {...state, poolCreationReceipt: action.payload}
     case SET_CURRENT_SELECTED_POOL:

@@ -32,6 +32,41 @@ export const SET_POOL_HISTORY = 'SET_POOL_HISTORY';
 
 export const SET_POOL_TRANSACTION_STATUS = 'SET_POOL_TRANSACTION_STATUS';
 
+export const RESET_POOL_STATUS = 'RESET_POOL_STATUS';
+
+export const DEPLOY_RELAY_CONVERTER_SUCCESS = 'DEPLOY_RELAY_CONVERTER_SUCCESS';
+
+export const SET_POOL_FUNDED_SUCCESS = 'SET_POOL_FUNDED_SUCCESS';
+
+export const SET_ACTIVATION_SUCCESS = 'SET_ACTIVATION_SUCCESS';
+
+export function setActivationSuccess() {
+  return {
+    type: SET_ACTIVATION_SUCCESS,
+    payload: {}
+  }
+}
+
+export function setPoolFundedSuccess() {
+  return {
+    type: SET_POOL_FUNDED_SUCCESS,
+    payload: {}
+  }
+}
+
+export function deployRelayConverterSuccess() {
+  return {
+    type: DEPLOY_RELAY_CONVERTER_SUCCESS,
+    payload: {}
+  }
+}
+
+export function resetPoolStatus() {
+  return {
+    type: RESET_POOL_STATUS,
+    payload: {}
+  }
+}
 export function setPoolTransactionStatus(payload) {
   return {
     type: SET_POOL_TRANSACTION_STATUS,
@@ -42,7 +77,7 @@ export function setPoolHistory(payload) {
   return {
     payload: payload,
     type: SET_POOL_HISTORY
-  }  
+  }
 }
 
 export function setTokenListRow() {
@@ -65,7 +100,7 @@ export function setCurrentSelectedPoolError(payload) {
   return {
     type: SET_CURRENT_SELECTED_POOL_ERROR,
     payload: payload
-  }  
+  }
 }
 
 export function setCurrentSelectedPool(payload) {

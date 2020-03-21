@@ -46,6 +46,7 @@ export default class Step3 extends Component {
   }
   render() {
     const {tokenAddressList, numPoolTokens} = this.state;
+    const {isCreationStepPending} = this.props;
 
     const self = this;
 
@@ -92,7 +93,7 @@ function renderFundingTooltipDisplay(props) {
 
         <Row>
           <Col lg={4} className="left-align-text">
-          <Button variant="primary" type="submit" className="pool-wizard-submit-btn">
+          <Button variant="primary" type="submit" className="pool-wizard-submit-btn" disabled={isCreationStepPending}>
             Next
           </Button>
           </Col>

@@ -169,7 +169,7 @@
 }
 
 .activation-text {
-
+    text-align: left;
     color: #404040;
 }
 .activation-sub-text {
@@ -181,6 +181,7 @@
 
 .activation-heading {
   margin-top: 20px;
+  text-align: left;
 }
 
 .search-icon {
@@ -354,3 +355,4 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
 .margin-bottom-10 {
   margin-bottom: 10px;
 }
+

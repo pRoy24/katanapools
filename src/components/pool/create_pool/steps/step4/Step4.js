@@ -4,6 +4,7 @@ import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
 
 export default class Step4 extends Component {
   render() {
+    const {isCreationStepPending} = this.props;
     return (
       <Container>
         <Row>
@@ -18,7 +19,7 @@ export default class Step4 extends Component {
             </div>
           </Col>
         </Row>
-        <Button onClick={this.props.activatePool} className="pool-activation-btn">Activate your pool</Button>
+        <Button onClick={this.props.activatePool} className="pool-activation-btn" disabled={isCreationStepPending}>Activate your pool</Button>
       </Container>
       )
   }

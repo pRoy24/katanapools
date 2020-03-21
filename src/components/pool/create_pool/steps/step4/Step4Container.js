@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 const mapStateToProps = state => {
   return {
     user: state.user,
-    isFetching: state.pool.isFetching,
+    isCreationStepPending: state.pool.isCreationStepPending,
     pool: state.pool
   }
 }

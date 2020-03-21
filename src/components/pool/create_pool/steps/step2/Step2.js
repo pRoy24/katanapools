@@ -90,7 +90,7 @@ export default class Step2 extends Component {
   render() {
 
     const {baseReserveWeight, reserveFee, tokenArrayList, poolType, pool} = this.state;
-    const {getTokenDetail, isFetching} = this.props;
+    const {getTokenDetail, isFetching, isCreationStepPending} = this.props;
     let weightPromptMessage = <span/>;
     const self = this;
 
@@ -261,7 +261,7 @@ function renderConvertibleTokenTooltip(props) {
         </Row>
         <Row>
         <Col lg={4}>
-        <Button variant="primary" disabled={isFetching} type="submit" className="pool-wizard-submit-btn">
+        <Button variant="primary" disabled={isCreationStepPending} type="submit" className="pool-wizard-submit-btn">
           Next
         </Button>
         </Col>
