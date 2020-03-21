@@ -16,7 +16,7 @@ const axios = require('axios');
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
     let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
-    if (currentNetwork.toString() === '3') {
+    if (currentNetwork && currentNetwork.toString() === '3') {
       CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
     }
     let ContractRegistryContract = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
@@ -88,7 +88,7 @@ const axios = require('axios');
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
     let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
-    if (currentNetwork.toString() === '3') {
+    if (currentNetwork && currentNetwork.toString() === '3') {
       CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
     }
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
@@ -114,7 +114,7 @@ const axios = require('axios');
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
     let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
-    if (currentNetwork.toString() === '3') {
+    if (currentNetwork && currentNetwork.toString() === '3') {
       CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
     }
     

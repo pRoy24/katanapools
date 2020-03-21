@@ -7,9 +7,13 @@ import AddressDisplay from '../common/AddressDisplay';
 
 export default class TopNav extends Component {
   render() {
+    const {user: {providerConnected}} = this.props;
+
     let addressBar = <span/>;
     let currentConnection = <span/>;
-     
+    if (!providerConnected) {
+      currentConnection = <div className="provider-connection-error">No Metamask connection detected.</div>
+    } 
     if (window.web3 && window.web3.currentProvider) {
      const selectedAddress = window.web3.currentProvider.selectedAddress;
      const currentNetwork = window.web3.currentProvider.networkVersion;

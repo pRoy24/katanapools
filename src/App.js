@@ -2,7 +2,7 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.scss';
 import LandingContainer from './components/landing/LandingContainer';
-import TopNav from './components/nav/TopNav';
+import TopNavContainer from './components/nav/TopNavContainer';
 import BottomNav from './components/nav/BottomNav';
 
 import {
@@ -19,7 +19,7 @@ function App() {
   return (
    <Router>
     <div className="App">
-      <TopNav/>
+      <TopNavContainer/>
       <LandingContainer/>
       <BottomNav/>
       </div>

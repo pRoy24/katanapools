@@ -8,11 +8,13 @@ import {Ethereum} from '../../utils/sdk/sdkUtils';
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
 } from '../../utils/ConverterUtils';
 import {toDecimals, fromDecimals} from '../../utils/eth';
+import {Decimal} from 'decimal.js';
 
 const mapStateToProps = state => {
   return {
     web3: state.web3,
     tokens: state.tokens,
+    user: state.user,
   }
 }
 
@@ -34,7 +36,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
 
             return (Object.assign({}, {path: pathMeta}, {price: pathPrices[idx]}));
-            
+
           }).catch(function(err){
             return null;
           })
@@ -44,39 +46,41 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           if (type === 'from') {
          dispatch(setFromPathListWithRates(metaData));
           } else {
-         dispatch(setToPathListWithRates(metaData));            
+         dispatch(setToPathListWithRates(metaData));
           }
         })
       })
-      
+
 
       })
     },
-    
+
     submitSwap: (networkPath, transferAmount, selectedTransferToken) => {
       let isEth = false;
       if (selectedTransferToken.symbol === 'ETH') {
         isEth = true;
       }
-  
+
       const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
-      
+
       getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-        
-        let availableBalance = fromDecimals(balanceResponse,selectedTransferToken.decimals);
-        if (availableBalance >= transferAmount) {
-  
+
+
+        const availableBalance = new Decimal(fromDecimals(balanceResponse,selectedTransferToken.decimals));
+        const requiredBalance = new Decimal(transferAmount)
+        if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
+
           submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
-        
+
           }).catch(function(err){
             if (err.message) {
-  
+
             }
           })
         } else {
-  
+
         }
-      });      
+      });
       }
   }
 }

@@ -24,6 +24,7 @@ var RegistryUtils =require('../../../utils/RegistryUtils');
 const mapStateToProps = state => {
   return {
     pool: state.pool,
+    user: state.user,
   }
 }
 
@@ -244,13 +245,19 @@ function getPoolRowMeta(poolRow, dispatch) {
               
             BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
               const conversinFeePercent = conversionFee / 10000;
-                 SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
+
+                   
                      Promise.all(reserveTokenData).then(function(reserveDetail){
+                       
+                       getSenderBalanceOfToken(SmartTokenContract, senderAddress).then(function(balanceData){
+                         
+                  
                         reserveDetail = reserveDetail.filter(Boolean);
                         const finalPayload = Object.assign({}, smartTokenDetails, {senderBalance: balanceData}, {converter: poolConverterAddress},
                         {reserves: reserveDetail}, {conversionFee: conversinFeePercent});
                         dispatch(setCurrentSelectedPool(finalPayload));
                      })
+                     });
                       })
                     });
                   });
@@ -260,8 +267,17 @@ function getPoolRowMeta(poolRow, dispatch) {
         });
       });
     
-    });
+
     });  
+}
+
+function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {
+  if (senderAddress === null || senderAddress === undefined) {
+    return new Promise((resolve)=>(resolve(0)));
+  }
+  return SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
+    return balanceData;  
+  });
 }
 
 

@@ -45,8 +45,8 @@ export default class SwapToken extends Component {
     if (smartTokenCheck) {
       tokenList = tokenList.concat(smartTokens);
     }
-    const initialFromToken = tokenList[0];
-    const initialToToken = tokenList[1];
+    const initialFromToken = tokenList.find((token)=>(token.symbol === 'ETH'));
+    const initialToToken = tokenList.find((token)=>(token.symbol) === 'BNT');
     this.setState({tokenData: tokenList, selectedTransferToken: initialFromToken, selectedReceiveToken: initialToToken });
     
   }
@@ -55,6 +55,8 @@ export default class SwapToken extends Component {
     this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
   }
   render() {
+    const {user: {providerConnected}} = this.props;
+
     return (
       <div className="swap-token-app">
         <SwapTokenToolbar refetchTokenList={this.refetchTokenList}/>

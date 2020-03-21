@@ -8,13 +8,14 @@ import {toDecimals, fromDecimals} from '../../utils/eth';
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken
 } from '../../utils/ConverterUtils';
+import {Decimal} from 'decimal.js';
 var RegistryUtils = require('../../utils/RegistryUtils');
 
 const Initial_State = {'showTransaferSelect': false, 'showReceiveSelect': false, selectedTransferToken: {}, selectedReceiveToken: {},
           transferAmount: 1000, receiveAmount: 0, totalFee: 0, transactionFee: 0, 'ConverterRegistryContractAddress': '',
            networkPath: [], pathMeta: [], widgetError: ''
         };
-        
+
 export default class SwapTokenWidget extends Component {
 
   constructor(props, context) {
@@ -24,7 +25,7 @@ export default class SwapTokenWidget extends Component {
   }
 
 
-  
+
   getConversionData = (fromToken, toToken, amount) => {
     const self = this;
 
@@ -32,11 +33,11 @@ export default class SwapTokenWidget extends Component {
     if (fromToken.address !== toToken.address) {
       RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
         RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
-          
+
           getNetworkPathMeta(networkPath).then(function(networkMeta){
             self.setState({'pathMeta': networkMeta});
           })
-          
+
           getExpectedReturn(networkPath, fromAmount).then(function(expectedReturn){
             let networkFee = fromDecimals(expectedReturn[1], toToken.decimals);
             if (networkFee) {
@@ -51,29 +52,29 @@ export default class SwapTokenWidget extends Component {
     } else {
         self.setState({receiveAmount: amount,totalFee : 0})
     }
-  }  
-  
-  
+  }
+
+
     openTransferSelectDropdown = () => {
       this.setState({showTransaferSelect: !this.state.showTransaferSelect});
     }
-    
+
     openReceiveSelectDropdown = () => {
       this.setState({showReceiveSelect: !this.state.showReceiveSelect});
     }
-    
+
     transferSelectChanged = (val) => {
       const {transferAmount} = this.state;
       this.setState({selectedTransferToken: val, showTransaferSelect: false});
           this.getConversionData(val, this.state.selectedReceiveToken, transferAmount);
     }
-    
+
     receiveSelectChanged = (val) => {
       const {transferAmount} = this.state;
       this.setState({selectedReceiveToken: val, showReceiveSelect: false});
                 this.getConversionData(this.state.selectedTransferToken, val, transferAmount);
     }
-    
+
   componentWillMount() {
     const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = this.props;
     if ( tokenData.length > 0) {
@@ -83,14 +84,14 @@ export default class SwapTokenWidget extends Component {
       if (transferAmount > 0) {
       self.getConversionData(tokenData[0], tokenData[1],
                     transferAmount)}
-    }    
-  }  
+    }
+  }
   componentWillReceiveProps(nextProps) {
     const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = nextProps;
     if (toAmount !== this.props.toAmount) {
       this.setState({receiveAmount:toAmount });
     }
-    
+
     if ( tokenData.length > 0 && tokenData.length !== this.props.tokenData.length) {
       const self = this;
       const {transferAmount} = this.state;
@@ -100,11 +101,11 @@ export default class SwapTokenWidget extends Component {
                     transferAmount)}
     }
   }
-  
+
   componentWillUnmount() {
     this.setState(Initial_State);
-  }  
-  
+  }
+
   transferAmountChanged = (evt) => {
     const {transferAmount} = this.state;
     const newTransferAmount = evt.target.value;
@@ -117,19 +118,20 @@ export default class SwapTokenWidget extends Component {
   submitSwapTransaction = () => {
     const {networkPath, transferAmount, selectedTransferToken} = this.state;
     const self = this;
-    
+
     let isEth = false;
     if (selectedTransferToken.symbol === 'ETH') {
       isEth = true;
     }
     const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
-    
-    getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-      let availableBalance = fromDecimals(balanceResponse,selectedTransferToken.decimals);
-      if (availableBalance >= transferAmount) {
-          self.setState({'widgetError': ''});
-        submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
 
+    getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
+      const availableBalance = new Decimal(fromDecimals(balanceResponse,selectedTransferToken.decimals));
+      const requiredBalance = new Decimal(transferAmount)
+      if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
+
+          self.setState({'widgetError': ''});
+          submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
         }).catch(function(err){
           if (err.message) {
             self.setState({'widgetError': err.message});
@@ -140,24 +142,24 @@ export default class SwapTokenWidget extends Component {
       }
     });
 
-  } 
-  
+  }
+
   receiveAmountChanged = (evt) => {
     // Do nothing as this is readonly
   }
-  
+
   render() {
     const {tokenData} = this.props;
-    
+
     const {showTransaferSelect, selectedTransferToken, selectedReceiveToken, showReceiveSelect,
       transferAmount, receiveAmount, totalFee, pathMeta, transactionFee, widgetError
     } = this.state;
 
     let transferFromTokenSelect = <span/>;
     let receiveToTokenSelect = <span/>;
-    
+
     if (showTransaferSelect) {
-        transferFromTokenSelect = 
+        transferFromTokenSelect =
         (<div className="token-select-dropdown">
           <TokenSuggestionList tokenData={tokenData} tokenSelectChanged={this.transferSelectChanged}/>
         </div>
@@ -167,7 +169,7 @@ export default class SwapTokenWidget extends Component {
       receiveToTokenSelect = (
         <div className="token-select-dropdown">
           <TokenSuggestionList tokenData={tokenData} tokenSelectChanged={this.receiveSelectChanged}/>
-        </div>        
+        </div>
         )
     }
 
@@ -180,27 +182,27 @@ export default class SwapTokenWidget extends Component {
       </div>
       </div>);
     }
-    
+
     let pathMetaData = <span/>;
     if (pathMeta && pathMeta.length > 0) {
       pathMetaData = pathMeta.map(function(item, idx){
         let pointerArrow = <span/>;
-        
+
         if (idx < pathMeta.length - 1) {
-          pointerArrow = 
+          pointerArrow =
           <div className="arrow-right-container">
             <FontAwesomeIcon icon={faArrowRight} />
           </div>
-        } 
+        }
         return (
         <div className="meta-item-cell-container" key={idx}>
           <div className="meta-item-cell">
-            <div className="token-label-cell">{item.meta.symbol}</div> 
+            <div className="token-label-cell">{item.meta.symbol}</div>
             <div className="token-name-cell">{item.meta.name}</div>
           </div>
           {pointerArrow}
         </div>)
-      }) 
+      })
     }
     let errorData = <span/>;
     if (widgetError && widgetError.length > 0) {
@@ -262,7 +264,7 @@ export default class SwapTokenWidget extends Component {
            <Row className="swap-action-btn-container">
            <Col lg={8}>
             {errorData}
-           
+
            </Col>
            <Col lg={3}>
             Total Fees: {transactionFee} {selectedReceiveToken.symbol}
@@ -282,7 +284,7 @@ export default class SwapTokenWidget extends Component {
           </div>
         </div>
   </div>
-      
+
       )
   }
 }
@@ -311,10 +313,10 @@ class TokenSuggestionList extends Component {
 
     const inputValue = value.trim().toLowerCase();
     const inputLength = inputValue.length;
-  
+
     return inputLength === 0 ? [] : tokenData.filter(token =>
-      token.name.toLowerCase().slice(0, inputLength) === inputValue || token.symbol.toLowerCase().slice(0, inputLength) === inputValue 
-    );    
+      token.name.toLowerCase().slice(0, inputLength) === inputValue || token.symbol.toLowerCase().slice(0, inputLength) === inputValue
+    );
   }
 
   onSuggestionsFetchRequested = ({ value }) => {
@@ -339,12 +341,12 @@ class TokenSuggestionList extends Component {
        </div>
        )
   }
-  
+
   getSuggestionValue = (suggestion) => {
     this.props.tokenSelectChanged(suggestion);
-    return suggestion.symbol;  
+    return suggestion.symbol;
   }
-  
+
   render() {
     const { value, suggestions } = this.state;
 

@@ -82,7 +82,6 @@ export class Ethereum {
         return await conversionEvents.get(this, token.blockchainId, fromBlock, toBlock);
     }
 
-
 }
 
 export const getContractAddresses = function(_this) {

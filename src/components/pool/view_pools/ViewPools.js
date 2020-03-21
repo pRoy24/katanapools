@@ -93,7 +93,7 @@ class ViewPoolWidget extends Component {
   }
   
   render() {
-    const { pool: {currentSelectedPool, poolTransactionStatus}, poolData} = this.props;
+    const { pool: {currentSelectedPool, poolTransactionStatus}, poolData, } = this.props;
 
     const {selectedPoolIndex, isError, errorMessage} = this.state;
     const self = this;

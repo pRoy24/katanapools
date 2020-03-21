@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {isNonEmptyArray, isNonEmptyObject} from '../../../utils/ObjectUtils';
+import {isNonEmptyArray, isNonEmptyObject, isEmptyObject} from '../../../utils/ObjectUtils';
 import {ListGroupItem, ListGroup, Row, Col, Button, Form, InputGroup} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faChevronDown, faChevronUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +27,16 @@ export default class ViewPaths extends Component {
         }
         
         let tokenPairDescription = <span/>;
+        
+        if (isEmptyObject(fromToken) && isEmptyObject(toToken)) {
+          tokenPairDescription = (
+      <div className="swap-token--loading-container">
+      <div className="spinner-icon">
+              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+      </div>
+      </div>             
+          )           
+        }
         if (isNonEmptyObject(fromToken) && isNonEmptyObject(toToken)) {
             let fromTokenDescription = <span/>;
             let toTokenDescription = <span/>;
@@ -112,6 +122,8 @@ export default class ViewPaths extends Component {
                 </Row>
                 )
         }
+        
+            
         return (
             <div className="view-paths-container">
             <div>
@@ -168,6 +180,8 @@ class ConversionPathList extends Component {
          if (pathList.length > 2) {
              viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
          }
+         
+         
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>

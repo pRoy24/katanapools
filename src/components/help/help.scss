@@ -1,0 +1,20 @@
+.help-topic-container {
+  background: #F2F2F2;
+  margin-bottom: 40px;
+  text-align: left;
+  margin-top: 20px;
+  padding: 18px 24px;
+  .sub-text {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+}
+
+.explain-image-container {
+  text-align: center;
+  img {
+    border: 2px solid #A6A6A6;
+    width: 300px;
+  }
+}

@@ -1,6 +1,6 @@
 import {connect} from 'react-redux';
 import Landing from './Landing';
-import {setUserEnvironment} from '../../actions/user';
+import {setUserEnvironment, setProviderConnected} from '../../actions/user';
 import {setConvertibleTokens, setSmartTokens, setConvertibleTokensBySmartTokensMap,
   setSmartTokensWithReserves
 } from '../../actions/tokens';
@@ -12,7 +12,7 @@ import {getTokenData} from '../../utils/RegistryUtils';
 const mapStateToProps = state => {
   return {
     web3: state.web3,
-    
+    user: state.user,
   }
 }
 
@@ -22,6 +22,11 @@ const mapDispatchToProps = (dispatch) => {
       const web3 = window.web3;
       const args = {'selectedAddress': web3.currentProvider.selectedAddress, 'selectedNetwork': web3.currentProvider.networkVersion};
       dispatch(setUserEnvironment(args))
+    },
+    
+    setMetaskConnected: () => {
+      const payload = {'providerType': 'metamask'};
+      dispatch(setProviderConnected(payload));
     },
     
     getAllConvertibleTokens: () => {

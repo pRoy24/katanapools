@@ -9,6 +9,7 @@ const mapStateToProps = state => {
   return {
     web3: state.web3,
     tokens: state.tokens,
+    user: state.user,
   }
 }
 
@@ -30,7 +31,7 @@ const mapDispatchToProps = (dispatch) => {
         }, pathPrices);
         Promise.all(pathWithMeta).then(function(metaData){
           metaData = metaData.filter(Boolean);
-          console.log(metaData);
+
         })
       })
       })

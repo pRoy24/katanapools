@@ -1,8 +1,6 @@
 import React, {Component} from 'react';
 import {Container, Row, Col, Button} from 'react-bootstrap';
 
-
-
 import CreateNewPoolContainer from './create_pool/CreateNewPoolContainer';
 import './pool.scss';
 import {
@@ -23,13 +21,28 @@ export default class PoolTokens extends Component {
     this.state = {poolData: []};
   }
 
-  
+
   componentWillMount() {
-    this.props.getSmartTokensWithSymbols();
+    const {user: {providerConnected}} = this.props;
+    if (providerConnected) {
+      this.props.getSmartTokensWithSymbols();
+    }
   }
-  
+
+  componentWillReceiveProps(nextProps) {
+    const {user: {providerConnected}} = nextProps;
+    if (providerConnected && !this.props.user.providerConnected) {
+      this.props.getSmartTokensWithSymbols();
+    }
+
+
+  }
+
   render() {
-  const {smartTokensWithReserves} = this.props;
+  const {smartTokensWithReserves, user: {providerConnected}} = this.props;
+  if (!providerConnected) {
+    return <span/>;
+  }
   return (
     <div>
       <Container>
@@ -40,7 +53,7 @@ export default class PoolTokens extends Component {
           <Route path="/pool/view">
             <ViewPoolsContainer smartTokensWithReserves={smartTokensWithReserves}/>
           </Route>
-        </Switch>  
+        </Switch>
        </Container>
     </div>
     )

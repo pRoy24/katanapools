@@ -27,14 +27,14 @@ export default function poolReducer (state = initialState, action) {
   switch (action.type) {
     case SET_POOL_HISTORY:
       return {...state, poolHistory: action.payload}
-      
+
     case SET_TOKEN_LIST_ROW:
       currentTokenList = state.tokenList;
       currentTokenList.push({});
       return {...state, tokenList: currentTokenList};
     case SET_TOKEN_LIST_DETAILS:
       return {...state, tokenList: action.payload};
-      
+
     case DEPLOY_SMART_TOKEN_INIT:
       return {
         ...state,
@@ -59,13 +59,11 @@ export default function poolReducer (state = initialState, action) {
         ...state,
         smartTokenStatus:  action.payload,
         isError: false,
-        isFetching: false
       }
     case DEPLOY_SMART_TOKEN_CONFIRMATION:
       return {
         ...state,
         isError: false,
-        isFetching: false,
         smartTokenStatus: action.payload
       }
     case DEPLOY_SMART_TOKEN_ERROR:
@@ -83,13 +81,18 @@ export default function poolReducer (state = initialState, action) {
         isFetching: false,
       }
     case DEPLOY_RELAY_CONVERTER_STATUS:
+      let isFetchingStatus = false;
+      if (action.payload.type === 'pending') {
+        isFetchingStatus = true;
+      }
       return {
         ...state,
+        isFetching: isFetchingStatus,
         relayConverterStatus: action.payload
       }
     case SET_CONVERTER_CONTRACT_RECEIPT:
-      return {...state, converterContractReceipt: action.payload}
-      
+      return {...state, isFetching: false, converterContractReceipt: action.payload}
+
     case SET_POOL_FUNDED_STATUS:
       return {...state, poolFundedStatus: action.payload}
     case SET_ACTIVATION_STATUS:

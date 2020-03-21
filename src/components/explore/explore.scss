@@ -2,6 +2,7 @@
     background: #f2f2f2;
     padding-left: 0 !important;
     padding-right: 0 !important;
+    margin-bottom: 40px;
 }
 
 .symbol-image {
@@ -133,4 +134,9 @@ box-shadow: 2px 2px 2px 0px #a9a9a9;
     margin-bottom: 10px;
     display: inline-block;
 }
+}
+
+.explore-token--loading-container {
+    margin-top: 50px;
+    font-size: 30px;
 }

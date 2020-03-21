@@ -11,7 +11,7 @@
   width: 80%;
   margin-left: 10%;
   text-align: left;
-  
+
   padding-top: 20px;
   padding-bottom: 20px;
 }
@@ -217,7 +217,7 @@ button:focus {outline:0 !important;}
 .button-active {
   background: #0D0D0D !important;
   color: #fff !important;
-  
+
 }
 
 .amount-row {
@@ -240,9 +240,9 @@ button:focus {outline:0 !important;}
 }
 
 .remove-icon-btn {
-      position: absolute;
+    position: absolute;
     right: -20px;
-    top: 56px;
+    top: 46px;
     color: #dc3545;
     cursor: pointer;
 }
@@ -252,7 +252,7 @@ button:focus {outline:0 !important;}
 }
 
 .slider {
-  margin-top: 10px;
+  margin-top: 2px;
 }
 
 .add-pool-form-header {
@@ -287,7 +287,7 @@ button:focus {outline:0 !important;}
   }
   .cell-value {
     font-weight: 500;
-    font-size: 14px;    
+    font-size: 14px;
   }
 }
 
@@ -296,7 +296,7 @@ button:focus {outline:0 !important;}
 }
 
 .holdings-data {
-  display: inline-block;  
+  display: inline-block;
 }
 
 .cell-active {
@@ -305,7 +305,7 @@ button:focus {outline:0 !important;}
 box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     background: #A6A6A6 !important;
     color: #0D0D0D;
-        
+
 }
 
 .broadcast-container {
@@ -314,4 +314,43 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     display: inline-block;
     font-size: 14px;
   }
+}
+
+.create-pool-wizard-container {
+  margin-bottom: 40px;
+}
+
+.pool-wizard-submit-btn {
+  width: 180px !important;
+}
+
+.info-tooltip-btn {
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+.sub-form-header {
+  font-weight: 500;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+.reserve-ratio-field-container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.help-link-text {
+  font-size: 12px;
+  text-decoration: underline;
+  display: inline-block;
+  margin-left: 2px;
+}
+
+.no-pad-left {
+  padding-left: 0;
+}
+
+.margin-bottom-10 {
+  margin-bottom: 10px;
 }

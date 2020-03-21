@@ -1,4 +1,4 @@
-import { SET_USER_ENVIRONMENT } from '../actions/user';
+import { SET_USER_ENVIRONMENT, SET_PROVIDER_CONNECTED } from '../actions/user';
 const REACT_APP_MULTICALL_ADDRESS_ROPSTEN = process.env.REACT_APP_MULTICALL_ADDRESS_ROPSTEN;
 const REACT_APP_BNT_ID_ROPSTEN = process.env.REACT_APP_BNT_ID_ROPSTEN;
 const REACT_APP_ETHER_ID_ROPSTEN = process.env.REACT_APP_ETHER_ID_ROPSTEN;
@@ -10,6 +10,7 @@ const REACT_APP_ETHER_ID_MAINNET = process.env.REACT_APP_ETHER_ID_MAINNET;
 const REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
 
 
+
 const initialState = {
   SelectedAddress: '',
   SelectedNetwork: '',
@@ -17,6 +18,8 @@ const initialState = {
   BNT_ID: '',
   CONTRACT_REGISTRY: '',
   ETHER_ID: '',
+  providerConnected: false,
+  providerType: '',
 }
 
 export default function userReducer (state = initialState, action) {
@@ -45,6 +48,8 @@ export default function userReducer (state = initialState, action) {
         CONTRACT_REGISTRY: contractRegistry,
         ETHER_ID: etherID
       }
+    case SET_PROVIDER_CONNECTED:
+      return {...state, providerConnected: true, providerType: action.payload.type}
 
     default:
       return state
