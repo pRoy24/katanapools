@@ -15,36 +15,6 @@ import {isEmptyArray, isNonEmptyArray} from '../../utils/ObjectUtils';
 
 
 class ExploreTokens extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {selectedFromIdx: 0, selectedToIdx: 1};
-    }
-    componentWillMount() {
-        const {user: {providerConnected}} = this.props;
-        if (providerConnected) {
-            this.props.getAllConvertibleTokens();
-        }
-        const {tokens: {convertibleTokens}}  = this.props;
-        if (isNonEmptyArray(convertibleTokens)) {
-            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
-            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
-        }
-    }
-
-    fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
-         this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
-    }
-
-    componentWillReceiveProps(nextProps) {
-        const {tokens: {convertibleTokens}, user: {providerConnected}}  = nextProps;
-        if (providerConnected && !this.props.user.providerConnected) {
-            this.props.getAllConvertibleTokens();
-        }
-        if (isEmptyArray(this.props.tokens.convertibleTokens) && isNonEmptyArray(convertibleTokens)) {
-            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
-            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
-        }
-    }
 
     renderExploreView = (viewType) => {
         const {history} = this.props;
@@ -88,6 +58,32 @@ class ExploreTokensAdvanced extends Component {
     constructor(props) {
         super(props);
         this.state = {selectedFromIdx: 0, selectedToIdx: 1};
+    }
+    componentWillMount() {
+        const {user: {providerConnected}} = this.props;
+        if (providerConnected) {
+            this.props.getAllConvertibleTokens();
+        }
+        const {tokens: {convertibleTokens}}  = this.props;
+        if (isNonEmptyArray(convertibleTokens)) {
+            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
+            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
+        }
+    }
+
+    fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
+         this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const {tokens: {convertibleTokens}, user: {providerConnected}}  = nextProps;
+        if (providerConnected && !this.props.user.providerConnected) {
+            this.props.getAllConvertibleTokens();
+        }
+        if (isEmptyArray(this.props.tokens.convertibleTokens) && isNonEmptyArray(convertibleTokens)) {
+            this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
+            this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
+        }
     }
 
 

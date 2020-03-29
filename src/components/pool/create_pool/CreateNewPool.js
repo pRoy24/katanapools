@@ -8,7 +8,6 @@ import {
   StepperContext
 } from "react-material-stepper";
 import Step1Container from './steps/step1/Step1Container';
-import Step2Container from './steps/step2/Step2Container';
 import Step3Container from './steps/step3/Step3Container';
 import Step4Container from './steps/step4/Step4Container';
 import {isEmptyObject, isNonEmptyObject, isEmptyString} from '../../../utils/ObjectUtils';
@@ -88,6 +87,9 @@ export default class CreateNewPool extends Component {
    } else if (!isValidationError) {
     this.setState({isError: false, errorMessage: '', tokenAddressList: tokenAddressList});
     const args = {
+      poolName: vals.poolName,
+      poolSymbol: vals.poolSymbol,
+      poolDecimals: vals.poolDecimals,
       reserveFee: parseFloat(vals.reserveFee),
       smartTokenAddress: smartTokenStatus.contractAddress,
       tokenAddressList: tokenAddressList,
@@ -156,12 +158,6 @@ export default class CreateNewPool extends Component {
   componentWillReceiveProps(nextProps) {
     const {pool: {smartTokenContract, relayConverterStatus, poolFundedStatus, activationStatus}} = nextProps;
 
-    if (!isEmptyObject(smartTokenContract) && isEmptyObject(this.props.pool.smartTokenContract)) {
-      this.setState({currentStep: 'step2'})
-      this.appStepper.current.resolve();
-
-    }
-
     if (isNonEmptyObject(relayConverterStatus) && relayConverterStatus.type === 'success' && this.props.pool.relayConverterStatus.type === 'pending') {
       this.setState({currentStep: 'step3'})
       this.appStepper.current.resolve();
@@ -179,8 +175,12 @@ export default class CreateNewPool extends Component {
     }
   }
 
-  getTokenDetail = (val, idx) => {
-  // this.props.getTokenDetailFromAddress(val, idx);
+  setFormError = (errorMessage)  => {
+    this.setState({isError: true, errorMessage: errorMessage});
+  }
+
+  resetFormError = () => {
+    this.setState({isError: false, errorMessage: ''});
   }
 
   componentWillUnmount() {
@@ -191,11 +191,11 @@ export default class CreateNewPool extends Component {
     const STEP1 = "step-one";
     const STEP2 = "step-two";
     const STEP3 = "step-three";
-    const STEP4 = "step-four";
+
 
     const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
-    const {pool: {isFetching, smartTokenStatus, relayConverterStatus, poolFundedStatus}, pool,} = this.props;
+    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, isCreationStepPending}} = this.props;
 
     let transactionStatusMessage = <span/>;
 
@@ -205,20 +205,34 @@ export default class CreateNewPool extends Component {
               {errorMessage}
             </Alert>)
     } else {
-    if (isFetching) {
+
+    if (smartTokenStatus) {
         let message = <span/>;
         if (smartTokenStatus.message) {
           message = smartTokenStatus.message;
         }
-        if (smartTokenStatus.transactionHash) {
-          message = <div className="broadcast-container">Transaction broadcast <AddressDisplay address={smartTokenStatus.transactionHash}/></div>;
+
+
+        if (smartTokenStatus.type === 'pending') {
+          if (smartTokenStatus.transactionHash) {
+            message = <div className="broadcast-container"><AddressDisplay address={smartTokenStatus.transactionHash}/></div>;
+          }
+          transactionStatusMessage = (
+              <Alert  variant={"info"}>
+                <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
+                {message}
+              </Alert>
+            )
+        } else if (smartTokenStatus.type === 'error') {
+
+          transactionStatusMessage = (
+              <Alert  variant={"danger"}>
+                {smartTokenStatus.message}
+                Fix errors and click Resume to continue.
+              </Alert>
+            )
         }
-        transactionStatusMessage = (
-            <Alert  variant={"info"}>
-              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-              {message}
-            </Alert>
-          )
+
       } else {
         transactionStatusMessage = <span/>;
       }
@@ -253,21 +267,15 @@ export default class CreateNewPool extends Component {
     if (showReceiptPage === false) {
       currentPage = (
         <Stepper contextRef={this.appStepper} currentStep={currentStep}>
-          <Step
-            stepId={STEP1}
-            data="Step 1 initial state"
-            title="Pool name"
-            description="Pool name and symbol">
-            <Step1Container handler={this.setStepOneReceipt} smartTokenStatus={pool.smartTokenStatus} deployPoolContract={this.deployPoolContract}/>
+          <Step stepId={STEP1} data="Step 1 initial state" title="Pool and Converter details" description="Configure convertible token">
+              <Step1Container deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail}
+              setTokenListRow={this.props.setTokenListRow} setFormError={this.setFormError} resetFormError={this.resetFormError}/>
           </Step>
-          <Step stepId={STEP2} data="Step 2 initial state" title="Converter details" description="Configure convertible token">
-              <Step2Container deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail} setTokenListRow={this.props.setTokenListRow}/>
-          </Step>
-          <Step stepId={STEP3} title="Funding and initial supply" description="Fund pool with initial supply"
+          <Step stepId={STEP2} title="Funding and initial supply" description="Fund pool with initial supply"
           data={tokenAddressList} tokenAddressList={tokenAddressList}>
             <Step3Container fundRelayWithSupply={this.fundRelayWithSupply} getAddressList={this.getAddressList}/>
           </Step>
-          <Step stepId={STEP4} title="Pool Activation" description="Activate your pool">
+          <Step stepId={STEP3} title="Pool Activation" description="Activate your pool">
             <Step4Container activatePool={this.activatePool} />
           </Step>
         </Stepper>

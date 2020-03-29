@@ -24,6 +24,15 @@ const initialState = {
   poolTransactionStatus: {}
 }
 
+const deploy_steps = [
+  {'type': 'create-pool', idx: 0},
+  {'type': 'deploy-converter', idx: 0},
+  {'type': 'add-reserves', idx: 0},
+  {'type': 'set-conversion-fee', idx: 0},
+  {'type': 'fund-relay', idx: 0},
+  ]
+
+
 export default function poolReducer (state = initialState, action) {
   let currentTokenList;
   switch (action.type) {
@@ -44,48 +53,53 @@ export default function poolReducer (state = initialState, action) {
     case DEPLOY_SMART_TOKEN_INIT:
       return {
         ...state,
-        smartTokenStatus: {'message': action.payload.message},
+        smartTokenStatus: {'type': 'pending', 'message': action.payload.message},
          tokenSymbol: action.payload.symbol,
-        isError: false,
-        isFetching: true
-      }
-    case DEPLOY_SMART_TOKEN_PENDING:
-
-      return {
-        ...state,
-        smartTokenStatus: {'transactionHash': action.payload},
         smartTokenContract: {},
         isError: false,
         isFetching: true,
         isCreationStepPending: true,
-
       }
-
-
+    case DEPLOY_SMART_TOKEN_PENDING:
+      let messageStatus = {'type': 'pending'};
+      if (action.payload.transactionHash) {
+        messageStatus.message = '';
+        messageStatus.transactionHash = action.payload.transactionHash;
+      } else {
+        messageStatus.message = action.payload;
+        messageStatus.transactionHash = null;
+      }
+      return {
+        ...state,
+        smartTokenStatus: messageStatus,
+        isError: false,
+        isFetching: true,
+        isCreationStepPending: true,
+      }
     case DEPLOY_SMART_TOKEN_RECEIPT:
 
       return {
         ...state,
-        smartTokenStatus:  action.payload,
+        smartTokenStatus:  {'type': 'pending', 'message': action.payload},
         isError: false,
       }
     case DEPLOY_SMART_TOKEN_CONFIRMATION:
       return {
         ...state,
         isError: false,
-        smartTokenStatus: action.payload
+        smartTokenStatus: {'type': 'pending', 'message': action.payload},
       }
     case DEPLOY_SMART_TOKEN_ERROR:
       return {
         ...state,
-        smartTokenStatus: action.payload,
+        smartTokenStatus: {'type': 'error', 'message': action.payload},
         isError: true,
-        isFetching: false,
       }
     case DEPLOY_SMART_TOKEN_SUCCESS:
       return {
         ...state,
         smartTokenContract: action.payload,
+        smartTokenStatus: {'type': 'success', 'message': 'successfully deployed smart token'},
         isError: false,
         isFetching: false,
         isCreationStepPending: false,

@@ -42,7 +42,7 @@ const Decimal = require('decimal.js');
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
       return converterRegistry.methods.getSmartTokens().call()
       .then(function(data){
-        return Promise.all(fetchTokenSymbolAndName(data)).then(function(tokenData){
+        return Promise.all(fetchTokenListSymbolAndName(data)).then(function(tokenData){
           return tokenData;
         })
 
@@ -52,8 +52,11 @@ const Decimal = require('decimal.js');
 
     })
   }
-
-
+  export function getReserveTokenNameAndSymbol(address) {
+    return fetchTokenSymbolAndName(address).then(function(response){
+      return response;
+    })
+  }
   export function getReturnValueData(toAddress, fromAddress) {
         let web3 = window.web3;
 
@@ -63,7 +66,6 @@ const Decimal = require('decimal.js');
           return dataResponse;
         })
   }
-
 
   export function getPathTypesFromNetworkPath(networkPath) {
     const web3 = window.web3;
@@ -295,7 +297,7 @@ function getConvertibleToSmartTokenMapping() {
   })
 }
 
-function fetchTokenSymbolAndName(dataList) {
+function fetchTokenListSymbolAndName(dataList) {
   const web3 = window.web3;
   return dataList.map(function(tokenAddress){
     let CurrentToken = new web3.eth.Contract(ERC20Token, tokenAddress);
@@ -305,4 +307,20 @@ function fetchTokenSymbolAndName(dataList) {
           });
         })
   })
+}
+
+function fetchTokenSymbolAndName(address) {
+  const web3 = window.web3;
+  try {
+  let CurrentToken = new web3.eth.Contract(ERC20Token, address);
+  return CurrentToken.methods.symbol().call().then(function(tokenSymbol){
+    return CurrentToken.methods.name().call().then(function(tokenName){
+      return Object.assign({}, {symbol: tokenSymbol, address: address, name: tokenName});
+    });
+  }).catch(function(err){
+    throw err;
+  });
+  } catch(e) {
+    return new Promise((resolve, reject)=>(reject(e)));
+  }
 }

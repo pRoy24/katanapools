@@ -5,6 +5,7 @@ const mapStateToProps = state => {
   return {
     user: state.user,
     isFetching: state.pool.isFetching,
+    pool: state.pool,
     isCreationStepPending: state.pool.isCreationStepPending
   }
 }

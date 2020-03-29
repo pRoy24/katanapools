@@ -40,6 +40,16 @@ export const SET_POOL_FUNDED_SUCCESS = 'SET_POOL_FUNDED_SUCCESS';
 
 export const SET_ACTIVATION_SUCCESS = 'SET_ACTIVATION_SUCCESS';
 
+export const SET_CURRENT_STEP = 'SET_CURRENT_STEP';
+
+export function setCurrentStep(payload) {
+  return {
+    type: SET_CURRENT_STEP,
+    payload: payload
+  }
+}
+
+
 export function setActivationSuccess() {
   return {
     type: SET_ACTIVATION_SUCCESS,

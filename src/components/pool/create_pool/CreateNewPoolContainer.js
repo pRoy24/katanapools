@@ -3,9 +3,13 @@ import CreateNewPool from './CreateNewPool';
 import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
-  setActivationStatus, setPoolCreationReceipt, setTokenListDetails, setTokenListRow, resetPoolStatus,
-  deployRelayConverterSuccess, setPoolFundedSuccess
+  setActivationStatus, setPoolCreationReceipt, setTokenListDetails, resetPoolStatus,
+  deployRelayConverterSuccess, setPoolFundedSuccess,
+
+  setCurrentStep,
 } from '../../../actions/pool';
+
+
 import {isNonEmptyObject} from '../../../utils/ObjectUtils';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {getFullBalanceOfToken} from '../../../utils/ConverterUtils';
@@ -33,48 +37,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = (dispatch) => {
   return {
     deployPoolContract: (args) => {
-        const web3 = window.web3;
-
-        const walletAddress = web3.currentProvider.selectedAddress;
-
-        const smartTokenContract = new web3.eth.Contract(SmartToken);
-
-        const bytecode ='0x' + SmartTokenByteCode.ByteCode;
-
-        dispatch(deploySmartTokenInit({'message': 'Waiting for user approval', 'symbol': args.poolSymbol}));
-
-        let deployer = smartTokenContract.deploy({data : bytecode, arguments: [
-          args.poolName,
-          args.poolSymbol,
-          args.poolDecimals
-          ]});
-
-          deployer.send({
-            from: walletAddress
-
-        }, function(error, transactionHash){
-          if (error) {
-            dispatch(deploySmartTokenError(error));
-          }
-          dispatch(deploySmartTokenPending(transactionHash));
-        })
-        .on('error', function(error){
-         dispatch(deploySmartTokenError(error));
-        })
-        .on('transactionHash', function(transactionHash){
-           dispatch(deploySmartTokenPending(transactionHash));
-        })
-        .on('receipt', function(receipt){
-         dispatch(deploySmartTokenReceipt(receipt));
-        })
-        .on('confirmation', function(confirmationNumber, receipt){
-
-          dispatch(deploySmartTokenConfirmation(receipt));
-
-        })
-        .then(function(newContractInstance){
-          dispatch(deploySmartTokenSuccess(newContractInstance));
-        });
 
     },
 
@@ -83,36 +45,41 @@ const mapDispatchToProps = (dispatch) => {
    },
 
     deployRelayConverter: (args) => {
-    const web3 = window.web3;
+      const web3 = window.web3;
 
-    const conversionFee = args.reserveFee * 10000;
-    const maxFee = 3 * 10000;
+      let poolStepsCompletionStatus = [
+        {type: 'deployPoolToken', status: 'incomplete'},
+        {type: 'deployRelayConverter', status: 'incomplete'}
+      ];
 
-    let tokenAddressList = args.tokenAddressList;
+      const conversionFee = args.reserveFee * 10000;
+      const maxFee = 3 * 10000;
 
-    const smartTokenAddress = args.smartTokenAddress;
+      let tokenAddressList = args.tokenAddressList;
 
-    const relayToken = tokenAddressList.find((i)=>(i.type === 'relay'));
-    let relayTokenAddress = '0x0000000000000000000000000000000000000000';
-    let relayTokenWeight = 0;
-    if (isNonEmptyObject(relayToken)) {
-      relayTokenAddress = relayToken.address;
-      relayTokenWeight = relayToken.weight * 10000;
-    }
-    // Set converter details in reducer
-    dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Waiting for user approval`}));
 
-    getTokenListData(tokenAddressList).then(function(tokenListDetails){
+      const relayToken = tokenAddressList.find((i)=>(i.type === 'relay'));
+      let relayTokenAddress = '0x0000000000000000000000000000000000000000';
+      let relayTokenWeight = 0;
+      if (isNonEmptyObject(relayToken)) {
+        relayTokenAddress = relayToken.address;
+        relayTokenWeight = relayToken.weight * 10000;
+      }
+
+      const walletAddress = web3.currentProvider.selectedAddress;
+      const bancorConverterContract = new web3.eth.Contract(BancorConverter);
+      const bytecode ='0x' + BancorConverterByteCode.ByteCode;
+
+      deployPoolContract(args, dispatch).then(function(contractResponse){
+
+      getTokenListData(tokenAddressList).then(function(tokenListDetails){
 
       dispatch(setTokenListDetails(tokenListDetails));
 
       // Deploy the converter and add the first reserve i.e. relay token BNT or USDB as first step
-
       RegistryUtils.getContractAddress('ContractRegistry').then(function(contractRegistryContractAddress){
-      const walletAddress = web3.currentProvider.selectedAddress;
-      const bancorConverterContract = new web3.eth.Contract(BancorConverter);
-      const bytecode ='0x' + BancorConverterByteCode.ByteCode;
+
+      const smartTokenAddress = contractResponse._address;
 
       const deployer = bancorConverterContract.deploy({data : bytecode, arguments: [
                         smartTokenAddress,
@@ -121,6 +88,8 @@ const mapDispatchToProps = (dispatch) => {
                         relayTokenAddress,
                         relayTokenWeight
                       ]});
+      dispatch(deployRelayConverterStatus({type: 'pending',
+          message: `Waiting for user approval`}));
 
       deployer.send({
         from: walletAddress
@@ -169,6 +138,7 @@ const mapDispatchToProps = (dispatch) => {
   });
 
     });
+   });
 
     },
 
@@ -226,7 +196,7 @@ const mapDispatchToProps = (dispatch) => {
         });
         Promise.all(approveAndFundPromiseList).then(function(response){
 
-          dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
+         // dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
 
           dispatch(setPoolFundedSuccess());
         })
@@ -435,6 +405,45 @@ function getTokenListData(tokenList) {
       return Promise.all(tokenDetailList).then(function(detailListData){
         return detailListData.filter(Boolean);
       });
+}
+
+function deployPoolContract(args, dispatch) {
+  const web3 = window.web3;
+
+  const walletAddress = web3.currentProvider.selectedAddress;
+
+  const smartTokenContract = new web3.eth.Contract(SmartToken);
+
+  const bytecode ='0x' + SmartTokenByteCode.ByteCode;
+
+  dispatch(deploySmartTokenInit({'message': 'Waiting for user approval', 'symbol': args.poolSymbol}));
+
+  let deployer = smartTokenContract.deploy({data : bytecode, arguments: [
+    args.poolName,
+    args.poolSymbol,
+    args.poolDecimals
+    ]});
+
+  return deployer.send({
+      from: walletAddress
+
+  }, function(error, transactionHash){
+    if (error) {
+      dispatch(deploySmartTokenError(error.message));
+    } else {
+      dispatch(deploySmartTokenPending({'transactionHash': transactionHash}));
+    }
+  })
+  .on('receipt', function(receipt){
+   dispatch(deploySmartTokenReceipt(receipt));
+  })
+  .on('confirmation', function(confirmationNumber, receipt){
+    dispatch(deploySmartTokenConfirmation(receipt));
+  })
+  .then(function(newContractInstance){
+    dispatch(deploySmartTokenSuccess(newContractInstance));
+    return newContractInstance;
+  });
 }
 
 
