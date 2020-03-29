@@ -7,6 +7,7 @@ import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUti
 import {Ethereum} from '../../utils/sdk/sdkUtils';
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
 } from '../../utils/ConverterUtils';
+import {swapTokenStatus} from '../../actions/swap';
 import {toDecimals, fromDecimals} from '../../utils/eth';
 import {Decimal} from 'decimal.js';
 
@@ -15,6 +16,7 @@ const mapStateToProps = state => {
     web3: state.web3,
     tokens: state.tokens,
     user: state.user,
+    swap: state.swap,
   }
 }
 
@@ -23,7 +25,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
 
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
-
+      dispatch(swapTokenStatus({}));
       let ethGraph = new Ethereum();
       ethGraph.init().then(function(initResponse){
         ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
@@ -78,8 +80,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
             }
           })
         } else {
-          dispatch()
-          console.log('not enough balance');
+          dispatch(swapTokenStatus({type: 'error', 'message': `Not enough balance for ${selectedTransferToken.symbol}`}));
         }
       });
       }
