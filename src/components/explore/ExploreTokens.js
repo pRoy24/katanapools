@@ -3,11 +3,18 @@ import {Container, Row, Col, ListGroup, ListGroupItem} from 'react-bootstrap';
 import ExploreTokensToolbar from './ExploreTokensToolbar';
 import './explore.scss';
 import ViewPaths from './view_paths/ViewPaths';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+} from "react-router-dom";
+import SwapTokensContainer from '../swap/SwapTokensContainer';
+import { withRouter } from 'react-router-dom'
 
 import {isEmptyArray, isNonEmptyArray} from '../../utils/ObjectUtils';
 
 
-export default class ExploreTokens extends Component {
+class ExploreTokens extends Component {
     constructor(props) {
         super(props);
         this.state = {selectedFromIdx: 0, selectedToIdx: 1};
@@ -24,6 +31,10 @@ export default class ExploreTokens extends Component {
         }
     }
 
+    fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
+         this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
+    }
+
     componentWillReceiveProps(nextProps) {
         const {tokens: {convertibleTokens}, user: {providerConnected}}  = nextProps;
         if (providerConnected && !this.props.user.providerConnected) {
@@ -35,9 +46,50 @@ export default class ExploreTokens extends Component {
         }
     }
 
-    fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
-         this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
+    renderExploreView = (viewType) => {
+        const {history} = this.props;
+        if (viewType === 'advanced') {
+            history.push('/explore/advanced');
+        }
+        if (viewType === 'basic') {
+            history.push('/explore/basic');
+        }
     }
+
+    render() {
+        return (
+            <div>
+            <ExploreTokensToolbar renderExploreView={this.renderExploreView}/>
+            <Container className="explore-tokens-container">
+            <Switch>
+              <Route path="/explore/advanced">
+                <ExploreTokensAdvanced {...this.props}/>
+              </Route>
+              <Route path="/explore/basic">
+                <ExploreTokensBasic {...this.props}/>
+              </Route>
+              <Route exact path="/explore">
+              <ExploreTokensAdvanced {...this.props}/>
+              </Route>
+              <Route exact path="/">
+              <ExploreTokensAdvanced {...this.props}/>
+              </Route>
+            </Switch>
+            </Container>
+            </div>
+            )
+    }
+}
+
+export default withRouter(ExploreTokens);
+
+class ExploreTokensAdvanced extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {selectedFromIdx: 0, selectedToIdx: 1};
+    }
+
 
     fromTokenChanged (idx) {
         const {tokens: {convertibleTokens}} = this.props;
@@ -66,7 +118,10 @@ export default class ExploreTokens extends Component {
              this.fetchTokenPathsWithRates( convertibleTokens[selectedToIdx], convertibleTokens[selectedFromIdx], 'to', amount);
         }
     }
+
+
     render() {
+
         const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate}, user: {providerConnected}} = this.props;
         const {selectedFromIdx, selectedToIdx} = this.state;
         const self = this;
@@ -106,11 +161,7 @@ export default class ExploreTokens extends Component {
         if (!providerConnected) {
             return <span/>;
         }
-
         return (
-            <div>
-            <ExploreTokensToolbar/>
-            <Container className="explore-tokens-container">
              <Row>
              <Col lg={2} style={{'paddingRight': 0}}>
                <ListGroup className="token-selector-list">
@@ -130,8 +181,15 @@ export default class ExploreTokens extends Component {
                 </ListGroup>
              </Col>
             </Row>
-            </Container>
-            </div>
+            )
+    }
+}
+
+class ExploreTokensBasic extends Component {
+    render() {
+        return (
+            <SwapTokensContainer  getAllConvertibleTokens={this.props.getAllConvertibleTokens}
+        getAllSmartTokens={this.props.getAllSmartTokens}/>
             )
     }
 }

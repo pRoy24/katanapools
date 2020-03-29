@@ -14,25 +14,25 @@ export default class SwapToken extends Component {
             receiveAmount: 0, totalFee: 0, transactionFee: 0,
           tokenData: [],
     };
-    
+
   }
-  
+
   componentWillMount() {
     const {smartTokenCheck, convertibleTokenCheck} = this.state;
     this.props.getAllConvertibleTokens();
     this.props.getAllSmartTokens();
-    
+
     this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
   }
-  
+
   componentDidUpdate(prevProps, prevState, snapshot) {
     const {tokens: {convertibleTokens, smartTokens}} = this.props;
-    const {smartTokenCheck, convertibleTokenCheck} = this.state;    
+    const {smartTokenCheck, convertibleTokenCheck} = this.state;
     if ((prevProps.tokens.convertibleTokens.length === 0 && convertibleTokens.length > 0) ||
     (prevProps.tokens.smartTokens.length === 0 && smartTokens.length > 0 )) {
       this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
     }
-    
+
   }
 
   fetchTokenList = (smartTokenCheck, convertibleTokenCheck) => {
@@ -48,9 +48,9 @@ export default class SwapToken extends Component {
     const initialFromToken = tokenList.find((token)=>(token.symbol === 'ETH'));
     const initialToToken = tokenList.find((token)=>(token.symbol) === 'BNT');
     this.setState({tokenData: tokenList, selectedTransferToken: initialFromToken, selectedReceiveToken: initialToToken });
-    
+
   }
-  
+
   refetchTokenList = (smartTokenCheck, convertibleTokenCheck) => {
     this.fetchTokenList(smartTokenCheck, convertibleTokenCheck);
   }
@@ -59,7 +59,6 @@ export default class SwapToken extends Component {
 
     return (
       <div className="swap-token-app">
-        <SwapTokenToolbar refetchTokenList={this.refetchTokenList}/>
         <SwapTokenWidget {...this.state} fetchTokenPathsWithRates={this.props.fetchTokenPathsWithRates}/>
       </div>
       )

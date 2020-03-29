@@ -29,7 +29,7 @@
 box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     background: #A6A6A6 !important;
     color: #0D0D0D;
-        
+
 }
 
 .token-selector-list {
@@ -121,7 +121,7 @@ box-shadow: 2px 2px 2px 0px #a9a9a9;
     padding-bottom: 2px !important;
     height: 28px !important;
     margin-bottom: 10px;
-    display: inline-block;   
+    display: inline-block;
 }
 .path-label {
     display: inline-block;
@@ -139,4 +139,31 @@ box-shadow: 2px 2px 2px 0px #a9a9a9;
 .explore-token--loading-container {
     margin-top: 50px;
     font-size: 30px;
+}
+
+.swap-token-loading-container {
+    margin-top: 50px;
+    font-size: 20px;
+}
+
+.explore-tokens-toolbar-btngroup {
+  float: right;
+
+.btn:focus {
+    outline: none !important;
+    outline-offset: none !important;
+}
+.explore-toolbar-btn {
+    width: 120px;
+    background: #404040 !important;
+}
+
+.active-btn {
+    border: none;
+    outline:none;
+    background: #fff !important;
+    color: black !important;
+    box-shadow: inset -2px 2px 10px -5px #404040;
+}
+
 }

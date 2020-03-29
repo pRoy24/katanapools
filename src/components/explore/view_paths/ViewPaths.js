@@ -9,7 +9,7 @@ export default class ViewPaths extends Component {
     render() {
         const {fromPathListWithRate, toPathListWithRate, fromToken, toToken} = this.props;
 
-        
+
         let paths = <span/>;
         let fromPathListItems = <span/>;
         let toPathListItems = <span/>;
@@ -21,26 +21,26 @@ export default class ViewPaths extends Component {
         }
 
         if (isNonEmptyArray(toPathListWithRate)) {
-            const sortedPathList = toPathListWithRate.sort((a, b)=>(b.price - a.price));            
+            const sortedPathList = toPathListWithRate.sort((a, b)=>(b.price - a.price));
             toPathListItems = <ConversionPathList fromToken={toToken} toToken={fromToken} pathList={sortedPathList}
             type={"to"} transferAmountChanged={this.props.transferAmountChanged} submitSwap={this.props.submitSwap}/>
         }
-        
+
         let tokenPairDescription = <span/>;
-        
+
         if (isEmptyObject(fromToken) && isEmptyObject(toToken)) {
           tokenPairDescription = (
-      <div className="swap-token--loading-container">
-      <div className="spinner-icon">
-              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
-      </div>
-      </div>             
-          )           
+              <div className="swap-token-loading-container">
+              <div className="spinner-icon">
+                      <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+              </div>
+              </div>
+          )
         }
         if (isNonEmptyObject(fromToken) && isNonEmptyObject(toToken)) {
             let fromTokenDescription = <span/>;
             let toTokenDescription = <span/>;
-            
+
             if (fromToken.meta && fromToken.meta.description) {
                 fromTokenDescription = <div>{fromToken.meta.description}</div>
             }
@@ -65,7 +65,7 @@ export default class ViewPaths extends Component {
                     </div>
                     <div className="cell-label">
                         Symbol
-                    </div>                
+                    </div>
                 </Col>
                 <Col lg={6}>
                     <div className="cell-data">
@@ -73,7 +73,7 @@ export default class ViewPaths extends Component {
                     </div>
                     <div className="cell-label">
                         Address
-                    </div>                   
+                    </div>
                 </Col>
                 <Col lg={12}>
                     <div className="cell-data">
@@ -99,7 +99,7 @@ export default class ViewPaths extends Component {
                         </div>
                         <div className="cell-label">
                             Symbol
-                        </div>                
+                        </div>
                     </Col>
                     <Col lg={6}>
                     <div className="cell-data">
@@ -107,10 +107,10 @@ export default class ViewPaths extends Component {
                     </div>
                     <div className="cell-label">
                         Address
-                    </div>                          
+                    </div>
                     </Col>
                     <Col lg={6}>
-                    
+
                     </Col>
                     <Col lg={12}>
                         <div className="cell-data">
@@ -122,8 +122,8 @@ export default class ViewPaths extends Component {
                 </Row>
                 )
         }
-        
-            
+
+
         return (
             <div className="view-paths-container">
             <div>
@@ -156,14 +156,14 @@ class ConversionPathList extends Component {
     toggleShowPath = () => {
         this.setState({showMain: true});
     }
-    
+
     tranferAmountChanged = (evt) => {
         const {type} = this.props;
         const amount = evt.target.value;
         this.setState({transferAmount: amount});
         this.props.transferAmountChanged(amount, type);
     }
-    
+
     submitSwap(idx) {
         const {pathList, fromToken} = this.props;
         const {transferAmount} = this.state;
@@ -180,8 +180,7 @@ class ConversionPathList extends Component {
          if (pathList.length > 2) {
              viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
          }
-         
-         
+
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>
@@ -211,14 +210,14 @@ class ConversionPathList extends Component {
                 {item.path.map(function(cell, idx){
                 let pointerArrow = <span/>;
                 if (idx < item.path.length - 1) {
-                      pointerArrow = 
+                      pointerArrow =
                       <div className="arrow-right-container">
                         <FontAwesomeIcon icon={faArrowRight} />
                       </div>
-                } 
+                }
                 return <div className="meta-item-cell-container" key={cell.meta.symbol + "idx"}>
                       <div className="meta-item-cell">
-                        <div className="token-label-cell">{cell.meta.symbol}</div> 
+                        <div className="token-label-cell">{cell.meta.symbol}</div>
                         <div className="token-name-cell">{cell.meta.name}</div>
                       </div>
                       {pointerArrow}
@@ -234,27 +233,46 @@ class ConversionPathList extends Component {
                 </ListGroupItem>)
             })}
             {viewAllPaths}
-            </div>)              
+            </div>)
         }
         return (
             <div>
-            <div className="h6 conversion-path-header">Conversion paths  from {fromToken.symbol} to {toToken.symbol}</div>
+            <div className="h6 conversion-path-header">
+            <Row>
+            <Col lg={8} xs={6}>
+            Conversion paths  from {fromToken.symbol} to {toToken.symbol}
+            </Col>
+            <Col lg={4} xs={6} className="path-label-container">
+               <InputGroup className="mb-3">
+                <Form.Control type="text" placeholder="Amount" className="swap-amount-input"
+                value={transferAmount} onChange={this.tranferAmountChanged}/>
+                <InputGroup.Append>
+                  <InputGroup.Text id="basic-addon2">{fromToken.symbol}</InputGroup.Text>
+                </InputGroup.Append>
+              </InputGroup>
+            </Col>
+            </Row>
+            </div>
             {
             pathList.map(function(item, idx){
-                return (<ListGroupItem key={`frompath-${idx}`}>
+                let isBestPath = "";
+                if (idx === 0) {
+                    isBestPath = "best-path";
+                }
+                return (<ListGroupItem key={`frompath-${idx}`} className={`path-row ${isBestPath}`}>
                 <Row>
                 <Col lg={10} className="token-path-display">
                 {item.path.map(function(cell, idx){
                 let pointerArrow = <span/>;
                 if (idx < item.path.length - 1) {
-                      pointerArrow = 
+                      pointerArrow =
                       <div className="arrow-right-container">
                         <FontAwesomeIcon icon={faArrowRight} />
                       </div>
-                } 
+                }
                 return <div className="meta-item-cell-container" key={cell.meta.symbol + "idx"}>
                       <div className="meta-item-cell">
-                        <div className="token-label-cell">{cell.meta.symbol}</div> 
+                        <div className="token-label-cell">{cell.meta.symbol}</div>
                         <div className="token-name-cell">{cell.meta.name}</div>
                       </div>
                       {pointerArrow}
@@ -263,15 +281,14 @@ class ConversionPathList extends Component {
                 <div className="path-conversion-price">{transferAmount} {item.path[0].meta.symbol} = {item.price} {item.path[item.path.length - 1].meta.symbol}</div>
                 </Col>
                 <Col lg={2}>
-                <Form.Control type="text" placeholder="Amount" className="swap-amount-input"/>
                 <Button className="path-swap-btn" onClick={self.submitSwap.bind(self, idx)}>Swap</Button>
                 </Col>
                 </Row>
                 </ListGroupItem>)
             })}
             <div className="view-toggle-container" onClick={this.toggleShowPath}>View less. <FontAwesomeIcon icon={faChevronUp}/>.</div>
-            </div>            
-            
+            </div>
+
             )
     }
 }

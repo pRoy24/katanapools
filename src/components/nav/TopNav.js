@@ -13,12 +13,12 @@ export default class TopNav extends Component {
     let currentConnection = <span/>;
     if (!providerConnected) {
       currentConnection = <div className="provider-connection-error">No Metamask connection detected.</div>
-    } 
+    }
     if (window.web3 && window.web3.currentProvider) {
      const selectedAddress = window.web3.currentProvider.selectedAddress;
      const currentNetwork = window.web3.currentProvider.networkVersion;
      if (currentNetwork && selectedAddress) {
-     
+
      addressBar = <AddressDisplay address={selectedAddress}/>
      if (currentNetwork.toString() === '1') {
        currentConnection = <div className="connection-string">Connected to Mainnet</div>;
@@ -28,7 +28,7 @@ export default class TopNav extends Component {
      }
      }
     }
-   
+
     return (
       <div>
       <Navbar  expand="lg" className="app-top-nav">
@@ -36,11 +36,8 @@ export default class TopNav extends Component {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
-            <LinkContainer to="/swap">
-              <NavItem key={1}>Swap tokens</NavItem>
-            </LinkContainer>
             <LinkContainer to="/explore">
-              <NavItem key={1}>Explore tokens</NavItem>
+              <NavItem key={1}>Explore and Swap</NavItem>
             </LinkContainer>
             <LinkContainer to="/pool/view">
               <NavItem key={2}>View pools</NavItem>

@@ -78,7 +78,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
             }
           })
         } else {
-
+          dispatch()
+          console.log('not enough balance');
         }
       });
       }

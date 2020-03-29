@@ -54,25 +54,13 @@ class ViewPoolWidget extends Component {
     super(props);
     this.state = {selectedPoolIndex: -1, isError: false, errorMessage: ''};
   }
-  
-  setErrorMessage = (errorMessage) => {
-    this.setState({isError: true, errorMessage: errorMessage});
-  }
-  
-  resetErrorMessage = () => {
-    this.setState({isError: false, errorMessage: ''});
-  }
-  setSelectedPool (selectedPool, idx) {
-    this.props.getPoolDetails(selectedPool);
-    this.setState({selectedPoolIndex: idx});
-    
-  }
-  
-  componentWillReceiveProps(nextProps) {
-    const {poolData} = nextProps;
-    
-    if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
-      
+
+  componentWillMount() {
+    const {poolData} = this.props;
+
+    if (isNonEmptyArray(poolData)) {
+
+
           let selectedPoolIndex = poolData.findIndex(function(item){
             return item.symbol === 'ETHBNT';
           });
@@ -82,7 +70,36 @@ class ViewPoolWidget extends Component {
           }
     }
   }
-  
+
+  setErrorMessage = (errorMessage) => {
+    this.setState({isError: true, errorMessage: errorMessage});
+  }
+
+  resetErrorMessage = () => {
+    this.setState({isError: false, errorMessage: ''});
+  }
+  setSelectedPool (selectedPool, idx) {
+    this.props.getPoolDetails(selectedPool);
+    this.setState({selectedPoolIndex: idx});
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {poolData} = nextProps;
+
+    if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
+
+
+          let selectedPoolIndex = poolData.findIndex(function(item){
+            return item.symbol === 'ETHBNT';
+          });
+          if (selectedPoolIndex !== -1) {
+            this.setState({selectedPoolIndex: selectedPoolIndex});
+            this.props.getPoolDetails(poolData[selectedPoolIndex]);
+          }
+    }
+  }
+
   componentDidUpdate(prevProps, prevState) {
     const {pool: {poolTransactionStatus}, poolData} = this.props;
     const {selectedPoolIndex} = this.state;
@@ -91,7 +108,7 @@ class ViewPoolWidget extends Component {
       this.props.refetchPoolDetails(currentPoolRow);
     }
   }
-  
+
   render() {
     const { pool: {currentSelectedPool, poolTransactionStatus}, poolData, } = this.props;
 
@@ -101,7 +118,7 @@ class ViewPoolWidget extends Component {
     if (poolData.length === 0) {
       poolDataList =  <span/>;
     } else {
-      poolDataList = 
+      poolDataList =
       <span>
         <ListGroupItem>
               Symbol
@@ -117,7 +134,7 @@ class ViewPoolWidget extends Component {
            </ListGroupItem>
          })
        }</span>
-   
+
     }
     let selectedPool =  (<div className="loading-spinner">
                           <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
@@ -135,7 +152,7 @@ class ViewPoolWidget extends Component {
     if (poolTransactionStatus.type === 'pending') {
       transactionStatusMessage = <Alert  variant={"info"}>
               <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/> {poolTransactionStatus.message}
-            </Alert>      
+            </Alert>
     }
     return (
       <div>

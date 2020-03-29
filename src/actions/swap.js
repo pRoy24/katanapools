@@ -6,6 +6,15 @@ export const APPROVE_STEP_SUCCESS = 'APPROVE_STEP_SUCCESS';
 
 export const APPROVE_STEP_FAILURE = 'APPROVE_STEP_FAILURE';
 
+export const SWAP_TOKEN_STATUS = 'SWAP_TOKEN_STATUS';
+
+export function swapTokenStatus(payload) {
+  return {
+    type: SWAP_TOKEN_STATUS,
+    payload: payload
+  }
+}
+
 export function fetchTokens(payload) {
   return {
     type: FETCH_TOKENS,
