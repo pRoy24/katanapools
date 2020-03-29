@@ -4,9 +4,7 @@ import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
   setActivationStatus, setPoolCreationReceipt, setTokenListDetails, resetPoolStatus,
-  deployRelayConverterSuccess, setPoolFundedSuccess,
-
-  setCurrentStep,
+  deployRelayConverterSuccess, setPoolFundedSuccess, setCurrentPoolStatus,
 } from '../../../actions/pool';
 
 
@@ -44,13 +42,24 @@ const mapDispatchToProps = (dispatch) => {
      dispatch(resetPoolStatus());
    },
 
-    deployRelayConverter: (args) => {
+   resumeDeployRelayConverter: (args, poolCompletionStatus) => {
+
+   },
+
+   deployRelayConverter: (args) => {
+      let poolStepsCompletionStatus = [
+        {type: 'deployPoolToken', status: false},
+        {type: 'deployRelayConverter', status: false},
+        {
+          'connectors': [
+
+            ]
+        }
+      ];
+      dispatch(setCurrentPoolStatus(poolStepsCompletionStatus));
+
       const web3 = window.web3;
 
-      let poolStepsCompletionStatus = [
-        {type: 'deployPoolToken', status: 'incomplete'},
-        {type: 'deployRelayConverter', status: 'incomplete'}
-      ];
 
       const conversionFee = args.reserveFee * 10000;
       const maxFee = 3 * 10000;
@@ -72,6 +81,9 @@ const mapDispatchToProps = (dispatch) => {
 
       deployPoolContract(args, dispatch).then(function(contractResponse){
 
+        poolStepsCompletionStatus[0].status = true;
+        dispatch(setCurrentPoolStatus(poolStepsCompletionStatus));
+
       getTokenListData(tokenAddressList).then(function(tokenListDetails){
 
       dispatch(setTokenListDetails(tokenListDetails));
@@ -88,47 +100,40 @@ const mapDispatchToProps = (dispatch) => {
                         relayTokenAddress,
                         relayTokenWeight
                       ]});
-      dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Waiting for user approval`}));
-
+      dispatch(deployRelayConverterStatus({type: 'pending', message: `Waiting for user approval to deploy converter contract`}));
       deployer.send({
         from: walletAddress
-
       }, function(error, transactionHash){
-
+            dispatch(deployRelayConverterStatus({type: 'pending',
+          message: `Deploying Pool converter contract`, transactionHash:transactionHash}));
        })
       .on('error', function(error){
         dispatch(deployRelayConverterStatus({type: 'error', message: error.message}))
-      })
-      .on('transactionHash', function(transactionHash){
-          dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Deploying Pool converter contract`}));
-      })
-      .on('confirmation', function(confirmationNumber, receipt){
-         dispatch(setRelayTokenContractReceipt(receipt))
-      })
-      .then(function(deployerContractInstance){
+      }).then(function(deployerContractInstance){
+        poolStepsCompletionStatus[1].status = true;
+        dispatch(setCurrentPoolStatus(poolStepsCompletionStatus));
           dispatch(deployRelayConverterStatus({type: 'pending',
           message: `Adding relay connectors`}));
           let convertibleTokenDeploy = tokenAddressList.filter((a)=>(a.type === 'convertible')).map(function(item, idx){
-              let itemWeight = item.weight * 10000;
+          let itemWeight = item.weight * 10000;
           dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Waiting for user approval`}));
+          message: `Waiting for user approval for adding ${item.symbol} connector`}));
               return  deployerContractInstance.methods.addReserve(item.address, itemWeight).send({
                   from: walletAddress
               }, function(err, txHash){
           dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Deploying reserve token connector`}));
+          message: `Deploying reserve token connector for ${item.symbol}`}));
               }).then(function(data){
           dispatch(deployRelayConverterStatus({type: 'pending',
-          message: `Finished deploying reserve connector`}));
+          message: `Finished deploying ${item.symbol} reserve connector`}));
                   return data;
               });
           });
-
           Promise.all(convertibleTokenDeploy).then(function(response){
-                dispatch(deployRelayConverterStatus({type: 'pending', message: `Setting conversion fees`}));
-              deployerContractInstance.methods.setConversionFee(conversionFee).send({from: walletAddress}).then(function(dataRes){
+                dispatch(deployRelayConverterStatus({type: 'pending', message: `Waiting for user approval to set conversion fees`}));
+              deployerContractInstance.methods.setConversionFee(conversionFee).send({from: walletAddress}, function(err, txHash){
+                dispatch(deployRelayConverterStatus({type: 'pending', message: `Setting conversion fees`, transactionHash: txHash}));
+              }).then(function(dataRes){
                 dispatch(deployRelayConverterStatus({type: 'success', message: `Relay token is ready to be used`}));
                 dispatch(deployRelayConverterSuccess());
               });
@@ -190,18 +195,14 @@ const mapDispatchToProps = (dispatch) => {
       smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
       dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Creating initial pool supply"}));
       }).then(function(response){
+        (async () => {
         let totalConversions = convertibleTokens.length - 1;
-        let approveAndFundPromiseList = convertibleTokens.map(function(x, idx){
-          return  approveAndFundPool(x, bancorConverterAddress, dispatch, idx, totalConversions);
-        });
-        Promise.all(approveAndFundPromiseList).then(function(response){
-
-         // dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
-
-          dispatch(setPoolFundedSuccess());
-        })
-
-
+        for (let job of convertibleTokens.map((x, idx) => () =>
+          approveAndFundPool(x, bancorConverterAddress, dispatch, idx, totalConversions)
+        ))
+        await job();
+        dispatch(setPoolFundedSuccess());
+        })();
       });
     },
 
@@ -309,16 +310,20 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
         let diff = new BigNumber(allowance).minus(required);
 
         if (diff.isNegative()) {
-          dispatch(setPoolFundedStatus({'type': 'pending', 'message': `waiting for user authorization of ${convertibleToken.symbol} transfer`}));
+          dispatch(setPoolFundedStatus({'type': 'pending', 'message': `waiting for user approval for ${convertibleToken.symbol} transfer`}));
           return convertibleTokenContract.methods.approve(bancorConverterAddress, convertibleTokenMinApprovalAmount).send({
             from: senderAddress
           }, function(err, txHash){
 
             dispatch(setPoolFundedStatus({'type': 'pending', 'message': `Authorizing ${convertibleToken.symbol} transfer to contract`}));
           }).then(function(approval){
+            dispatch(setPoolFundedStatus({'type': 'pending', 'message': `Waiting for user signature for ${convertibleToken.symbol} transfer`}));
           return convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
-              dispatch(setPoolFundedStatus({'type': 'pending', 'message': `transferring ${convertibleToken.amount} ${convertibleToken.symbol} to contract`}));
+              dispatch(setPoolFundedStatus({'type': 'pending', 'message': `Transferring ${convertibleToken.amount} ${convertibleToken.symbol} to contract`}));
             }).then(function(txSuccess){
+              if (idx === totalConversions) {
+                dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
+              }
               return;
             });
           });
@@ -326,6 +331,7 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
       } else {
         return convertibleTokenContract.methods.transfer(bancorConverterAddress, convertibleTokenMinAmount).send({from: senderAddress}, function(err, txHash){
           }).then(function(txSuccess){
+
               if (idx === totalConversions) {
                 dispatch(setPoolFundedStatus({'type': 'success', 'message': `Finished creating pool supply and token transfer`}));
               }
@@ -416,7 +422,7 @@ function deployPoolContract(args, dispatch) {
 
   const bytecode ='0x' + SmartTokenByteCode.ByteCode;
 
-  dispatch(deploySmartTokenInit({'message': 'Waiting for user approval', 'symbol': args.poolSymbol}));
+  dispatch(deploySmartTokenInit({'message': 'Waiting for user approval to deploy pool token', 'symbol': args.poolSymbol}));
 
   let deployer = smartTokenContract.deploy({data : bytecode, arguments: [
     args.poolName,
@@ -433,12 +439,6 @@ function deployPoolContract(args, dispatch) {
     } else {
       dispatch(deploySmartTokenPending({'transactionHash': transactionHash}));
     }
-  })
-  .on('receipt', function(receipt){
-   dispatch(deploySmartTokenReceipt(receipt));
-  })
-  .on('confirmation', function(confirmationNumber, receipt){
-    dispatch(deploySmartTokenConfirmation(receipt));
   })
   .then(function(newContractInstance){
     dispatch(deploySmartTokenSuccess(newContractInstance));

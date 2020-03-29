@@ -359,3 +359,13 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.activation-page-container {
+  .row {
+    padding-left: 40px;
+  }
+  .activation-text {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+}

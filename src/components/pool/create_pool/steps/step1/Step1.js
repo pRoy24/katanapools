@@ -110,12 +110,14 @@ export default class Step1 extends Component {
     let poolNameDefault = "";
     let poolSymbolDefault = "";
     let poolTypeIdentifier = "Relay";
-
+      if (newTokenAddressList && newTokenAddressList.length > 0) {
       newTokenAddressList.forEach(function(tokenItem, idx){
-        poolNameDefault += " " + tokenItem.name.split(" ")[0];
-        poolSymbolDefault += tokenItem.symbol;
-        if (tokenItem.weight !== 50) {
-          poolTypeIdentifier = "Pool";
+        if (tokenItem.name && tokenItem.symbol) {
+          poolNameDefault += " " + tokenItem.name.split(" ")[0];
+          poolSymbolDefault += tokenItem.symbol;
+          if (tokenItem.weight !== 50) {
+            poolTypeIdentifier = "Pool";
+          }
         }
       });
       if (poolType === 'relay') {
@@ -127,6 +129,7 @@ export default class Step1 extends Component {
         self.setState({ poolName: poolNameDefault, poolSymbol: poolSymbolDefault})
       } else {
          self.setState({ poolName: '', poolSymbol: ''});
+      }
       }
   }
 
@@ -151,7 +154,6 @@ export default class Step1 extends Component {
     const {baseReserveWeight, reserveFee, tokenArrayList, poolType, pool, poolSymbolDefault, poolNameDefault} = this.state;
     const {getTokenDetail, isFetching, isCreationStepPending, isError} = this.props;
     const {poolName, poolSymbol, poolDecimals} = this.state;
-
 
     let weightPromptMessage = <span/>;
     const self = this;
@@ -411,7 +413,7 @@ function renderConvertibleTokenTooltip(props) {
         <Col lg={4}>
         {isError ?
 
-        <Button className="pool-wizard-submit-btn" variant="primary">
+        <Button className="pool-wizard-submit-btn" variant="primary" onClick={this.props.resumePoolCreation}>
           Resume
         </Button>
         :

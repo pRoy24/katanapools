@@ -2,7 +2,7 @@ import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN
 ,DEPLOY_SMART_TOKEN_ERROR, DEPLOY_SMART_TOKEN_SUCCESS, DEPLOY_RELAY_CONVERTER_STATUS, SET_CONVERTER_CONTRACT_RECEIPT,
 SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
   SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS, RESET_POOL_STATUS,
-  DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS
+  DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS, SET_CURRENT_POOL_STATUS
 } from '../actions/pool';
 
 const initialState = {
@@ -21,7 +21,8 @@ const initialState = {
   currentSelectedPoolError: false,
   tokenList: [],
   poolHistory: [],
-  poolTransactionStatus: {}
+  poolTransactionStatus: {},
+  poolStatus: {}
 }
 
 const deploy_steps = [
@@ -36,6 +37,8 @@ const deploy_steps = [
 export default function poolReducer (state = initialState, action) {
   let currentTokenList;
   switch (action.type) {
+    case SET_CURRENT_POOL_STATUS:
+      return {...state, poolStatus: action.payload}
     case RESET_POOL_STATUS:
       return {...state, smartTokenStatus: {}, smartTokenContract: {}, relayConverterStatus: {}, converterContractReceipt: {},
         poolFundedStatus: {}, activationStatus: {}, poolCreationReceipt: {}, isCreationStepPending: false,
@@ -87,7 +90,6 @@ export default function poolReducer (state = initialState, action) {
       return {
         ...state,
         isError: false,
-        smartTokenStatus: {'type': 'pending', 'message': action.payload},
       }
     case DEPLOY_SMART_TOKEN_ERROR:
       return {
@@ -102,7 +104,6 @@ export default function poolReducer (state = initialState, action) {
         smartTokenStatus: {'type': 'success', 'message': 'successfully deployed smart token'},
         isError: false,
         isFetching: false,
-        isCreationStepPending: false,
       }
     case DEPLOY_RELAY_CONVERTER_SUCCESS:
       return {...state, isCreationStepPending: false}
@@ -112,11 +113,16 @@ export default function poolReducer (state = initialState, action) {
       if (action.payload.type === 'pending') {
         isFetchingStatus = true;
       }
+      let isErrorState = false;
+      if (action.payload.type === 'error') {
+        isErrorState = true;
+      }
       return {
         ...state,
         isFetching: isFetchingStatus,
         relayConverterStatus: action.payload,
         isCreationStepPending: true,
+        isError: isErrorState
       }
     case SET_CONVERTER_CONTRACT_RECEIPT:
       return {...state, isFetching: false, converterContractReceipt: action.payload}

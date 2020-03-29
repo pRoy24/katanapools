@@ -1,15 +1,16 @@
-import Step4 from './Step4';
+import Step2 from './Step2';
 import {connect} from 'react-redux';
 
 const mapStateToProps = state => {
   return {
     user: state.user,
-    isCreationStepPending: state.pool.isCreationStepPending,
-    pool: state.pool
+    isFetching: state.pool.isFetching,
+    pool: state.pool,
+    isCreationStepPending: state.pool.isCreationStepPending
   }
 }
 
 export default connect(
     mapStateToProps,
     {}
-)(Step4);
+)(Step2);

@@ -4,9 +4,8 @@ import {connect} from 'react-redux';
 const mapStateToProps = state => {
   return {
     user: state.user,
-    isFetching: state.pool.isFetching,
-    pool: state.pool,
-    isCreationStepPending: state.pool.isCreationStepPending
+    isCreationStepPending: state.pool.isCreationStepPending,
+    pool: state.pool
   }
 }
 
