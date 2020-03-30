@@ -413,7 +413,7 @@ function renderConvertibleTokenTooltip(props) {
         <Col lg={4}>
         {isError ?
 
-        <Button className="pool-wizard-submit-btn" variant="primary" onClick={this.props.resumePoolCreation}>
+        <Button className="pool-wizard-submit-btn" variant="primary">
           Resume
         </Button>
         :
