@@ -11,27 +11,27 @@ export default class SelectedPool extends Component {
     super(props);
     this.state= {fundAmount: 0, liquidateAmount: 0, reserve1Needed: 0, reserve2Needed: 0}
   }
-  
+
   onFundInputChanged = (evt) => {
     let inputFund = evt.target.value;
     this.calculateFundingAmount(inputFund);
     this.setState({fundAmount: inputFund});
   }
-  
+
   onLiquidateInputChanged = (evt) => {
     let inputFund = evt.target.value;
     this.calculateLiquidateAmount(inputFund);
     this.setState({liquidateAmount: inputFund});
   }
-  
+
   calculateLiquidateAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
-    
+
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const removeSupply = new BigNumber(inputFund);
     const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
     const currentReserves = currentSelectedPool.reserves;
-    
+
     const reservesAdded = currentReserves.map(function(item){
       const currentReserveSupply = new BigNumber(item.reserveBalance);
       const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
@@ -39,10 +39,10 @@ export default class SelectedPool extends Component {
       const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
       return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
     });
-    
+
     this.setState({reservesAdded: reservesAdded});
   }
-  
+
   calculateFundingAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
 
@@ -58,11 +58,11 @@ export default class SelectedPool extends Component {
       const currentReserveNeededDisplay = currentReserveNeeded.toPrecision(6, 0);
       return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
     });
-    
+
     this.setState({reservesNeeded: reservesNeeded});
   }
 
-  
+
   submitBuyPoolToken = () => {
 
     const {fundAmount, reservesNeeded} = this.state;
@@ -83,7 +83,7 @@ export default class SelectedPool extends Component {
       this.props.submitPoolBuy(args);
     }
   }
-  
+
   submitSellPoolToken = () => {
     const {pool: {currentSelectedPool}} = this.props;
 
@@ -98,29 +98,27 @@ export default class SelectedPool extends Component {
       isError = true;
       this.props.setErrorMessage(`User balance for ${currentSelectedPool.symbol} is less than needed amount of ${liquidateAmount}`);
     }
-    
+
     if (!isError){
       this.props.resetErrorMessage();
       this.props.submitPoolSell(args);
     }
   }
-  
+
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
     const {reservesNeeded, reservesAdded} = this.state;
-        
+
     let reserveRatio = '';
-    if (!currentSelectedPool.reserves) {
-      return <span/>;
-    }
-    reserveRatio = currentSelectedPool.reserves.map(function(item){
+
+    reserveRatio = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ?currentSelectedPool.reserves.map(function(item){
       if (item) {
       return parseInt(item.reserveRatio) / 10000;
       } else {
         return null;
       }
-    }).filter(Boolean).join("/");
-    
+    }).filter(Boolean).join("/") : '';
+
 
     if (currentSelectedPoolError) {
       return (<div>
@@ -131,22 +129,24 @@ export default class SelectedPool extends Component {
     const { fundAmount, liquidateAmount, isError, errorMessage } = this.state;
 
     let minTotalSupply = parseFloat(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals)).toFixed(4);
-    let reserveTokenList = currentSelectedPool.reserves.map(function(item, idx){
+    let reserveTokenList = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ? currentSelectedPool.reserves.map(function(item, idx){
       return <div key={`token-${idx}`}>
         <div className="holdings-label">{item.name}</div>
         <div className="holdings-data">&nbsp;{parseFloat(item.reserveBalance).toFixed(4)}</div>
       </div>
-    });
-    
-    let userHoldingsList = currentSelectedPool.reserves.map(function(item, idx){
+    }) : <span/>;
+
+    let userHoldingsList = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ? currentSelectedPool.reserves.map(function(item, idx){
       return (<div key={`token-${idx}`}>
         <div className="holdings-label">{item.name}</div>
         <div className="holdings-data">&nbsp;{parseFloat(item.userBalance).toFixed(4)}</div>
       </div>)
-    });
-    
-    let poolHoldings = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
-    
+    }) : <span/>;
+
+    let poolHoldings = "";
+    if (currentSelectedPool.senderBalance) {
+      poolHoldings = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals) + " " + currentSelectedPool.symbol;
+    }
     let liquidateInfo = <span/>;
     if (liquidateAmount && liquidateAmount > 0) {
       liquidateInfo = (
@@ -155,7 +155,7 @@ export default class SelectedPool extends Component {
             {reservesAdded.map(function(item, idx){
               return <div key={`reserve-added-${idx}`}>{item.addedDisplay} {item.symbol}</div>
             })}
-        </div>    
+        </div>
         )
     }
     let fundInfo = <span/>;
@@ -167,10 +167,13 @@ export default class SelectedPool extends Component {
             {reservesNeeded.map(function(item, idx){
               return <div key={`reserve-needed-${idx}`}>{item.neededDisplay} {item.symbol}</div>
             })}
-        </div>    
+        </div>
         )
     }
-
+    let conversionFee = "";
+    if (currentSelectedPool && currentSelectedPool.conversionFee) {
+       conversionFee = currentSelectedPool.conversionFee + "%";
+    }
     return (
       <div>
         <Row className="select-pool-row-1">
@@ -191,26 +194,26 @@ export default class SelectedPool extends Component {
           </Col>
           <Col lg={3}>
             <div>
-              <div className="cell-label">Reserves</div> 
+              <div className="cell-label">Reserves</div>
               <div className="cell-data">{reserveTokenList}</div>
             </div>
           </Col>
           <Col lg={2}>
             <div className="cell-label">Reserve Ratio</div>
-            <div className="cell-data">{reserveRatio}</div>          
+            <div className="cell-data">{reserveRatio}</div>
           </Col>
         </Row>
         <Row className="selected-pool-meta-row">
           <Col lg={3}>
-            <div className="cell-label">Conversion fee generated</div> 
-            <div className="cell-data">{currentSelectedPool.conversionFee} %</div>           
+            <div className="cell-label">Conversion fee generated</div>
+            <div className="cell-data">{conversionFee}</div>
           </Col>
           <Col lg={3}>
-            <div className="cell-label">Your pool token holdings</div> 
-            <div className="cell-data">{poolHoldings} {currentSelectedPool.symbol}</div> 
+            <div className="cell-label">Your pool token holdings</div>
+            <div className="cell-data">{poolHoldings}</div>
           </Col>
           <Col lg={4}>
-            <div className="cell-label">Your reserve token holdings</div> 
+            <div className="cell-label">Your reserve token holdings</div>
             <div className="cell-data">{userHoldingsList}</div>
           </Col>
         </Row>
@@ -228,7 +231,7 @@ export default class SelectedPool extends Component {
             <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
             <div className="action-info-col">
             {liquidateInfo}
-            <Button onClick={this.submitSellPoolToken} className="pool-action-btn">Sell</Button>            
+            <Button onClick={this.submitSellPoolToken} className="pool-action-btn">Sell</Button>
             </div>
           </Col>
           <Col lg={6}>
@@ -237,7 +240,7 @@ export default class SelectedPool extends Component {
             </div>
           </Col>
         </Row>
-      
+
         <Row>
 
         </Row>
@@ -245,7 +248,7 @@ export default class SelectedPool extends Component {
 
         </Row>
       </div>
-      
+
       )
   }
 }
@@ -254,11 +257,11 @@ class VolumeGraph extends Component {
   componentWillMount() {
 
     const {selectedPool} = this.props;
-    
+
     this.props.fetchConversionVolume(selectedPool);
-    
+
   }
-  
+
   componentWillReceiveProps(nextProps) {
     const {selectedPool, selectedPool: {symbol}} = nextProps;
     if (symbol !== this.props.selectedPool.symbol) {
@@ -271,15 +274,15 @@ class VolumeGraph extends Component {
     const {poolHistory, selectedPool: {symbol}} = this.props;
 
     let graphData = poolHistory.map(function(item){
-      
+
       return {x: moment(item.timeStamp).format('MM-DD'), y: parseInt(item.data)}
     });
 
     if (graphData.length == 0) {
       return <div className="graph-message-text">Volume graph data not available</div>
     }
-        
-    
+
+
     if (currentNetwork !== '1') {
       return <div className="graph-message-text">Volume graph is available only on mainnet</div>
     }
@@ -295,13 +298,13 @@ class VolumeGraph extends Component {
     }}
     data={graphData}
       />
-      <VictoryAxis dependentAxis/> 
-      <VictoryAxis fixLabelOverlap={true}/> 
-      
+      <VictoryAxis dependentAxis/>
+      <VictoryAxis fixLabelOverlap={true}/>
+
     </VictoryChart>
     <div className="h7 text-center">Daily conversion vol from reserve to {symbol} (ETH)</div>
     </div>
-      
+
       )
   }
 }

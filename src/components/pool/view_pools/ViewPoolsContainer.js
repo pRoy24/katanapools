@@ -30,20 +30,20 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    
+
     getPoolDetails: (poolRow) => {
         dispatch(setCurrentSelectedPool({}));
         getPoolRowMeta(poolRow, dispatch);
     },
-    
+
     refetchPoolDetails: (poolRow) => {
-        getPoolRowMeta(poolRow, dispatch);      
+        getPoolRowMeta(poolRow, dispatch);
     },
-    
+
     submitPoolBuy: (args) => {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
-    
+
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
       let resNeededApproval = args.reservesNeeded.map(function(item){
@@ -52,10 +52,10 @@ const mapDispatchToProps = (dispatch) => {
           reserveContract = new web3.eth.Contract(EtherToken, item.address);
           const reserveAmount = item.neededMin;
           // get deposit amount from eth token
-          
+
           // if amount to deposit is > balance then deposit remainder
-          
-          
+
+
           return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
           }).then(function(response){
@@ -79,19 +79,19 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(setPoolTransactionStatus({type: 'pending', message: 'Funding pool with reserve tokens'}));
           }).then(function(fundRes){
             dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Funded pool with reserve tokens'}));
-          })        
+          })
       })
-      
- 
+
+
     },
-    
+
     submitPoolSell: (args) => {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
-    
+
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
-            
+
       ConverterContract.methods.liquidate(args.poolTokenSold).send({
         from: senderAddress
       }, function(err, txHash){
@@ -121,17 +121,20 @@ const mapDispatchToProps = (dispatch) => {
       })
 
     },
-    
+
     fetchConversionVolume: (selectedPool) => {
       const  toCurrencyCode = selectedPool.symbol;
       let  fromCurrencyCode = '';
+      if (!selectedPool.reserves || selectedPool.reserves.length === 0) {
+        return [];
+      }
       if (selectedPool.reserves.length > 1) {
        fromCurrencyCode = selectedPool.reserves[1].symbol;
       } else if (selectedPool.reserves.length === 1) {
         fromCurrencyCode = selectedPool.reserves[0].symbol;
       }
 
-      
+
       const conversionVolumeURL = `https://api.bancor.network/0.1/currencies/volumeHistory?toCurrencyCode=${toCurrencyCode}&fromCurrencyCode=${fromCurrencyCode}&timeFrame=year`;
 
       axios.get(conversionVolumeURL).then(function(dataResponse){
@@ -141,11 +144,11 @@ const mapDispatchToProps = (dispatch) => {
             return Object.assign({}, {timeStamp: item.timeStamp}, {data: item.volume.eth});
           });
           dispatch(setPoolHistory(graphReturnData));
-          
+
         } else {
           return [];
         }
-        
+
       })
     }
   }
@@ -165,7 +168,7 @@ function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
     return reserveTokenBalance;
   }).catch(function(err){
     return '-';
-  });  
+  });
 }
 
 function getApproval(contract, owner, spender, amount, dispatch) {
@@ -186,7 +189,7 @@ function getApproval(contract, owner, spender, amount, dispatch) {
     }, function(err, txHash){
         dispatch(setPoolTransactionStatus({type: 'pending', message: 'Approving token transfer.'}));
     }).then(function(allowanceResponse){
-        dispatch(setPoolTransactionStatus({type: 'pending', message: 'Token transfer approved.'}));      
+        dispatch(setPoolTransactionStatus({type: 'pending', message: 'Token transfer approved.'}));
       return allowanceResponse;
     })
     } else {
@@ -198,22 +201,30 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 function getPoolRowMeta(poolRow, dispatch) {
         const web3 = window.web3;
-        
+
         const senderAddress = web3.currentProvider.selectedAddress;
-  
+
+
         RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
           const poolSmartTokenAddress = poolRow.address;
+
+          RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
+          console.log('here');
+          console.log(new Date());
+          console.log(smartTokenDetails);
+dispatch(setCurrentSelectedPool(smartTokenDetails));
+
           RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
             RegistryUtils.getERC20DData(poolSmartTokenAddress).then(function(tokenData){
-          
+
           const poolConverterAddress = converters[0];
-    
+
           const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
-    
+
           const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
-    
+
           BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
-            
+
             let reserveTokenList = [];
             for (let a =0; a < numReserveTokens; a++) {
             const reserveTokenAddress = BancorConverterContract.methods.reserveTokens(a).call().then(function(resTokenAddress){
@@ -238,25 +249,25 @@ function getPoolRowMeta(poolRow, dispatch) {
                           const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
                           let reserveData = Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
                           {userBalance: availableUserBalance});
-                        
+                          console.log('there');
                           return reserveData;
                         })
                        })
                       });
                     })
             });
-            RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
-  
-              
+
+
+
             BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
               const conversinFeePercent = conversionFee / 10000;
 
-                   
+
                      Promise.all(reserveTokenData).then(function(reserveDetail){
-                       
+
                        getSenderBalanceOfToken(SmartTokenContract, senderAddress).then(function(balanceData){
-                         
-                  
+
+
                         reserveDetail = reserveDetail.filter(Boolean);
                         const finalPayload = Object.assign({}, smartTokenDetails, {senderBalance: balanceData}, {converter: poolConverterAddress},
                         {reserves: reserveDetail}, {conversionFee: conversinFeePercent});
@@ -271,9 +282,9 @@ function getPoolRowMeta(poolRow, dispatch) {
           });
         });
       });
-    
 
-    });  
+
+    });
 }
 
 function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {
@@ -281,7 +292,7 @@ function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {
     return new Promise((resolve)=>(resolve(0)));
   }
   return SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
-    return balanceData;  
+    return balanceData;
   });
 }
 
