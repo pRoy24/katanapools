@@ -236,7 +236,8 @@ export default class SelectedPool extends Component {
           </Col>
           <Col lg={6}>
           <div className="volume-graph-container">
-            <VolumeGraph selectedPool={currentSelectedPool} poolHistory={poolHistory} fetchConversionVolume={this.props.fetchConversionVolume}/>
+            <VolumeGraph selectedPool={currentSelectedPool} poolHistory={poolHistory} fetchConversionVolume={this.props.fetchConversionVolume}
+            resetPoolHistory={this.props.resetPoolHistory}/>
             </div>
           </Col>
         </Row>
@@ -264,9 +265,12 @@ class VolumeGraph extends Component {
 
   componentWillReceiveProps(nextProps) {
     const {selectedPool, selectedPool: {symbol}} = nextProps;
-    if (symbol !== this.props.selectedPool.symbol) {
+    if (symbol !== this.props.selectedPool.symbol || (selectedPool.reserves && selectedPool.reserves.length > 0 && !this.props.selectedPool.reserves)) {
       this.props.fetchConversionVolume(selectedPool);
     }
+  }
+  componentWillUnmount() {
+    this.props.resetPoolHistory();
   }
   render() {
     const web3 = window.web3;

@@ -67,7 +67,7 @@ export class Ethereum {
         const tokens = [Web3.utils.toChecksumAddress(sourceToken)];
         const destToken = Web3.utils.toChecksumAddress(targetToken);
         getAllPathsRecursive(paths, graph, tokens, destToken);
-        
+
         const sourceDecimals = await getDecimals(this, sourceToken);
         const targetDecimals = await getDecimals(this, targetToken);
         const rates = await getRates(this, paths, utils.toWei(amount, sourceDecimals));
@@ -104,11 +104,10 @@ export const getDecimals = async function(_this, token) {
 
 export const getRates = async function(_this, paths, amount) {
     const calls = paths.map(path => [_this.bancorNetwork._address, _this.bancorNetwork.methods.getReturnByPath(path, amount).encodeABI()]);
-
     return _this.multicallContract.methods.aggregate(calls, false).call().then(function(dataResponse){
-        
+
         const returnData = dataResponse.returnData;
-   
+
         return returnData.map(item => item.success ? Web3.utils.toBN(item.data.substr(0, 66)).toString() : "0");
     });
 };
@@ -116,16 +115,16 @@ export const getRates = async function(_this, paths, amount) {
 export const getGraph = async function(_this) {
     const graph = {};
 
-    
+
     const convertibleTokens = await _this.converterRegistry.methods.getConvertibleTokens().call();
     const calls = convertibleTokens.map(convertibleToken => [_this.converterRegistry._address, _this.converterRegistry.methods.getConvertibleTokenSmartTokens(convertibleToken).encodeABI()]);
     return _this.multicallContract.methods.aggregate(calls, true).call().then(function(dataResponse){
 
-        
+
         const blockNumber = dataResponse.blockNumber;
         const returnData = dataResponse.returnData;
 
-    
+
 
     for (let i = 0; i < returnData.length; i++) {
         for (const smartToken of Array.from(Array((returnData[i].data.length - 130) / 64).keys()).map(n => Web3.utils.toChecksumAddress(returnData[i].data.substr(64 * n + 154, 40)))) {
@@ -137,7 +136,7 @@ export const getGraph = async function(_this) {
     }
    return graph;
    })
- 
+
 };
 
 function updateGraph(graph, key, value) {

@@ -117,7 +117,8 @@ class AppHome extends Component {
             <PoolTokensContainer getSmartTokensWithSymbols={this.props.getSmartTokensWithSymbols}/>
           </Route>
           <Route path="/explore">
-            <ExploreTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}  getAllSmartTokens={this.props.getAllSmartTokens}/>
+            <ExploreTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}  getAllSmartTokens={this.props.getAllSmartTokens}
+            getAllConvertibleTokensV2={this.props.getAllConvertibleTokensV2}/>
           </Route>
           <Route exact path="/">
             <ExploreTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}  getAllSmartTokens={this.props.getAllSmartTokens}/>

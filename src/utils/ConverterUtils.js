@@ -1,8 +1,11 @@
+import {MulticallContract} from '../utils/sdk/abis/index';
+import axios from 'axios';
 var RegistryUtils = require('./RegistryUtils');
 const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
 const BancorConverter = require('../contracts/BancorConverter');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
+
 const SwapActions = require('../actions/swap');
 const Decimal = require('decimal.js');
 
@@ -52,6 +55,16 @@ const Decimal = require('decimal.js');
 
     })
   }
+
+  export function multiCallTokenData(tokenList) {
+    return getTokenListNameAndSymbol(tokenList).then(function(dataResponse){
+      return getTokenListMeta(dataResponse).then(function(tokenListDetails){
+        console.log(tokenListDetails);
+        return tokenListDetails;
+      });
+    })
+  }
+
   export function getReserveTokenNameAndSymbol(address) {
     return fetchTokenSymbolAndName(address).then(function(response){
       return response;
@@ -323,4 +336,70 @@ function fetchTokenSymbolAndName(address) {
   } catch(e) {
     return new Promise((resolve, reject)=>(reject(e)));
   }
+}
+
+// Multicalls token list data and returns response
+function getTokenListNameAndSymbol(tokenList) {
+
+  const web3 = window.web3;
+  let MutltiCallAddress = '0xf3ad7e31b052ff96566eedd218a823430e74b406';
+  if (web3.currentProvider.networkVersion === '1') {
+    MutltiCallAddress = '0x5eb3fa2dfecdde21c950813c665e9364fa609bd2';
+  }
+  const MulticallTokenContract = new web3.eth.Contract(MulticallContract, MutltiCallAddress);
+
+  const calls = [];
+  let tokenData = [];
+  tokenList.forEach(function(item, idx){
+    tokenData[idx] = {'address': item};
+    let CurrentToken = new web3.eth.Contract(ERC20Token, item);
+    calls.push([item, CurrentToken.methods.symbol().encodeABI()]);
+    calls.push([item, CurrentToken.methods.name().encodeABI()])
+  })
+
+ return MulticallTokenContract.methods.aggregate(calls, false).call().then(function(response){
+  //console.log(response.returnData);
+  const responseData = response.returnData;
+  responseData.forEach(function(dataItem, idx){
+
+    let currentIndex = parseInt(idx / 2);
+    let callData = web3.utils.hexToUtf8(dataItem.data);
+    callData = callData.toString().trim();
+    let trimmedWord = '';
+    for (let i =0; i < callData.length; i++) {
+      if (callData[i] === ' ' || callData[i].charCodeAt() == 0) {
+        continue;
+      }
+      else {
+        for (let j = i+1; j < callData.length; j++) {
+          trimmedWord += callData[j];
+        }
+        break;
+      }
+    }
+    if (idx % 2 === 0) {
+      tokenData[currentIndex].symbol = trimmedWord
+    } else {
+      tokenData[currentIndex].name = trimmedWord
+    }
+  });
+  return tokenData;
+});
+}
+
+function getTokenListMeta(tokenList) {
+  let tokenListPromises = tokenList.map(function(item){
+    const tokenSymbol = item.symbol;
+    return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
+      const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
+      const [name, ext] = imgFile.split(".");
+      let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
+      return Object.assign({}, item, {imageURI: imgURI}, {meta: tokenApiMeta.data.data});
+    }).catch(function(err){
+       return Object.assign({}, item, {imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'});
+    });
+  });
+  return Promise.all(tokenListPromises).then(function(dataResponse){
+    return dataResponse;
+  })
 }

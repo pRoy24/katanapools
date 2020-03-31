@@ -6,7 +6,7 @@ import {setConvertibleTokens, setSmartTokens, setConvertibleTokensBySmartTokensM
 } from '../../actions/tokens';
 import {getAllPathsWithRates} from '../../utils/PathUtils';
 import {getConvertibleTokensInRegistry, getSmartTokensInRegistry,
-getSmartTokensWithSymbolsInRegistry, getConvertibleTokensBySmartTokens} from '../../utils/ConverterUtils';
+getSmartTokensWithSymbolsInRegistry, getConvertibleTokensBySmartTokens, multiCallTokenData} from '../../utils/ConverterUtils';
 import {getTokenData} from '../../utils/RegistryUtils';
 
 const mapStateToProps = state => {
@@ -23,35 +23,43 @@ const mapDispatchToProps = (dispatch) => {
       const args = {'selectedAddress': web3.currentProvider.selectedAddress, 'selectedNetwork': web3.currentProvider.networkVersion};
       dispatch(setUserEnvironment(args))
     },
-    
+
     setMetaskConnected: () => {
       const payload = {'providerType': 'metamask'};
       dispatch(setProviderConnected(payload));
     },
-    
+
     getAllConvertibleTokens: () => {
       getConvertibleTokensInRegistry().then(function(dataResponse){
-        getTokenData(dataResponse).then(function(tokenDetailList){
+        multiCallTokenData(dataResponse).then(function(tokenDetailList){
           dispatch(setConvertibleTokens(tokenDetailList));
         })
       })
     },
-    
+
+    getAllConvertibleTokensV2: () => {
+      getConvertibleTokensInRegistry().then(function(dataResponse){
+        multiCallTokenData(dataResponse).then(function(tokenDetailList){
+          dispatch(setConvertibleTokens(tokenDetailList));
+        })
+      })
+    },
+
     getAllSmartTokens: () => {
       getSmartTokensInRegistry().then(function(dataResponse){
         getTokenData(dataResponse).then(function(tokenDetailList){
           dispatch(setSmartTokens(tokenDetailList));
         })
-      })      
+      })
     },
-    
+
     getSmartTokensWithSymbols: () => {
       getSmartTokensWithSymbolsInRegistry().then(function(dataResponse){
-      
+
         dispatch(setSmartTokensWithReserves(dataResponse));
       })
     },
-    
+
     getConvertibleToSmartTokenMap: () => {
       getConvertibleTokensBySmartTokens().then(function(dataResponse){
         dispatch(setConvertibleTokensBySmartTokensMap(dataResponse));

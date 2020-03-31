@@ -40,8 +40,15 @@ export const SET_POOL_FUNDED_SUCCESS = 'SET_POOL_FUNDED_SUCCESS';
 
 export const SET_ACTIVATION_SUCCESS = 'SET_ACTIVATION_SUCCESS';
 
+export const RESET_POOL_HISTORY = 'RESET_POOL_HISTORY';
 
 export const SET_CURRENT_POOL_STATUS = 'SET_CURRENT_POOL_STATUS';
+
+export function resetPoolHistory() {
+  return {
+    type: RESET_POOL_HISTORY
+  }
+}
 
 export function setCurrentPoolStatus(payload) {
   return {

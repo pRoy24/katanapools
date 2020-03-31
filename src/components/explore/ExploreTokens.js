@@ -75,6 +75,8 @@ class ExploreTokensAdvanced extends Component {
         if (providerConnected) {
             this.props.getAllConvertibleTokens();
         }
+
+
         const {tokens: {convertibleTokens}}  = this.props;
         if (isNonEmptyArray(convertibleTokens)) {
             this.setState({fromConvertibleTokens: convertibleTokens, toConvertibleTokens: convertibleTokens});
@@ -97,7 +99,7 @@ class ExploreTokensAdvanced extends Component {
             this.setState({fromConvertibleTokens: convertibleTokens, toConvertibleTokens: convertibleTokens});
             this.fetchTokenPathsWithRates(convertibleTokens[0], convertibleTokens[1], 'from', 1);
             this.fetchTokenPathsWithRates(convertibleTokens[1], convertibleTokens[0], 'to', 1);
-            this.setState({fromToken: convertibleTokens[0], toToken: convertibleTokens[1]});            
+            this.setState({fromToken: convertibleTokens[0], toToken: convertibleTokens[1]});
         }
     }
 
@@ -148,7 +150,7 @@ class ExploreTokensAdvanced extends Component {
         let toConvertibleTokens = convertibleTokens.filter(function(item){
             return item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.symbol.toLowerCase().includes(searchTerm.toLowerCase())
         })
-        this.setState({searchFromToken: searchTerm, toConvertibleTokens: toConvertibleTokens});         
+        this.setState({searchFromToken: searchTerm, toConvertibleTokens: toConvertibleTokens});
     }
 
     render() {

@@ -3,7 +3,7 @@ import ViewPools from './ViewPools';
 import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
-  setPoolTransactionStatus
+  setPoolTransactionStatus, resetPoolHistory
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
 
@@ -83,6 +83,10 @@ const mapDispatchToProps = (dispatch) => {
       })
 
 
+    },
+
+    resetPoolHistory: () => {
+      dispatch(resetPoolHistory());
     },
 
     submitPoolSell: (args) => {
@@ -209,9 +213,6 @@ function getPoolRowMeta(poolRow, dispatch) {
           const poolSmartTokenAddress = poolRow.address;
 
           RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
-          console.log('here');
-          console.log(new Date());
-          console.log(smartTokenDetails);
 dispatch(setCurrentSelectedPool(smartTokenDetails));
 
           RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
@@ -249,7 +250,6 @@ dispatch(setCurrentSelectedPool(smartTokenDetails));
                           const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
                           let reserveData = Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
                           {userBalance: availableUserBalance});
-                          console.log('there');
                           return reserveData;
                         })
                        })
