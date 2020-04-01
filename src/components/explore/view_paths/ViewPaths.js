@@ -128,6 +128,7 @@ export default class ViewPaths extends Component {
                           <div className="spinner-icon">
                       <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
               </div>
+              <div>Fetching paths from {fromToken.symbol} -> {toToken.symbol}</div>
             </div>
         }
         if (toPathLoading) {
@@ -135,6 +136,7 @@ export default class ViewPaths extends Component {
                           <div className="spinner-icon">
                       <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
               </div>
+                            <div>Fetching paths from {toToken.symbol} -> {fromToken.symbol}</div>
               </div>
         }
 
