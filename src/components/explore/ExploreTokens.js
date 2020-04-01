@@ -129,11 +129,12 @@ class ExploreTokensAdvanced extends Component {
         const {tokens: {convertibleTokens}} = this.props;
         const {selectedFromIdx, selectedToIdx, fromConvertibleTokens, toConvertibleTokens} = this.state;
         amount = parseFloat(amount);
+        
         if (!isNaN(amount)) {
             if (type === 'from') {
-                this.fetchTokenPathsWithRates(fromConvertibleTokens[selectedFromIdx], convertibleTokens[selectedToIdx], 'from', amount);
+                this.fetchTokenPathsWithRates(fromConvertibleTokens[selectedFromIdx], toConvertibleTokens[selectedToIdx], 'from', amount);
             } else if (type === 'to') {
-                this.fetchTokenPathsWithRates( toConvertibleTokens[selectedToIdx], convertibleTokens[selectedFromIdx], 'to', amount);
+                this.fetchTokenPathsWithRates( toConvertibleTokens[selectedToIdx], fromConvertibleTokens[selectedFromIdx], 'to', amount);
             }
         }
     }
