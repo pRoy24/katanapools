@@ -6,7 +6,8 @@ import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@for
 import Autosuggest from 'react-autosuggest';
 import {toDecimals, fromDecimals} from '../../utils/eth';
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
-  getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken
+  getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
+  getTokenDecimals
 } from '../../utils/ConverterUtils';
 import {Decimal} from 'decimal.js';
 var RegistryUtils = require('../../utils/RegistryUtils');
@@ -28,8 +29,12 @@ export default class SwapTokenWidget extends Component {
 
   getConversionData = (fromToken, toToken, amount) => {
     const self = this;
+    getTokenDecimals(fromToken.address).then(function(fromTokenDecimals){
+    getTokenDecimals(toToken.address).then(function(toTokenDecimals){
 
-    const fromAmount = toDecimals(amount, fromToken.decimals);
+
+
+    const fromAmount = toDecimals(amount, fromTokenDecimals);
     if (fromToken.address !== toToken.address) {
       RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
         RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
@@ -39,19 +44,25 @@ export default class SwapTokenWidget extends Component {
           })
 
           getExpectedReturn(networkPath, fromAmount).then(function(expectedReturn){
-            let networkFee = fromDecimals(expectedReturn[1], toToken.decimals);
+            let networkFee = fromDecimals(expectedReturn[1], toTokenDecimals);
             if (networkFee) {
               networkFee = parseFloat(networkFee).toFixed(3)
             }
 
-            self.setState({receiveAmount: fromDecimals(expectedReturn[0], toToken.decimals),
+            self.setState({receiveAmount: fromDecimals(expectedReturn[0], toTokenDecimals),
             transactionFee: networkFee, networkPath: networkPath})
           })
         })
       })
+
+
     } else {
         self.setState({receiveAmount: amount,totalFee : 0})
     }
+
+    })
+
+    })
   }
 
 
@@ -123,10 +134,16 @@ export default class SwapTokenWidget extends Component {
     if (selectedTransferToken.symbol === 'ETH') {
       isEth = true;
     }
-    const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
+
+    getTokenDecimals(selectedTransferToken.address).then(function(tokenDecimals){
+
+
+    const fromAmount = toDecimals(transferAmount, tokenDecimals);
 
     getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-      const availableBalance = new Decimal(fromDecimals(balanceResponse,selectedTransferToken.decimals));
+
+
+      const availableBalance = new Decimal(fromDecimals(balanceResponse,tokenDecimals));
       const requiredBalance = new Decimal(transferAmount)
       if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
 
@@ -141,6 +158,8 @@ export default class SwapTokenWidget extends Component {
         self.setState({'widgetError': 'Insufficient balance for this transaction'});
       }
     });
+
+    })
 
   }
 

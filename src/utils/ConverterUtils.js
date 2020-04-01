@@ -64,6 +64,14 @@ const Decimal = require('decimal.js');
     })
   }
 
+  export function getTokenDecimals(address) {
+    let web3 = window.web3;
+    const TokenContract = new web3.eth.Contract(ERC20Token, address);
+    return TokenContract.methods.decimals().call().then(function(decimals){
+      return decimals;
+    })
+  }
+
   export function getReserveTokenNameAndSymbol(address) {
     return fetchTokenSymbolAndName(address).then(function(response){
       return response;
