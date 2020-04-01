@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import ExploreTokens from './ExploreTokens';
 import {setUserEnvironment} from '../../actions/user';
-import {setFromPathListWithRates, setToPathListWithRates} from '../../actions/tokens';
+import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, resetToPathList} from '../../actions/tokens';
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
@@ -26,6 +26,12 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
       dispatch(swapTokenStatus({}));
+      if (type === 'from') {
+        dispatch(resetFromPathList());
+      }
+      if (type === 'to') {
+        dispatch(resetToPathList());
+      }
       let ethGraph = new Ethereum();
       ethGraph.init().then(function(initResponse){
         ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
@@ -62,12 +68,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       if (selectedTransferToken.symbol === 'ETH') {
         isEth = true;
       }
-
       const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
-
       getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-
-
         const availableBalance = new Decimal(fromDecimals(balanceResponse,selectedTransferToken.decimals));
         const requiredBalance = new Decimal(transferAmount)
         if (requiredBalance.lessThanOrEqualTo(availableBalance)) {

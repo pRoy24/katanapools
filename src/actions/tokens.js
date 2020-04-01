@@ -14,11 +14,27 @@ export const SET_TO_PATH_LIST_WITH_RATE = 'SET_TO_PATH_LIST_WITH_RATE';
 
 export const SET_SMART_TOKENS_WITH_RESERVES = 'SET_SMART_TOKENS_WITH_RESERVES';
 
+export const RESET_FROM_PATH_LIST ='RESET_FROM_PATH_LIST';
+
+export const RESET_TO_PATH_LIST = 'RESET_TO_PATH_LIST';
+
+export function resetFromPathList() {
+    return {
+        type: RESET_FROM_PATH_LIST,
+    }
+}
+
+export function resetToPathList() {
+    return {
+        type: RESET_TO_PATH_LIST
+    }
+}
+
 export function setFromPathListWithRates(payload) {
     return {
         type: SET_FROM_PATH_LIST_WITH_RATE,
         payload: payload
-    }    
+    }
 }
 
 export function setToPathListWithRates(payload) {
@@ -32,7 +48,7 @@ export function setPathListWithRates(payload) {
     return {
         type: SET_PATH_LIST_WITH_RATE,
         payload: payload
-    }    
+    }
 }
 
 export function setConvertibleTokens(dataList) {

@@ -1,5 +1,6 @@
 import { SET_CONVERTIBLE_TOKENS, SET_SMART_TOKENS, SET_CONVERTIBLE_TOKEN_PATHS, SET_CONVERTIBLE_TOKENS_BY_SMART_TOKENS_MAP,
-SET_PATH_LIST_WITH_RATE, SET_FROM_PATH_LIST_WITH_RATE, SET_TO_PATH_LIST_WITH_RATE, SET_SMART_TOKENS_WITH_RESERVES } from '../actions/tokens';
+SET_PATH_LIST_WITH_RATE, SET_FROM_PATH_LIST_WITH_RATE, SET_TO_PATH_LIST_WITH_RATE, SET_SMART_TOKENS_WITH_RESERVES,
+RESET_FROM_PATH_LIST, RESET_TO_PATH_LIST} from '../actions/tokens';
 
 
 
@@ -10,7 +11,9 @@ const initialState = {
   pathListWithRate: [],
   fromPathListWithRate: [],
   toPathListWithRate: [],
-  smartTokensWithReserves: []
+  smartTokensWithReserves: [],
+  fromPathLoading: false,
+  toPathLoading: false,
 }
 
 export default function tokensReducer (state = initialState, action) {
@@ -19,7 +22,7 @@ export default function tokensReducer (state = initialState, action) {
       return {...state, convertibleTokens: action.payload};
     case SET_SMART_TOKENS:
       return {...state, smartTokens: action.payload};
-      
+
     case SET_CONVERTIBLE_TOKENS_BY_SMART_TOKENS_MAP:
       return {...state, convertibleTokensBySmartTokens: action.payload};
     case SET_PATH_LIST_WITH_RATE:
@@ -27,11 +30,15 @@ export default function tokensReducer (state = initialState, action) {
     case SET_CONVERTIBLE_TOKEN_PATHS:
         return {...state}
     case SET_FROM_PATH_LIST_WITH_RATE:
-      return {...state, fromPathListWithRate: action.payload}
+      return {...state, fromPathLoading: false, fromPathListWithRate: action.payload}
     case SET_TO_PATH_LIST_WITH_RATE:
-      return {...state, toPathListWithRate: action.payload}
+      return {...state, toPathLoading: false, toPathListWithRate: action.payload}
     case SET_SMART_TOKENS_WITH_RESERVES:
       return {...state, smartTokensWithReserves: action.payload}
+    case RESET_FROM_PATH_LIST:
+      return {...state, fromPathLoading: true};
+    case RESET_TO_PATH_LIST:
+      return {...state, toPathLoading: true};
     default:
       return state
   }

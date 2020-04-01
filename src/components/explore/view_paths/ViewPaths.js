@@ -7,8 +7,7 @@ import AddressDisplay from '../../common/AddressDisplay';
 
 export default class ViewPaths extends Component {
     render() {
-        const {fromPathListWithRate, toPathListWithRate, fromToken, toToken} = this.props;
-
+        const {fromPathListWithRate, toPathListWithRate, fromToken, toToken, fromPathLoading, toPathLoading} = this.props;
 
         let paths = <span/>;
         let fromPathListItems = <span/>;
@@ -122,18 +121,36 @@ export default class ViewPaths extends Component {
                 </Row>
                 )
         }
-
+        let fromPathLoadingDiv = <span/>;
+        let toPathLoadingDiv = <span/>;
+        if (fromPathLoading) {
+            fromPathLoadingDiv = <div className="path-loading-container">
+                          <div className="spinner-icon">
+                      <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+              </div>
+            </div>
+        }
+        if (toPathLoading) {
+            toPathLoadingDiv = <div className="path-loading-container">
+                          <div className="spinner-icon">
+                      <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
+              </div>
+              </div>
+        }
 
         return (
             <div className="view-paths-container">
             <div>
                 {tokenPairDescription}
             </div>
-
-            {fromPathListItems}
-
-            {toPathListItems}
-
+            <div className="from-path-container">
+                {fromPathLoadingDiv}
+                {fromPathListItems}
+            </div>
+            <div className="to-path-container">
+                {toPathLoadingDiv}
+                {toPathListItems}
+            </div>
             </div>
             )
     }

@@ -167,3 +167,19 @@ box-shadow: 2px 2px 2px 0px #a9a9a9;
 }
 
 }
+
+.from-path-container {
+    position: relative;
+}
+
+.to-path-container {
+    position: relative;
+}
+
+.path-loading-container{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: 100;
+    background: rgba(242, 242, 242, 0.6);
+}

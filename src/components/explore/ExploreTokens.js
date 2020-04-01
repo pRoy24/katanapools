@@ -91,7 +91,7 @@ class ExploreTokensAdvanced extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        const {tokens: {convertibleTokens}, user: {providerConnected}}  = nextProps;
+        const {tokens: {convertibleTokens, fromPathLoading, toPathLoading}, user: {providerConnected}}  = nextProps;
         if (providerConnected && !this.props.user.providerConnected) {
             this.props.getAllConvertibleTokens();
         }
@@ -155,7 +155,7 @@ class ExploreTokensAdvanced extends Component {
 
     render() {
 
-        const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate}, user: {providerConnected}} = this.props;
+        const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate, fromPathLoading, toPathLoading}, user: {providerConnected}} = this.props;
         const {selectedFromIdx, selectedToIdx, searchFromToken, searchToToken, fromConvertibleTokens,
         toConvertibleTokens, fromToken, toToken} = this.state;
         const self = this;
@@ -213,7 +213,7 @@ class ExploreTokensAdvanced extends Component {
              </Col>
              <Col lg={8} className="explore-paths-container">
                <ViewPaths
-               fromToken={fromToken} toToken={toToken}
+               fromToken={fromToken} toToken={toToken} fromPathLoading={fromPathLoading} toPathLoading={toPathLoading}
                fromPathListWithRate={fromPathListWithRate}
                toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}
                submitSwap={this.props.submitSwap}/>

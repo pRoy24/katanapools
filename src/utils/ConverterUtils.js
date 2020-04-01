@@ -59,7 +59,6 @@ const Decimal = require('decimal.js');
   export function multiCallTokenData(tokenList) {
     return getTokenListNameAndSymbol(tokenList).then(function(dataResponse){
       return getTokenListMeta(dataResponse).then(function(tokenListDetails){
-        console.log(tokenListDetails);
         return tokenListDetails;
       });
     })
@@ -358,7 +357,6 @@ function getTokenListNameAndSymbol(tokenList) {
   })
 
  return MulticallTokenContract.methods.aggregate(calls, false).call().then(function(response){
-  //console.log(response.returnData);
   const responseData = response.returnData;
   responseData.forEach(function(dataItem, idx){
 
