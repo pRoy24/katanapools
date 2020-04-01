@@ -50,7 +50,7 @@ export default class ViewPaths extends Component {
                 <Row className="token-info-row">
                 <Col lg={6} className="token-info-block">
                 <Row className="token-info-row">
-                <Col lg={6}>
+                <Col lg={6} className="token-info-col">
                     <div className="cell-data">
                         {fromToken.name}
                     </div>
@@ -58,7 +58,7 @@ export default class ViewPaths extends Component {
                         Name
                     </div>
                 </Col>
-                <Col lg={6}>
+                <Col lg={6} className="token-info-col">
                     <div className="cell-data">
                         {fromToken.symbol}
                     </div>
@@ -66,7 +66,7 @@ export default class ViewPaths extends Component {
                         Symbol
                     </div>
                 </Col>
-                <Col lg={6}>
+                <Col lg={6} className="token-info-col">
                     <div className="cell-data">
                         <AddressDisplay address={fromToken.address}/>
                     </div>
@@ -74,7 +74,7 @@ export default class ViewPaths extends Component {
                         Address
                     </div>
                 </Col>
-                <Col lg={12}>
+                <Col lg={12} className="token-info-col">
                     <div className="cell-data">
                         {fromTokenDescription}
                     </div>
@@ -84,7 +84,7 @@ export default class ViewPaths extends Component {
               </Col>
               <Col lg={6} className="token-info-block">
                 <Row className="token-info-row">
-                    <Col lg={6}>
+                    <Col lg={6} className="token-info-col">
                         <div className="cell-data">
                             {toToken.name}
                         </div>
@@ -92,7 +92,7 @@ export default class ViewPaths extends Component {
                             Name
                         </div>
                     </Col>
-                    <Col lg={6}>
+                    <Col lg={6} className="token-info-col">
                         <div className="cell-data">
                             {toToken.symbol}
                         </div>
@@ -100,7 +100,7 @@ export default class ViewPaths extends Component {
                             Symbol
                         </div>
                     </Col>
-                    <Col lg={6}>
+                    <Col lg={6} className="token-info-col">
                     <div className="cell-data">
                         <AddressDisplay address={toToken.address}/>
                     </div>
@@ -108,10 +108,10 @@ export default class ViewPaths extends Component {
                         Address
                     </div>
                     </Col>
-                    <Col lg={6}>
+                    <Col lg={6} className="token-info-col">
 
                     </Col>
-                    <Col lg={12}>
+                    <Col lg={12} className="token-info-col">
                         <div className="cell-data">
                             {toTokenDescription}
                         </div>

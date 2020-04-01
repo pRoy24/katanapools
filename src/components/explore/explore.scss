@@ -184,5 +184,17 @@ box-shadow: 2px 2px 2px 0px #a9a9a9;
     width: 100%;
     z-index: 100;
     background: rgba(242, 242, 242, 0.6);
+    .spinner-icon {
+        margin-top: 20px;
+    }
 
+}
+
+
+.token-info-col {
+margin-top: 10px;   
+.cell-label {
+    line-height: 0.7em;
+}
+    
 }
