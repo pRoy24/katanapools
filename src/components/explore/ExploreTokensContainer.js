@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import ExploreTokens from './ExploreTokens';
 import {setUserEnvironment} from '../../actions/user';
-import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, resetToPathList} from '../../actions/tokens';
+import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, resetToPathList, resetTokenPaths} from '../../actions/tokens';
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
@@ -85,7 +85,11 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           dispatch(swapTokenStatus({type: 'error', 'message': `Not enough balance for ${selectedTransferToken.symbol}`}));
         }
       });
-      }
+      },
+  resetTokenPathsWithRates: () => {
+    dispatch(resetTokenPaths());
+  }
+
   }
 }
 

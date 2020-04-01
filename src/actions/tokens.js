@@ -18,6 +18,15 @@ export const RESET_FROM_PATH_LIST ='RESET_FROM_PATH_LIST';
 
 export const RESET_TO_PATH_LIST = 'RESET_TO_PATH_LIST';
 
+
+export const RESET_TOKEN_PATHS = 'RESET_TOKEN_PATHS';
+
+export function resetTokenPaths() {
+    return {
+        type: RESET_TOKEN_PATHS
+    }
+}
+
 export function resetFromPathList() {
     return {
         type: RESET_FROM_PATH_LIST,

@@ -87,7 +87,11 @@ class ExploreTokensAdvanced extends Component {
     }
 
     fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
+        if (fromToken.symbol !== toToken.symbol) {
          this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
+        } else {
+            this.props.resetTokenPathsWithRates();
+        }
     }
 
     componentWillReceiveProps(nextProps) {
@@ -122,13 +126,15 @@ class ExploreTokensAdvanced extends Component {
     }
 
     transferAmountChanged = (amount, type) => {
+
+
         const {tokens: {convertibleTokens}} = this.props;
-        const {selectedFromIdx, selectedToIdx} = this.state;
+        const {selectedFromIdx, selectedToIdx, fromConvertibleTokens, toConvertibleTokens} = this.state;
         amount = parseFloat(amount);
         if (type === 'from') {
-            this.fetchTokenPathsWithRates(convertibleTokens[selectedFromIdx], convertibleTokens[selectedToIdx], 'from', amount);
+            this.fetchTokenPathsWithRates(fromConvertibleTokens[selectedFromIdx], convertibleTokens[selectedToIdx], 'from', amount);
         } else if (type === 'to') {
-             this.fetchTokenPathsWithRates( convertibleTokens[selectedToIdx], convertibleTokens[selectedFromIdx], 'to', amount);
+             this.fetchTokenPathsWithRates( toConvertibleTokens[selectedToIdx], convertibleTokens[selectedFromIdx], 'to', amount);
         }
     }
 
@@ -150,14 +156,16 @@ class ExploreTokensAdvanced extends Component {
         let toConvertibleTokens = convertibleTokens.filter(function(item){
             return item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.symbol.toLowerCase().includes(searchTerm.toLowerCase())
         })
-        this.setState({searchFromToken: searchTerm, toConvertibleTokens: toConvertibleTokens});
+        this.setState({searchToToken: searchTerm, toConvertibleTokens: toConvertibleTokens});
     }
 
     render() {
 
         const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate, fromPathLoading, toPathLoading}, user: {providerConnected}} = this.props;
+
         const {selectedFromIdx, selectedToIdx, searchFromToken, searchToToken, fromConvertibleTokens,
         toConvertibleTokens, fromToken, toToken} = this.state;
+
         const self = this;
         let fromTokenSelector = <span/>;
         let toTokenSelector = <span/>;
