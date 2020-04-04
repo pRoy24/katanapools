@@ -18,6 +18,7 @@ const ERC20Token = require('../../../contracts/ERC20Token.json');
 const EtherToken = require('../../../contracts/EtherToken.json');
 
 const BigNumber = require('bignumber.js');
+const Decimal = require('decimal.js');
 
 var RegistryUtils =require('../../../utils/RegistryUtils');
 
@@ -54,6 +55,11 @@ const mapDispatchToProps = (dispatch) => {
           // get deposit amount from eth token
 
           // if amount to deposit is > balance then deposit remainder
+          return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
+          console.log(userBalance);
+          if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
+
+
 
 
           return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
@@ -62,8 +68,18 @@ const mapDispatchToProps = (dispatch) => {
             return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
               return response;
             });
+
+          });
+
+          } else {
+               return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
+              return res;
+            });
+          }
           });
         } else {
+          console.log('erc20 token');
+
           reserveContract = new web3.eth.Contract(ERC20Token, item.address);
           const reserveAmount = item.neededMin;
           return getApproval(reserveContract, senderAddress,  args.converterAddress, reserveAmount, dispatch).then(function(res){
@@ -176,6 +192,7 @@ function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
 }
 
 function getApproval(contract, owner, spender, amount, dispatch) {
+  const web3 = window.web3;
 
   return contract.methods.decimals().call().then(function(amountDecimals){
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
@@ -183,19 +200,39 @@ function getApproval(contract, owner, spender, amount, dispatch) {
       allowance = 0;
     }
     let minAmount = amount;
-    let minAllowance = toDecimals(allowance, amountDecimals);
+    let minAllowance = allowance;
+
     let diff = new BigNumber(minAllowance).minus(new BigNumber(minAmount));
 
-    if (diff.isNegative()) {
-      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
-    return contract.methods.approve(spender, minAmount).send({
+    const amountAllowed = new Decimal(minAllowance);
+    const amountNeeded = new Decimal(minAmount);
+    const zeroDecimal= new Decimal(0);
+
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Previous user allowance found. reseting allowance'}));
+    return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
       from: owner
+    }).then(function(approveResetResponse){
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval for token transfer'}));
+    return contract.methods.approve(web3.utils.toChecksumAddress(spender), amount).send({
+       from: owner
     }, function(err, txHash){
-        dispatch(setPoolTransactionStatus({type: 'pending', message: 'Approving token transfer.'}));
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Appoving token transfer'}));
     }).then(function(allowanceResponse){
         dispatch(setPoolTransactionStatus({type: 'pending', message: 'Token transfer approved.'}));
       return allowanceResponse;
     })
+    });
+    } else if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isZero()) {
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval for token transfer'}));
+        return contract.methods.approve(web3.utils.toChecksumAddress(spender), amount).send({
+           from: owner
+        }, function(err, txHash){
+          dispatch(setPoolTransactionStatus({type: 'pending', message: 'Appoving token transfer'}));
+        }).then(function(allowanceResponse){
+            dispatch(setPoolTransactionStatus({type: 'pending', message: 'Token transfer approved.'}));
+          return allowanceResponse;
+        })
     } else {
       return null;
     }

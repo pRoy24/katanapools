@@ -5,7 +5,7 @@ import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment'
 const BigNumber = require('bignumber.js');
-
+const Decimal = require('decimal.js');
 export default class SelectedPool extends Component {
   constructor(props) {
     super(props);
@@ -46,16 +46,16 @@ export default class SelectedPool extends Component {
   calculateFundingAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
 
-    const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-    const addSupply = new BigNumber(inputFund);
-    const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
+    const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
+    const addSupply = new Decimal(inputFund);
+    const pcIncreaseSupply = totalSupply.dividedBy(addSupply);
     const currentReserves = currentSelectedPool.reserves;
     const reservesNeeded = currentReserves.map(function(item){
-      const currentReserveSupply = new BigNumber(item.reserveBalance);
-      const currentReserveNeeded = pcIncreaseSupply.multipliedBy(currentReserveSupply);
+      const currentReserveSupply = new Decimal(item.reserveBalance);
+      const currentReserveNeeded = pcIncreaseSupply.dividedBy(currentReserveSupply);
       const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(6), item.decimals);
 
-      const currentReserveNeededDisplay = currentReserveNeeded.toPrecision(6, 0);
+      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6);
       return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
     });
 
@@ -73,7 +73,9 @@ export default class SelectedPool extends Component {
 
     let isError = false;
     reservesNeeded.forEach(function(reserveItem){
-      if (reserveItem.userBalance < reserveItem.neededDisplay) {
+      const amountNeeded = new Decimal(reserveItem.neededDisplay);
+      const amountAvailable = new Decimal(reserveItem.userBalance);
+      if (amountNeeded.greaterThan(amountAvailable)) {
         isError = true;
         self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
       }
@@ -174,6 +176,32 @@ export default class SelectedPool extends Component {
     if (currentSelectedPool && currentSelectedPool.conversionFee) {
        conversionFee = currentSelectedPool.conversionFee + "%";
     }
+
+    let poolLiquidateAction = <span/>;
+    let poolFundAction = <span/>;
+    if (currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0){
+      poolLiquidateAction = (
+        <div>
+            <div>Liquitate Pool Holdings</div>
+            <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
+            <div className="action-info-col">
+            {liquidateInfo}
+            <Button onClick={this.submitSellPoolToken} className="pool-action-btn">Sell</Button>
+            </div>
+        </div>
+        )
+      poolFundAction = (
+        <div>
+            <div>Fund Pool Holdings</div>
+            <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
+            <div className="action-info-col">
+            {fundInfo}
+            <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
+            </div>
+        </div>
+        )
+    }
+
     return (
       <div>
         <Row className="select-pool-row-1">
@@ -219,20 +247,10 @@ export default class SelectedPool extends Component {
         </Row>
         <Row className="selected-pool-buy-sell-row">
           <Col lg={3}>
-            <div>Fund Pool Holdings</div>
-            <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
-            <div className="action-info-col">
-            {fundInfo}
-            <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
-            </div>
+            {poolFundAction}
           </Col>
           <Col lg={3}>
-            <div>Liquitate Pool Holdings</div>
-            <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
-            <div className="action-info-col">
-            {liquidateInfo}
-            <Button onClick={this.submitSellPoolToken} className="pool-action-btn">Sell</Button>
-            </div>
+            {poolLiquidateAction}
           </Col>
           <Col lg={6}>
           <div className="volume-graph-container">

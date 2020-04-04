@@ -5,7 +5,7 @@ import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, res
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
-import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,
+import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,getDecimalsOfToken,
 } from '../../utils/ConverterUtils';
 import {swapTokenStatus} from '../../actions/swap';
 import {toDecimals, fromDecimals} from '../../utils/eth';
@@ -68,9 +68,13 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       if (selectedTransferToken.symbol === 'ETH') {
         isEth = true;
       }
-      const fromAmount = toDecimals(transferAmount, selectedTransferToken.decimals);
+
+      getDecimalsOfToken(selectedTransferToken.address).then(function(tokenDecimals){
+
+
+      const fromAmount = toDecimals(transferAmount, tokenDecimals);
       getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
-        const availableBalance = new Decimal(fromDecimals(balanceResponse,selectedTransferToken.decimals));
+        const availableBalance = new Decimal(fromDecimals(balanceResponse,tokenDecimals));
         const requiredBalance = new Decimal(transferAmount)
         if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
 
@@ -85,6 +89,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           dispatch(swapTokenStatus({type: 'error', 'message': `Not enough balance for ${selectedTransferToken.symbol}`}));
         }
       });
+
+      })
       },
   resetTokenPathsWithRates: () => {
     dispatch(resetTokenPaths());

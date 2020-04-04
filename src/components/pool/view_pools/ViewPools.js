@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
 import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/ObjectUtils';
 
+
 export default class ViewPool extends Component {
   constructor(props) {
     super(props);
@@ -88,8 +89,6 @@ class ViewPoolWidget extends Component {
     const {poolData} = nextProps;
 
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
-
-
           let selectedPoolIndex = poolData.findIndex(function(item){
             return item.symbol === 'ETHBNT';
           });

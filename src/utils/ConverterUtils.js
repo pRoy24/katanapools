@@ -205,6 +205,14 @@ const Decimal = require('decimal.js');
 
   }
 
+  export function getDecimalsOfToken(tokenAddress) {
+         const web3 = window.web3;
+      const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
+      return erc20Contract.methods.decimals().call().then(function(decimals){
+        return decimals;
+      })
+  }
+
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
