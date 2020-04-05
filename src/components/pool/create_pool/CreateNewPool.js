@@ -368,13 +368,13 @@ class TransactioReceiptPage extends Component {
             </Col>
             </Row>
             <Row>
-              <Col lg={3} xs={6}>
+              <Col lg={6} xs={12}>
             <div className="cell-label">Pool Token Address: </div>
             <div className="cell-value">
               {smartTokenContract._address}
             </div>
             </Col>
-            <Col lg={3} xs={6}>
+            <Col lg={6} xs={12}>
             <div className="cell-label">Pool Converter Address: </div>
             <div className="cell-value">
               {converterContract._address}
