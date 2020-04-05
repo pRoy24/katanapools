@@ -56,7 +56,6 @@ const mapDispatchToProps = (dispatch) => {
 
           // if amount to deposit is > balance then deposit remainder
           return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
-          console.log(userBalance);
           if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
 
 
@@ -78,8 +77,6 @@ const mapDispatchToProps = (dispatch) => {
           }
           });
         } else {
-          console.log('erc20 token');
-
           reserveContract = new web3.eth.Contract(ERC20Token, item.address);
           const reserveAmount = item.neededMin;
           return getApproval(reserveContract, senderAddress,  args.converterAddress, reserveAmount, dispatch).then(function(res){
@@ -206,7 +203,7 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
     const amountAllowed = new Decimal(minAllowance);
     const amountNeeded = new Decimal(minAmount);
-    const zeroDecimal= new Decimal(0);
+
 
     if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Previous user allowance found. reseting allowance'}));

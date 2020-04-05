@@ -48,14 +48,15 @@ export default class SelectedPool extends Component {
 
     const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const addSupply = new Decimal(inputFund);
-    const pcIncreaseSupply = totalSupply.dividedBy(addSupply);
+    const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
+
     const currentReserves = currentSelectedPool.reserves;
     const reservesNeeded = currentReserves.map(function(item){
       const currentReserveSupply = new Decimal(item.reserveBalance);
-      const currentReserveNeeded = pcIncreaseSupply.dividedBy(currentReserveSupply);
-      const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(6), item.decimals);
+      const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
+      const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(6, Decimal.ROUND_UP), item.decimals);
 
-      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6);
+      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP);
       return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
     });
 

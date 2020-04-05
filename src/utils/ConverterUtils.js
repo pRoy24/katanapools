@@ -240,9 +240,10 @@ const Decimal = require('decimal.js');
         });
       } else {
         let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
-        return erc20Contract.methods.approve(bnAddress, amount).send({
-                 'from': senderAddress,
-        }).then(function(approveResponse){
+
+        return getApprovalBasedOnAllowance(erc20Contract, bnAddress, amount).then(function(approvalResponse){
+
+
           return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, affiliate_account_address, affiliate_fee)
             .send({
               'from': senderAddress,
@@ -408,4 +409,54 @@ function getTokenListMeta(tokenList) {
   return Promise.all(tokenListPromises).then(function(dataResponse){
     return dataResponse;
   })
+}
+
+function getApprovalBasedOnAllowance(contract, spender, amount) {
+  const web3 = window.web3;
+  const owner = web3.currentProvider.selectedAddress;
+
+
+  return contract.methods.decimals().call().then(function(amountDecimals){
+  return contract.methods.allowance(owner, spender).call().then(function(allowance) {
+    if (!allowance || typeof allowance === undefined) {
+      allowance = 0;
+    }
+    let minAmount = amount;
+    let minAllowance = allowance;
+
+
+    const amountAllowed = new Decimal(minAllowance);
+    const amountNeeded = new Decimal(minAmount);
+
+
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+
+    return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
+      from: owner
+    }).then(function(approveResetResponse){
+
+    return contract.methods.approve(web3.utils.toChecksumAddress(spender), amount).send({
+       from: owner
+    }, function(err, txHash){
+
+    }).then(function(allowanceResponse){
+
+      return allowanceResponse;
+    })
+    });
+    } else if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isZero()) {
+
+        return contract.methods.approve(web3.utils.toChecksumAddress(spender), amount).send({
+           from: owner
+        }, function(err, txHash){
+
+        }).then(function(allowanceResponse){
+
+          return allowanceResponse;
+        })
+    } else {
+      return null;
+    }
+  });
+  });
 }
