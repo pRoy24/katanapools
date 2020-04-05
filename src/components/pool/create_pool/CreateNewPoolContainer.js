@@ -219,18 +219,25 @@ const mapDispatchToProps = (dispatch) => {
 
       const smartTokenContract = new web3.eth.Contract(SmartToken, args.smartTokenAddress);
       const converterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
-      dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval'}));
+      dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to transfer pool ownership'}));
       smartTokenContract.methods.transferOwnership(args.converterAddress).send({
         from: senderAddress
+      }, function(err, txHash){
+        dispatch(setActivationStatus({'type': 'pending', 'message': 'Transferring ownership of pool to converter'}));        
       }).then(function(transferOwnershipResponse){
-        dispatch(setActivationStatus({'type': 'pending', 'message': 'Transferring ownership of pool to converter'}));
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to accept pool token ownership'}));   
         converterContract.methods.acceptTokenOwnership().send({
           from: senderAddress
+        }, function(err, txHash){
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Converter contract is accepting pool token ownership'}));          
         }).then(function(senderAcceptResponse){
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to register converter contract to registry'}));              
           RegistryUtils.getConverterRegistryAddress().then(function(contractRegistryContractAddress){
           const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, contractRegistryContractAddress);
           ConverterRegistryContract.methods.addConverter(args.converterAddress).send({
             from: senderAddress
+          }, function(err, txHash){
+            dispatch(setActivationStatus({'type': 'pending', 'message': 'Registering converter contract with converter registry'}));     
           }).then(function(converterRegistryAddedResponse){
             dispatch(setActivationStatus({'type': 'success', 'message': 'Finished activating pool'}));
           });
