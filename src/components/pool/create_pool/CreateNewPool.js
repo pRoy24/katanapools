@@ -141,7 +141,7 @@ export default class CreateNewPool extends Component {
       convertibleTokens: vals.tokenAddressList,
       initialSupply: vals.initialSupply,
       smartTokenAddress: smartTokenContract._address,
-      converterAddress: converterContractReceipt.contractAddress
+      converterAddress: vals.converterAddress
     }
 
 

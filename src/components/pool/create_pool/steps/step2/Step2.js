@@ -22,7 +22,11 @@ export default class Step2 extends Component {
   onSubmit = (evt) => {
     evt.preventDefault();
     const {tokenAddressList, numPoolTokens} = this.state;
-    this.props.fundRelayWithSupply({'tokenAddressList': tokenAddressList, initialSupply: numPoolTokens});
+    const {pool: {converterContract}} = this.props;
+
+    const converterContractAddress = converterContract._address;
+
+    this.props.fundRelayWithSupply({'tokenAddressList': tokenAddressList, initialSupply: numPoolTokens, converterAddress: converterContractAddress});
   }
 
   componentWillMount(){

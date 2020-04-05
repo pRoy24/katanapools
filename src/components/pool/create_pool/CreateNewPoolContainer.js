@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, deploySmartTokenConfirmation,
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
   setActivationStatus, setPoolCreationReceipt, setTokenListDetails, resetPoolStatus,
-  deployRelayConverterSuccess, setPoolFundedSuccess, setCurrentPoolStatus,
+  deployRelayConverterSuccess, setPoolFundedSuccess, setCurrentPoolStatus, setConverterContract,
 } from '../../../actions/pool';
 
 
@@ -110,6 +110,8 @@ const mapDispatchToProps = (dispatch) => {
       .on('error', function(error){
         dispatch(deployRelayConverterStatus({type: 'error', message: error.message}))
       }).then(function(deployerContractInstance){
+        dispatch(setConverterContract(deployerContractInstance));
+
         poolStepsCompletionStatus[1].status = true;
         dispatch(setCurrentPoolStatus(poolStepsCompletionStatus));
           dispatch(deployRelayConverterStatus({type: 'pending',
@@ -193,6 +195,10 @@ const mapDispatchToProps = (dispatch) => {
       const convertibleTokens = args.convertibleTokens;
       dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Waiting for user approval of pool supply"}));
       smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
+
+
+
+
       dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Creating initial pool supply"}));
       }).then(function(response){
         (async () => {
@@ -298,7 +304,6 @@ async function approveAndFundPool(convertibleToken, bancorConverterAddress, disp
 
       return getPoolDepositStatus(convertibleTokenAddress, convertibleTokenAmount,
       isEth, dispatch).then(function(depositStatus){
-
 
       return convertibleTokenContract.methods.allowance(senderAddress, bancorConverterAddress).call().then(function(allowance) {
         if (!allowance || typeof allowance === undefined) {

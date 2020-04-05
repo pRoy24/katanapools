@@ -44,6 +44,15 @@ export const RESET_POOL_HISTORY = 'RESET_POOL_HISTORY';
 
 export const SET_CURRENT_POOL_STATUS = 'SET_CURRENT_POOL_STATUS';
 
+export const SET_CONVERTER_CONTRACT = 'SET_CONVERTER_CONTRACT';
+
+export function setConverterContract(payload) {
+  return {
+    type: SET_CONVERTER_CONTRACT,
+    payload: payload
+  }
+}
+
 export function resetPoolHistory() {
   return {
     type: RESET_POOL_HISTORY
