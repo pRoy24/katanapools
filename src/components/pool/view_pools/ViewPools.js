@@ -60,15 +60,13 @@ class ViewPoolWidget extends Component {
     const {poolData} = this.props;
 
     if (isNonEmptyArray(poolData)) {
-
-
-          let selectedPoolIndex = poolData.findIndex(function(item){
-            return item.symbol === 'ETHBNT';
-          });
-          if (selectedPoolIndex !== -1) {
-            this.setState({selectedPoolIndex: selectedPoolIndex});
-            this.props.getPoolDetails(poolData[selectedPoolIndex]);
-          }
+      let selectedPoolIndex = poolData.findIndex(function(item){
+        return item.symbol === 'ETHBNT';
+      });
+      if (selectedPoolIndex !== -1) {
+        this.setState({selectedPoolIndex: selectedPoolIndex});
+        this.props.getPoolDetails(poolData[selectedPoolIndex]);
+      }
     }
   }
 
@@ -155,7 +153,7 @@ class ViewPoolWidget extends Component {
     }
     return (
       <div>
-              {transactionStatusMessage}
+      {transactionStatusMessage}
       <div className="app-toolbar-container">
         <Row style={{'marginBottom': '40px'}}>
         <Col lg={2}>

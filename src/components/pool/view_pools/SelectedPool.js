@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Container, Row, Col, Form, Button, Alert} from 'react-bootstrap';
+import {Container, Row, Col, Form, Button, Alert, ButtonGroup, DropdownButton, Dropdown} from 'react-bootstrap';
 import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
@@ -9,13 +9,22 @@ const Decimal = require('decimal.js');
 export default class SelectedPool extends Component {
   constructor(props) {
     super(props);
-    this.state= {fundAmount: 0, liquidateAmount: 0, reserve1Needed: 0, reserve2Needed: 0}
+    this.state= {fundAmount: 0, liquidateAmount: 0, reserve1Needed: 0, reserve2Needed: 0,
+      fundAllReservesActive: 'reserve-active', fundOneReserveActive: '',
+      singleReserveSelection: '', singleReserveAmount: 0
+    }
   }
 
   onFundInputChanged = (evt) => {
     let inputFund = evt.target.value;
     this.calculateFundingAmount(inputFund);
     this.setState({fundAmount: inputFund});
+  }
+
+  onSingleReserveFundInputChanged = (evt) => {
+    const singleInputFund = evt.target.value;
+    this.calculateFundingAmountWithOneReserve(singleInputFund);
+    this.setState({singleReserveAmount: singleInputFund});
   }
 
   onLiquidateInputChanged = (evt) => {
@@ -63,6 +72,30 @@ export default class SelectedPool extends Component {
     this.setState({reservesNeeded: reservesNeeded});
   }
 
+  calculateFundingAmountWithOneReserve = (inputFund) => {
+
+    console.log("Input fund "+inputFund);
+
+    const {pool: {currentSelectedPool}} = this.props;
+
+    const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
+    const addSupply = new Decimal(inputFund);
+    const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
+
+    const currentReserves = currentSelectedPool.reserves;
+    const reservesNeeded = currentReserves.map(function(item){
+      const currentReserveSupply = new Decimal(item.reserveBalance);
+      const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
+      const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(6, Decimal.ROUND_UP), item.decimals);
+
+      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP);
+      return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
+    });
+
+    console.log(reservesNeeded);
+
+  }
+
 
   submitBuyPoolToken = () => {
 
@@ -108,10 +141,20 @@ export default class SelectedPool extends Component {
     }
   }
 
+  fundReserveToggle = (type) => {
+    if (type === 'all') {
+      this.setState({fundOneReserveActive: ''});
+      this.setState({fundAllReservesActive: 'reserve-active'});
+    } else {
+      this.setState({fundAllReservesActive: ''});
+      this.setState({fundOneReserveActive: 'reserve-active'});
+    }
+  }
+
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
-    const {reservesNeeded, reservesAdded} = this.state;
-
+    const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive} = this.state;
+    const self = this;
     let reserveRatio = '';
 
     reserveRatio = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ?currentSelectedPool.reserves.map(function(item){
@@ -164,6 +207,7 @@ export default class SelectedPool extends Component {
     let fundInfo = <span/>;
 
     if (fundAmount && fundAmount > 0) {
+
       fundInfo = (
         <div>
             <div>You will needs to stake</div>
@@ -172,6 +216,7 @@ export default class SelectedPool extends Component {
             })}
         </div>
         )
+
     }
     let conversionFee = "";
     if (currentSelectedPool && currentSelectedPool.conversionFee) {
@@ -191,16 +236,37 @@ export default class SelectedPool extends Component {
             </div>
         </div>
         )
-      poolFundAction = (
-        <div>
-            <div>Fund Pool Holdings</div>
-            <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
-            <div className="action-info-col">
-            {fundInfo}
-            <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
+
+        if (fundAllReservesActive === 'reserve-active') {
+          poolFundAction = (
+            <div>
+                <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
+                <div className="action-info-col">
+                {fundInfo}
+                <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
+                </div>
             </div>
-        </div>
-        )
+            )
+        } else if (fundOneReserveActive === 'reserve-active') {
+          console.log(currentSelectedPool.reserves);
+          let reserveOptions = currentSelectedPool.reserves.map(function(item, key){
+            return <Dropdown.Item key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
+          });
+          poolFundAction = (
+            <div>
+            <div className="select-reserve-container">
+              <DropdownButton id="dropdown-basic-button" title="ETH">
+                {reserveOptions}
+              </DropdownButton>
+                <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onSingleReserveFundInputChanged}/>
+            </div>
+                <div className="action-info-col">
+
+                <Button onClick={this.submitBuyPoolToken} className="pool-action-btn">Purchase</Button>
+                </div>
+            </div>
+            )
+        }
     }
 
     return (
@@ -247,13 +313,24 @@ export default class SelectedPool extends Component {
           </Col>
         </Row>
         <Row className="selected-pool-buy-sell-row">
-          <Col lg={3}>
+          <Col lg={5}>
+            <div>Fund Pool Holdings</div>
+            <ButtonGroup className="reserve-toggle-btn-group">
+              <Button className={`reserve-toggle-btn ${fundAllReservesActive}`} onClick={self.fundReserveToggle.bind(self, 'all')}>
+                Fund with all reserve tokens
+              </Button>
+              <Button className={`reserve-toggle-btn ${fundOneReserveActive}`} onClick={self.fundReserveToggle.bind(self, 'one')}>
+                Fund with one reserve token
+              </Button>
+            </ButtonGroup>
             {poolFundAction}
           </Col>
-          <Col lg={3}>
+          <Col lg={5}>
             {poolLiquidateAction}
           </Col>
-          <Col lg={6}>
+        </Row>
+        <Row>
+          <Col lg={8}>
           <div className="volume-graph-container">
             <VolumeGraph selectedPool={currentSelectedPool} poolHistory={poolHistory} fetchConversionVolume={this.props.fetchConversionVolume}
             resetPoolHistory={this.props.resetPoolHistory}/>
@@ -295,6 +372,7 @@ class VolumeGraph extends Component {
     const web3 = window.web3;
     const currentNetwork = web3.currentProvider.networkVersion;
     const {poolHistory, selectedPool: {symbol}} = this.props;
+
 
     let graphData = poolHistory.map(function(item){
 

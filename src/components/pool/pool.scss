@@ -369,3 +369,43 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     margin-bottom: 10px;
   }
 }
+
+.reserve-toggle-btn-group {
+margin-bottom: 10px;
+.reserve-toggle-btn {
+  background: #fff !important;
+  color: #000 !important;
+  border: 1px solid #A6A6A6 !important;
+  font-size: 12px !important;
+  font-weight: 600;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+.reserve-active {
+  background: #A6A6A6 !important;
+  color: #fff !important;
+  box-shadow: inset -2px 2px 10px -5px #404040;
+}
+}
+
+
+.select-reserve-container {
+  width: 100%;
+  position: relative;
+  .dropdown {
+    width: 30%;
+    display: inline-block;
+    height: 100%;
+    position: relative;
+    vertical-align: top;
+    button {
+      position: absolute;
+      width: 100%;
+    }
+  }
+  .form-control {
+    width: 70%;
+    display: inline-block;
+  }
+}
