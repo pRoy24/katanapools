@@ -146,6 +146,21 @@ const Decimal = require('decimal.js');
       });
     });
   }
+
+  export function getTokenConversionPath(fromToken, toToken) {
+    return RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
+      return RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
+          return networkPath;
+        })
+      })
+  }
+  export function getTokenConversionAmount(tokenPath, minAmount) {
+    return getExpectedReturn(tokenPath, minAmount).then(function(expectedReturn){
+      const totalAmount = new Decimal(expectedReturn[0]).add(expectedReturn[1]);
+      return totalAmount;
+    });
+  }
+
   // Returns the balance of token if ERC20 and balance of Ethereum + balance of ethereum deposited into Ether token if Ether
   export function getFullBalanceOfToken(tokenAddress, isEth) {
     const web3 = window.web3;

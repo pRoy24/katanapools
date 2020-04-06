@@ -5,7 +5,7 @@ import {connect} from 'react-redux';
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
   setPoolTransactionStatus, resetPoolHistory
 } from '../../../actions/pool';
-import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
+import {getConvertibleTokensBySmartTokens, getBalanceOfToken, submitSwapToken} from '../../../utils/ConverterUtils';
 
 import axios from 'axios';
 import  {toDecimals, fromDecimals} from '../../../utils/eth';
@@ -42,62 +42,28 @@ const mapDispatchToProps = (dispatch) => {
     },
 
     submitPoolBuy: (args) => {
-      const web3 = window.web3;
-      const senderAddress = web3.currentProvider.selectedAddress;
+      createBuyWithArguments(args, dispatch);
+    },
 
-      const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
-      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
-      let resNeededApproval = args.reservesNeeded.map(function(item){
-        let reserveContract = {};
-        if (item.symbol === 'ETH') {
-          reserveContract = new web3.eth.Contract(EtherToken, item.address);
-          const reserveAmount = item.neededMin;
-          // get deposit amount from eth token
+    submitPoolBuyWithSingleReserve: (args) => {
 
-          // if amount to deposit is > balance then deposit remainder
-          return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
-          if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
-
-
-
-
-          return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
-                  dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
-          }).then(function(response){
-            return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
-              return response;
-            });
-
-          });
-
-          } else {
-               return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
-              return res;
-            });
+      let tokenTransferMapping = args.map(function(item, idx){
+        if (item.path !== null) {
+          let isEth = false;
+          if (item.token.symbol === 'ETH') {
+            isEth = true;
           }
-          });
+          submitSwapToken(item.path, item.conversionAmount, item.token.address, isEth);
         } else {
-          reserveContract = new web3.eth.Contract(ERC20Token, item.address);
-          const reserveAmount = item.neededMin;
-          return getApproval(reserveContract, senderAddress,  args.converterAddress, reserveAmount, dispatch).then(function(res){
-            return res;
-          })
+          return null;
         }
       });
 
-      Promise.all(resNeededApproval).then(function(approvalResponse){
-          ConverterContract.methods.fund(args.poolTokenProvided).send({
-            from: senderAddress
-          }, function(err, txHash){
-            dispatch(setPoolTransactionStatus({type: 'pending', message: 'Funding pool with reserve tokens'}));
-          }).then(function(fundRes){
-            dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Funded pool with reserve tokens'}));
-          })
-      })
-
+      Promise.all(tokenTransferMapping).then(function(transferResponse){
+        // Call buy with args
+      });
 
     },
-
     resetPoolHistory: () => {
       dispatch(resetPoolHistory());
     },
@@ -171,6 +137,57 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
+
+function createBuyWithArguments(args, dispatch) {
+      const web3 = window.web3;
+      const senderAddress = web3.currentProvider.selectedAddress;
+
+      const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
+      let resNeededApproval = args.reservesNeeded.map(function(item){
+        let reserveContract = {};
+        if (item.symbol === 'ETH') {
+          reserveContract = new web3.eth.Contract(EtherToken, item.address);
+          const reserveAmount = item.neededMin;
+          // get deposit amount from eth token
+
+          // if amount to deposit is > balance then deposit remainder
+          return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
+          if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
+          return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
+                  dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
+          }).then(function(response){
+            return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
+              return response;
+            });
+
+          });
+
+          } else {
+               return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
+              return res;
+            });
+          }
+          });
+        } else {
+          reserveContract = new web3.eth.Contract(ERC20Token, item.address);
+          const reserveAmount = item.neededMin;
+          return getApproval(reserveContract, senderAddress,  args.converterAddress, reserveAmount, dispatch).then(function(res){
+            return res;
+          })
+        }
+      });
+
+      Promise.all(resNeededApproval).then(function(approvalResponse){
+          ConverterContract.methods.fund(args.poolTokenProvided).send({
+            from: senderAddress
+          }, function(err, txHash){
+            dispatch(setPoolTransactionStatus({type: 'pending', message: 'Funding pool with reserve tokens'}));
+          }).then(function(fundRes){
+            dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Funded pool with reserve tokens'}));
+          })
+      })
+}
 
 function getReserveBalance(BancorConverterContract, reserveTokenAddress) {
   return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
