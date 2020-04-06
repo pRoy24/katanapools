@@ -13,7 +13,9 @@ export default class SelectedPool extends Component {
     this.state= {fundAmount: 0, liquidateAmount: 0, reserve1Needed: 0, reserve2Needed: 0,
       fundAllReservesActive: 'reserve-active', fundOneReserveActive: '',
       singleTokenFundReserveSelection: '', singleTokenFundReserveAmount: 0, singleTokenFundConversionPaths: [],
-      singleTokenWithdrawReserveSelection: '', singleTokenWithdrawReserveAmount: 0, singleTokenWithdrawConversionPaths: []
+      singleTokenWithdrawReserveSelection: '', singleTokenWithdrawReserveAmount: 0, singleTokenWithdrawConversionPaths: [],
+      withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active', singleTokenWithdrawReserveSelection: '',
+      singleTokenWithdrawReserveAmount: '',
     }
   }
 
@@ -111,7 +113,7 @@ export default class SelectedPool extends Component {
     let reserveMap = reservesNeeded.map(function(item){
        if (item.symbol === singleReserveSelection) {
          const payload = {path: null, totalAmount: item.neededMin, conversionAmount: item.neededMin, quantity: item.neededDisplay, token: item};
-         
+
          return new Promise((resolve, reject) => (resolve(payload)));
        } else {
         // console.log('mapping reserve');
@@ -164,7 +166,6 @@ export default class SelectedPool extends Component {
   }
 
   submitBuyPoolTokenWithSingleReserve = () => {
-    console.log("Submit buy pool token");
     const {singleTokenFundConversionPaths} = this.state;
 
     this.props.submitPoolBuyWithSingleReserve(singleTokenFundConversionPaths);
@@ -201,9 +202,19 @@ export default class SelectedPool extends Component {
     }
   }
 
+  withdrawReserveToggle = (type) => {
+    if (type === 'all') {
+      this.setState({withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active'});
+    } else {
+      this.setState({withdrawOneReserveActive: 'reserve-active', withdrawAllReservesActive: ''});
+    }
+  }
+
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
-    const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths} = this.state;
+    const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths,
+      withdrawAllReservesActive, withdrawOneReserveActive
+    } = this.state;
     const self = this;
     let reserveRatio = '';
 
@@ -385,10 +396,10 @@ export default class SelectedPool extends Component {
           <Col lg={6}>
             <div>Liquitate Pool Holdings</div>
             <ButtonGroup className="reserve-toggle-btn-group">
-              <Button className={`reserve-toggle-btn ${fundAllReservesActive}`} onClick={self.fundReserveToggle.bind(self, 'all')}>
+              <Button className={`reserve-toggle-btn ${withdrawAllReservesActive}`} onClick={self.fundReserveToggle.bind(self, 'all')}>
                 Liquidate to all reserve tokens
               </Button>
-              <Button className={`reserve-toggle-btn ${fundOneReserveActive}`} onClick={self.fundReserveToggle.bind(self, 'one')}>
+              <Button className={`reserve-toggle-btn ${withdrawOneReserveActive}`} onClick={self.fundReserveToggle.bind(self, 'one')}>
                 Liquidate to one reserve token
               </Button>
             </ButtonGroup>
