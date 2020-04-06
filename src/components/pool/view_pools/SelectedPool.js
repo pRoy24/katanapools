@@ -287,6 +287,8 @@ export default class SelectedPool extends Component {
     let poolLiquidateAction = <span/>;
     let poolFundAction = <span/>;
     if (currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0){
+
+      if (withdrawAllReservesActive === 'reserve-active') {
       poolLiquidateAction = (
         <div>
             <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
@@ -296,6 +298,33 @@ export default class SelectedPool extends Component {
             </div>
         </div>
         )
+      } else if (withdrawOneReserveActive === 'reserve-active') {
+          let reserveOptions = currentSelectedPool.reserves.map(function(item, key){
+            return <Dropdown.Item key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
+          });
+          let withdrawActiveAmount = <span/>;
+
+        poolLiquidateAction = (
+            <div>
+            <div className="select-reserve-container">
+              <label>
+                Reserve token in which to withdraw
+              </label>
+              <DropdownButton id="dropdown-basic-button" title="ETH">
+                {reserveOptions}
+              </DropdownButton>
+              <div>
+                 <label>Amount of pool tokens to withdraw</label>
+                <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveFundInputChanged}/>
+              </div>
+            </div>
+                <div className="action-info-col">
+                {withdrawActiveAmount}
+                <Button onClick={this.submitBuyPoolTokenWithSingleReserve} className="pool-action-btn">Purchase</Button>
+                </div>
+            </div>
+            )
+      }
 
         if (fundAllReservesActive === 'reserve-active') {
           poolFundAction = (
@@ -396,10 +425,10 @@ export default class SelectedPool extends Component {
           <Col lg={6}>
             <div>Liquitate Pool Holdings</div>
             <ButtonGroup className="reserve-toggle-btn-group">
-              <Button className={`reserve-toggle-btn ${withdrawAllReservesActive}`} onClick={self.fundReserveToggle.bind(self, 'all')}>
+              <Button className={`reserve-toggle-btn ${withdrawAllReservesActive}`} onClick={self.withdrawReserveToggle.bind(self, 'all')}>
                 Liquidate to all reserve tokens
               </Button>
-              <Button className={`reserve-toggle-btn ${withdrawOneReserveActive}`} onClick={self.fundReserveToggle.bind(self, 'one')}>
+              <Button className={`reserve-toggle-btn ${withdrawOneReserveActive}`} onClick={self.withdrawReserveToggle.bind(self, 'one')}>
                 Liquidate to one reserve token
               </Button>
             </ButtonGroup>

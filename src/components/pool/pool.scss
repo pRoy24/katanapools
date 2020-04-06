@@ -393,6 +393,11 @@ margin-bottom: 10px;
 .select-reserve-container {
   width: 100%;
   position: relative;
+  label {
+        font-size: 12px;
+    font-weight: 600;
+    margin-right: 10px;
+  }
   .dropdown {
     width: 30%;
     display: inline-block;
