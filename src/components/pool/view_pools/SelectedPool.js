@@ -26,41 +26,41 @@ export default class SelectedPool extends Component {
 
   calculateLiquidateAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
+    if (!isNaN(inputFund) && parseFloat(inputFund) > 0) {
+      const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
+      const removeSupply = new BigNumber(inputFund);
+      const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
+      const currentReserves = currentSelectedPool.reserves;
 
-    const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-    const removeSupply = new BigNumber(inputFund);
-    const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
-    const currentReserves = currentSelectedPool.reserves;
-
-    const reservesAdded = currentReserves.map(function(item){
-      const currentReserveSupply = new BigNumber(item.reserveBalance);
-      const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
-      const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(6), item.decimals);
-      const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
-      return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
-    });
-
-    this.setState({reservesAdded: reservesAdded});
+      const reservesAdded = currentReserves.map(function(item){
+        const currentReserveSupply = new BigNumber(item.reserveBalance);
+        const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
+        const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(6), item.decimals);
+        const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
+        return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
+      });
+      this.setState({reservesAdded: reservesAdded});
+    }
   }
 
   calculateFundingAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
+    if (!isNaN(inputFund) && parseFloat(inputFund) > 0) {
+      const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
+      const addSupply = new Decimal(inputFund);
+      const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
 
-    const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-    const addSupply = new Decimal(inputFund);
-    const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
+      const currentReserves = currentSelectedPool.reserves;
+      const reservesNeeded = currentReserves.map(function(item){
+        const currentReserveSupply = new Decimal(item.reserveBalance);
+        const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
+        const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), item.decimals);
 
-    const currentReserves = currentSelectedPool.reserves;
-    const reservesNeeded = currentReserves.map(function(item){
-      const currentReserveSupply = new Decimal(item.reserveBalance);
-      const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-      const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), item.decimals);
-
-      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP);
-      return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
-    });
-
-    this.setState({reservesNeeded: reservesNeeded});
+        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP);
+        return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
+      });
+      this.setState({reservesNeeded: reservesNeeded});
+    }
   }
 
 
