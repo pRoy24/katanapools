@@ -4,6 +4,7 @@ import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment';
+import {isNonEmptyArray, isEmptyArray} from '../../../utils/ObjectUtils';
 import {getTokenConversionPath, getTokenConversionAmount} from '../../../utils/ConverterUtils';
 const BigNumber = require('bignumber.js');
 const Decimal = require('decimal.js');
@@ -16,6 +17,14 @@ export default class SelectedPool extends Component {
       singleTokenWithdrawReserveSelection: '', singleTokenWithdrawReserveAmount: 0, singleTokenWithdrawConversionPaths: [],
       withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active', singleTokenWithdrawReserveSelection: '',
       singleTokenWithdrawReserveAmount: '',
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {pool: {currentSelectedPool}} = nextProps;
+    if (isNonEmptyArray(currentSelectedPool.reserves) && isEmptyArray(this.props.pool.currentSelectedPool.reserves)) {
+      console.log(currentSelectedPool.reserves);
+      this.setState({singleTokenFundReserveSelection: currentSelectedPool.reserves[0], singleTokenWithdrawReserveSelection: currentSelectedPool.reserves[0]});
     }
   }
 
@@ -81,7 +90,7 @@ export default class SelectedPool extends Component {
   calculateFundingAmountWithOneReserve = (inputFund) => {
     const self = this;
     const {pool: {currentSelectedPool}} = this.props;
-
+    const {singleTokenFundReserveSelection} = this.state;
     const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const addSupply = new Decimal(inputFund);
     const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
@@ -99,7 +108,7 @@ export default class SelectedPool extends Component {
     this.setState({reservesNeeded: reservesNeeded});
 
 
-    const singleReserveSelection = 'ETH';
+    const singleReserveSelection = singleTokenFundReserveSelection.symbol;
 
     let selectedReserve = reservesNeeded.find(function(item){
       if (item.symbol === singleReserveSelection) {
@@ -192,6 +201,7 @@ export default class SelectedPool extends Component {
   }
 
   fundReserveToggle = (type) => {
+    const {currentSelectedPool} = this.state;
     if (type === 'all') {
       this.setState({fundOneReserveActive: ''});
       this.setState({fundAllReservesActive: 'reserve-active'});
@@ -201,6 +211,17 @@ export default class SelectedPool extends Component {
     }
   }
 
+  fundSingleBaseChanged = (evtKey, evt) => {
+    const {pool: {currentSelectedPool}} = this.props;
+    const currentSelection = currentSelectedPool.reserves.find((a)=>(a.symbol === evtKey));
+    this.setState({singleTokenFundReserveSelection: currentSelection});
+  }
+
+  withdrawSingleBaseChanged = (eventKey, evt) => {
+    const {pool: {currentSelectedPool}} = this.props;
+    const currentSelection = currentSelectedPool.reserves.find((a)=>(a.symbol === eventKey));
+    this.setState({singleTokenWithdrawReserveSelection: currentSelection});
+  }
   withdrawReserveToggle = (type) => {
     if (type === 'all') {
       this.setState({withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active'});
@@ -212,7 +233,7 @@ export default class SelectedPool extends Component {
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
     const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths,
-      withdrawAllReservesActive, withdrawOneReserveActive
+      withdrawAllReservesActive, withdrawOneReserveActive, singleTokenWithdrawReserveSelection, singleTokenFundReserveSelection
     } = this.state;
     const self = this;
     let reserveRatio = '';
@@ -299,19 +320,21 @@ export default class SelectedPool extends Component {
         )
       } else if (withdrawOneReserveActive === 'reserve-active') {
           let reserveOptions = currentSelectedPool.reserves.map(function(item, key){
-            return <Dropdown.Item key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
+            return <Dropdown.Item eventKey={item.symbol} key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
           });
           let withdrawActiveAmount = <span/>;
 
         poolLiquidateAction = (
             <div>
             <div className="select-reserve-container">
+              <div>
               <label>
                 Reserve token in which to withdraw
               </label>
-              <DropdownButton id="dropdown-basic-button" title="ETH">
+              <DropdownButton id="dropdown-basic-button" title={singleTokenWithdrawReserveSelection.symbol} onSelect={this.withdrawSingleBaseChanged}>
                 {reserveOptions}
               </DropdownButton>
+              </div>
               <div>
                  <label>Amount of pool tokens to withdraw</label>
                 <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveFundInputChanged}/>
@@ -337,24 +360,31 @@ export default class SelectedPool extends Component {
             )
         } else if (fundOneReserveActive === 'reserve-active') {
           let reserveOptions = currentSelectedPool.reserves.map(function(item, key){
-            return <Dropdown.Item key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
+            return <Dropdown.Item eventKey={item.symbol} key={`${item.symbol}-${key}`} >{item.symbol}</Dropdown.Item>
           });
           let fundActiveAmount = <span/>;
           if (singleTokenFundConversionPaths) {
             let totalReserveAmount  = 0;
             singleTokenFundConversionPaths.forEach(function(item){
-              console.log(item.quantity);
               totalReserveAmount += parseFloat(item.quantity);
             });
-            fundActiveAmount = <div>You will need to stake {totalReserveAmount} ETH</div>
+            fundActiveAmount = <div>You will need to stake {totalReserveAmount} {singleTokenFundReserveSelection.symbol}</div>
           }
           poolFundAction = (
             <div>
             <div className="select-reserve-container">
-              <DropdownButton id="dropdown-basic-button" title="ETH">
+            <div>
+              <label>
+                Reserve token with which to fund.
+              </label>
+              <DropdownButton id="dropdown-basic-button" title={singleTokenFundReserveSelection.symbol} onSelect={this.fundSingleBaseChanged}>
                 {reserveOptions}
               </DropdownButton>
-                <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onSingleReserveFundInputChanged}/>
+            </div>
+            <div>
+              <label>Amount of pool tokens to fund</label>
+              <Form.Control type="number" placeholder="Enter amount of pool tokens to fund" onChange={this.onSingleReserveFundInputChanged}/>
+            </div>
             </div>
                 <div className="action-info-col">
                 {fundActiveAmount}
