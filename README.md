@@ -7,7 +7,7 @@ This feature does not require depositing the reseve into any intermediate smart 
 directly between the user wallet and Bancor contracts and as such any remainder balance after funding/liquidation is deposited into the user wallet.
 
 
-## This feature was completed in response to Bancor Funding the future [challenge](https://gitcoin.co/issue/bancorprotocol/contracts/344/4119)*
+## This feature was completed in response to Bancor Funding the future [challenge](https://gitcoin.co/issue/bancorprotocol/contracts/344/4119)
 
 **Live Demo URL Hosted at**
 
