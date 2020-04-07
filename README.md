@@ -9,12 +9,12 @@ directly between the user wallet and Bancor contracts and as such any remainder 
 
 ## This feature was completed in response to Bancor Funding the future [challenge](https://gitcoin.co/issue/bancorprotocol/contracts/344/4119)*
 
-*Live Demo URL Hosted at* 
+**Live Demo URL Hosted at**
 
-*To test this feature switch to Ropsten network*
+This feature is currently experimental so please switch to Ropsten network to test this feature.
 
 *Screenshot*
-[screenshot](https://github.com/pRoy24/katanapools/blob/master/screenshots/fund_liquidate_single.png)
+![screenshot](https://github.com/pRoy24/katanapools/blob/master/screenshots/fund_liquidate_single.png)
 
 
 # Implementation details-
