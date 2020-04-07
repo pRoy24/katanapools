@@ -18,8 +18,8 @@ This feature is currently experimental so please switch to Ropsten network to te
 
 
 # Implementation details-
-To user provides the amount of pool token that they'd like to purchase and the reserve token that they want to purchase in.
-Then the app colculates the amount of chosen reseve needed for each of the other reserve token swaps and converts them.
+The user provides the amount of pool token that they'd like to purchase and the reserve token that they want to purchase in.
+Then the app colculates the amount of chosen reseve needed for each of the other reserve token swaps and converts them client side and finally funds the pool.
 
 Intead of using a third party contract converting the chosen reserve into the other reserves, the app allows the user to sign the transaction and accept the other reserves in their wallet.
 
