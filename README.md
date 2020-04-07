@@ -9,7 +9,8 @@ directly between the user wallet and Bancor contracts and as such any remainder 
 
 ## This feature was completed in response to Bancor Funding the future [challenge](https://gitcoin.co/issue/bancorprotocol/contracts/344/4119)
 
-**Live Demo URL Hosted at**
+**Live Demo for this feature Hosted at**
+https://staging.katanapools.com/pool/view
 
 This feature is currently experimental so please switch to Ropsten network to test this feature.
 

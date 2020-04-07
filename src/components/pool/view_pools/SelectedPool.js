@@ -46,6 +46,12 @@ export default class SelectedPool extends Component {
     this.setState({liquidateAmount: inputFund});
   }
 
+  onSingleReserveLiquidateFundChanged = (evt) => {
+    const singleLiquidateFund = evt.target.value;
+    this.calculateLiquidateAmountWithOneReserve(singleLiquidateFund);
+    this.setState({singleTokenWithdrawReserveAmount: singleLiquidateFund});
+  }
+
   calculateLiquidateAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
 
@@ -61,6 +67,43 @@ export default class SelectedPool extends Component {
       const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
       return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
     });
+
+    this.setState({reservesAdded: reservesAdded});
+  }
+
+  calculateLiquidateAmountWithOneReserve = (liquidateFund) => {
+    const {pool: {currentSelectedPool}} = this.props;
+
+    const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
+    const removeSupply = new BigNumber(liquidateFund);
+    const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
+    const currentReserves = currentSelectedPool.reserves;
+
+    const reservesAdded = currentReserves.map(function(item){
+      const currentReserveSupply = new BigNumber(item.reserveBalance);
+      const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
+      const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(6), item.decimals);
+      const currentReserveAddedDisplay = currentReserveAdded.toPrecision(6, 0);
+      return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
+    });
+    const {singleTokenWithdrawReserveSelection} = this.state;
+    let reservesMap = reservesAdded.map(function(item, idx){
+      if (item.symbol === singleTokenWithdrawReserveSelection.symbol) {
+        let payload = {path: null, totalAmount: item.addedMin, conversionAmount: item.addedMin, quantity: item.addedDisplay, token: item};
+        return new Promise((resolve, reject) => resolve(payload));
+      } else {
+         return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
+            return getTokenConversionAmount(conversionPath, item.addedMin).then(function(response){
+              let quantity = fromDecimals(response.toString(), item.decimals);
+            return {path: conversionPath, totalAmount: response, conversionAmount: item.neededMin, quantity: quantity, token: item}
+            });
+         });
+      }
+    });
+    const self = this;
+    Promise.all(reservesMap).then(function(mapData){
+      self.setState({singleTokenWithdrawConversionPaths: mapData})
+    })
 
     this.setState({reservesAdded: reservesAdded});
   }
@@ -81,8 +124,6 @@ export default class SelectedPool extends Component {
       const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP);
       return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
     });
-
-
 
     this.setState({reservesNeeded: reservesNeeded});
   }
@@ -179,6 +220,20 @@ export default class SelectedPool extends Component {
     this.props.submitPoolBuyWithSingleReserve(payload);
   }
 
+  submitSellPoolTokenWithSingleReserve = () => {
+    const {pool: {currentSelectedPool}} = this.props;
+    const {singleTokenWithdrawConversionPaths} = this.state;
+    const existingPoolTokenBalance = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
+    const {singleTokenWithdrawReserveAmount, reservesAdded} = this.state;
+    const args = {poolTokenSold: toDecimals(singleTokenWithdrawReserveAmount, currentSelectedPool.decimals),
+    reservesAdded: reservesAdded, converterAddress: currentSelectedPool.converter,
+      'poolAddress': currentSelectedPool.address
+    };
+    const payload = {paths: singleTokenWithdrawConversionPaths, funding: args}
+    this.props.submitPoolSellWithSingleReserve(payload);
+
+  }
+
   submitSellPoolToken = () => {
     const {pool: {currentSelectedPool}} = this.props;
 
@@ -233,7 +288,8 @@ export default class SelectedPool extends Component {
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
     const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths,
-      withdrawAllReservesActive, withdrawOneReserveActive, singleTokenWithdrawReserveSelection, singleTokenFundReserveSelection
+      withdrawAllReservesActive, withdrawOneReserveActive, singleTokenWithdrawReserveSelection, singleTokenFundReserveSelection,
+      singleTokenWithdrawConversionPaths
     } = this.state;
     const self = this;
     let reserveRatio = '';
@@ -323,7 +379,13 @@ export default class SelectedPool extends Component {
             return <Dropdown.Item eventKey={item.symbol} key={`${item.symbol}-${key}`}>{item.symbol}</Dropdown.Item>
           });
           let withdrawActiveAmount = <span/>;
-
+          if (singleTokenWithdrawConversionPaths && singleTokenWithdrawConversionPaths.length > 0) {
+            let totalReserveAmount  = 0;
+            singleTokenWithdrawConversionPaths.forEach(function(item){
+              totalReserveAmount += parseFloat(item.quantity);
+            });
+            withdrawActiveAmount = <div>You will receive {totalReserveAmount} {singleTokenWithdrawReserveSelection.symbol}</div>
+          }
         poolLiquidateAction = (
             <div>
             <div className="select-reserve-container">
@@ -337,12 +399,12 @@ export default class SelectedPool extends Component {
               </div>
               <div>
                  <label>Amount of pool tokens to withdraw</label>
-                <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveFundInputChanged}/>
+                <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveLiquidateFundChanged}/>
               </div>
             </div>
                 <div className="action-info-col">
                 {withdrawActiveAmount}
-                <Button onClick={this.submitBuyPoolTokenWithSingleReserve} className="pool-action-btn">Purchase</Button>
+                <Button onClick={this.submitSellPoolTokenWithSingleReserve} className="pool-action-btn">Withdraw</Button>
                 </div>
             </div>
             )
