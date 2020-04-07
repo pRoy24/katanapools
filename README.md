@@ -15,7 +15,7 @@ https://staging.katanapools.com/pool/view
 This feature is currently experimental so please switch to Ropsten network to test this feature.
 
 *Screenshot*
-![screenshot](https://github.com/pRoy24/katanapools/blob/master/screenshots/single_token_fl.png)
+![screenshot](https://github.com/pRoy24/katanapools/blob/master/screenshots/fund_liquidate_single.png)
 
 
 # Implementation details-
