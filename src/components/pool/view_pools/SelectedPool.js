@@ -81,7 +81,7 @@ export default class SelectedPool extends Component {
   calculateFundingAmountWithOneReserve = (inputFund) => {
     const self = this;
     const {pool: {currentSelectedPool}} = this.props;
-    console.log("amount of pool token "+inputFund);
+
     const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const addSupply = new Decimal(inputFund);
     const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
@@ -93,12 +93,10 @@ export default class SelectedPool extends Component {
       const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), item.decimals);
 
       const currentReserveNeededDisplay = currentReserveNeeded.toFixed(6, Decimal.ROUND_UP).toString();
-      console.log("percent to increase "+pcIncreaseSupply.toString());
-      console.log("existing reserve "+currentReserveSupply.toString());
-
-      console.log("Amount of "+item.symbol +" needed is "+currentReserveNeededDisplay);
       return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
     });
+
+    this.setState({reservesNeeded: reservesNeeded});
 
 
     const singleReserveSelection = 'ETH';
@@ -125,10 +123,7 @@ export default class SelectedPool extends Component {
             const responseAmount = fromDecimals(response, 18);
             let responseAmountDecimals = new Decimal(responseAmount);
             let amountNeeded = new Decimal(item.neededDisplay);
-
             let quantity = amountNeeded.dividedBy(responseAmountDecimals).toFixed(6, Decimal.ROUND_UP).toString();
-
-
             return {path: conversionPath, totalAmount: response, conversionAmount: item.neededMin, quantity: quantity, token: item}
           })
          })
@@ -166,9 +161,13 @@ export default class SelectedPool extends Component {
   }
 
   submitBuyPoolTokenWithSingleReserve = () => {
-    const {singleTokenFundConversionPaths} = this.state;
 
-    this.props.submitPoolBuyWithSingleReserve(singleTokenFundConversionPaths);
+    const {singleReserveAmount, reservesNeeded, singleTokenFundConversionPaths} = this.state;
+    const {pool: {currentSelectedPool}} = this.props;
+    const fundingArgs = {poolTokenProvided: toDecimals(singleReserveAmount, currentSelectedPool.decimals),
+    reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
+    const payload = {paths: singleTokenFundConversionPaths, funding: fundingArgs};
+    this.props.submitPoolBuyWithSingleReserve(payload);
   }
 
   submitSellPoolToken = () => {

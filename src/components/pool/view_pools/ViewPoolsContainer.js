@@ -45,21 +45,32 @@ const mapDispatchToProps = (dispatch) => {
       createBuyWithArguments(args, dispatch);
     },
 
-    submitPoolBuyWithSingleReserve: (args) => {
+    submitPoolBuyWithSingleReserve: (payload) => {
+
+      const args = payload.paths;
+      const baseToken = args.find(function(item){
+        return item.path === null;
+      })
 
       let tokenTransferMapping = args.map(function(item, idx){
         if (item.path !== null) {
           let isEth = false;
-          if (item.token.symbol === 'ETH') {
+          if (baseToken.token.symbol === 'ETH') {
             isEth = true;
           }
-          submitSwapToken(item.path, item.conversionAmount, item.token.address, isEth);
+          const amount = toDecimals(parseFloat(item.quantity), baseToken.token.decimals);
+          return submitSwapToken(item.path, amount, baseToken.token.address, isEth).then(function(res){
+            return res;
+          })
         } else {
-          return null;
+          return new Promise((resolve, reject) => (resolve()));
         }
       });
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
+
+        console.log('finished promise');
+        createBuyWithArguments(payload.funding, dispatch);
         // Call buy with args
       });
 
