@@ -23,7 +23,6 @@ export default class SelectedPool extends Component {
   componentWillReceiveProps(nextProps) {
     const {pool: {currentSelectedPool}} = nextProps;
     if (isNonEmptyArray(currentSelectedPool.reserves) && isEmptyArray(this.props.pool.currentSelectedPool.reserves)) {
-      console.log(currentSelectedPool.reserves);
       this.setState({singleTokenFundReserveSelection: currentSelectedPool.reserves[0], singleTokenWithdrawReserveSelection: currentSelectedPool.reserves[0]});
     }
   }
@@ -95,7 +94,7 @@ export default class SelectedPool extends Component {
          return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
             return getTokenConversionAmount(conversionPath, item.addedMin).then(function(response){
               let quantity = fromDecimals(response.toString(), item.decimals);
-            return {path: conversionPath, totalAmount: response, conversionAmount: item.neededMin, quantity: quantity, token: item}
+            return {path: conversionPath, totalAmount: response, conversionAmount: item.addedMin, quantity: quantity, token: item}
             });
          });
       }

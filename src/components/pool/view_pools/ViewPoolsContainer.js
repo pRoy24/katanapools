@@ -69,7 +69,6 @@ const mapDispatchToProps = (dispatch) => {
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
 
-        console.log('finished promise');
         createBuyWithArguments(payload.funding, dispatch);
         // Call buy with args
       });
@@ -86,11 +85,10 @@ const mapDispatchToProps = (dispatch) => {
       let tokenTransferMapping = args.map(function(item, idx){
         if (item.path !== null) {
           let isEth = false;
-          if (baseToken.token.symbol === 'ETH') {
+          if (item.token.symbol === 'ETH') {
             isEth = true;
           }
-          const amount = toDecimals(parseFloat(item.quantity), baseToken.token.decimals);
-          return submitSwapToken(item.path, amount, baseToken.token.address, isEth).then(function(res){
+          return submitSwapToken(item.path, item.conversionAmount, item.token.address, isEth).then(function(res){
             return res;
           })
         } else {
@@ -147,9 +145,7 @@ const mapDispatchToProps = (dispatch) => {
 function createSellWithArguments(args, dispatch) {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
-      console.log(args);
-      console.log('**');
-      
+
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
 
