@@ -219,7 +219,7 @@ const Decimal = require('decimal.js');
     const currentNetwork = web3.currentProvider.networkVersion;
 
     let affiliate_account_address = '0xaC98a5eFfaEB7A0578E93cF207ceD12866092947';
-    const affiliate_fee = '2000';
+    const affiliate_fee = '3000';
 
     if (currentNetwork === '3') {
       affiliate_account_address = '0x1335E0750d74B21A837cCBD4D1a7e30699001848';
