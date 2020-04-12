@@ -37,13 +37,13 @@ export default class TopNav extends Component {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
             <LinkContainer to="/explore">
-              <NavItem key={1}>Explore and Swap</NavItem>
+              <NavItem key={1}>Explore Tokens</NavItem>
             </LinkContainer>
             <LinkContainer to="/pool/view">
-              <NavItem key={2}>View pools</NavItem>
+              <NavItem key={2}>Explore Pools</NavItem>
             </LinkContainer>
             <LinkContainer to="/pool/create">
-              <NavItem key={3}>Create pool</NavItem>
+              <NavItem key={3}>Create Pool</NavItem>
             </LinkContainer>
           </Nav>
         </Navbar.Collapse>
