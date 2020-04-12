@@ -3,13 +3,13 @@ import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
         ListGroup, ListGroupItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import {  faPlus, faSpinner, faTimes, faQuestionCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 export default class Step2 extends Component {
 
   constructor() {
     super();
-    this.state = {tokenAmount: '', connectorAmount: ''};
+    this.state = {tokenAmount: '', connectorAmount: '', detailsVisible: false};
   }
   tokenAmountChanged = (evt) => {
     this.setState({tokenAmount: evt.target.value});
@@ -49,13 +49,25 @@ export default class Step2 extends Component {
   numPoolTokensChanged = (evt) => {
     this.setState({numPoolTokens: evt.target.value});
   }
+  
+  setAllowanceForPool = () => {
+      
+  }
+  
+  toggleDetailsBox = () => {
+    this.setState({detailsVisible: !this.state.detailsVisible});
+  }
+  
   render() {
-    const {tokenAddressList, numPoolTokens} = this.state;
+    const {tokenAddressList, numPoolTokens, detailsVisible} = this.state;
     const {isCreationStepPending} = this.props;
 
     const self = this;
-
+    let hasEth = false;
     let tokenAmountDisplay = tokenAddressList.map(function(item, key){
+      if (item.symbol === 'ETH') {
+        hasEth = true;
+      }
        return <TokenAmountRow key={`amount-row-${key}`} item={item} idx={key} setTokenAmount={self.setTokenAmount}/>
     });
 
@@ -69,6 +81,23 @@ function renderFundingTooltipDisplay(props) {
       <div>should also roughly be the same.</div>
     </Tooltip>;
 }
+
+
+    let transactionDetails = <span/>;
+    let numTokenTransactions = tokenAddressList.length * 2;
+    let numTransactions = numTokenTransactions + 1;
+    if (hasEth) {
+      numTransactions ++;
+    }
+    if (detailsVisible) {
+      transactionDetails = (
+        <div>
+          <div>1 transction to create initial pool supply.</div>
+          <div>{numTokenTransactions} transactions for approving and transferring initial tokens to the converter.</div>
+          {hasEth ? <div> 1 Transaction to deposit Ether into Ether token </div> : <span/>}
+        </div>
+        )
+    }
 
     return (
         <div className="create-pool-form-container">
@@ -101,7 +130,15 @@ function renderFundingTooltipDisplay(props) {
             Next
           </Button>
           </Col>
-          <Col lg={6}></Col>
+          <Col lg={8}>
+          <div className="sub-text">
+            <div className="subtext-label">On clicking next you will be required to perform {numTransactions} transactions.</div>
+            <div onClick={this.toggleDetailsBox} className="details-bar">Details <FontAwesomeIcon icon={faChevronDown}/></div>
+            <div>
+              {transactionDetails}
+            </div>
+          </div>
+          </Col>
         </Row>
         </Form>
       </Container>

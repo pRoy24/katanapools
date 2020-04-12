@@ -3,18 +3,18 @@ import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
         ListGroup, ListGroupItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import {getReserveTokenNameAndSymbol} from '../../../../../utils/ConverterUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import {  faPlus, faSpinner, faTimes, faQuestionCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 export default class Step1 extends Component {
   constructor() {
     super();
     this.state = {convertibleTokenAddress: '', reserveFee: 0.1, tokenArrayList: [], baseReserveSelected: '',
-    baseReserveWeight: '', poolType: 'relay', poolName: '', poolSymbol: '', poolDecimals: 18, txMsg: {}};
+    baseReserveWeight: '', poolType: 'relay', poolName: '', poolSymbol: '', poolDecimals: 18, txMsg: {}, detailsVisible: false};
   }
 
   componentDidMount() {
     this.setState({maxFee: 3, weight: 50, tokenArrayList: [{'address': '', weight: 50}],
-    baseReserveSelected: 'BNT', baseReserveWeight: 50});
+    baseReserveSelected: 'BNT', baseReserveWeight: 50, detailsVisible: false});
   }
   onSubmit = (e) => {
     e.preventDefault();
@@ -33,6 +33,10 @@ export default class Step1 extends Component {
   }
   reserveFeeChanged = (e) => {
     this.setState({reserveFee: e.target.value});
+  }
+
+  toggleDetailsBox = () => {
+    this.setState({detailsVisible: !this.state.detailsVisible});
   }
 
   addReserveTokenRow = () => {
@@ -151,7 +155,7 @@ export default class Step1 extends Component {
 
   render() {
 
-    const {baseReserveWeight, reserveFee, tokenArrayList, poolType, pool, poolSymbolDefault, poolNameDefault} = this.state;
+    const {baseReserveWeight, reserveFee, tokenArrayList, poolType, pool, poolSymbolDefault, poolNameDefault, detailsVisible} = this.state;
     const {getTokenDetail, isFetching, isCreationStepPending, isError} = this.props;
     const {poolName, poolSymbol, poolDecimals} = this.state;
 
@@ -296,7 +300,18 @@ function renderConvertibleTokenTooltip(props) {
     }
 
     let isSubmitBtnDisabled = isCreationStepPending || isFormInComplete;
-
+    let numTransactions = tokenArrayList.length + 3;
+    let transactionDetails = <span/>;
+    if (detailsVisible) {
+      transactionDetails = (
+        <div>
+          <div>1 transction for Pool token contract deployment.</div>
+          <div>1 transaction for Pool converter deployment.</div>
+          <div>1 transaction for setting pool conversion fees.</div>
+          <div>{tokenArrayList.length} transactions for adding connectors for each of the ERC20 tokens</div>
+        </div>
+        )
+    }
     return (
         <div className="create-pool-form-container">
 
@@ -422,8 +437,14 @@ function renderConvertibleTokenTooltip(props) {
         </Button>
         }
         </Col>
-        <Col lg={4}>
-
+        <Col lg={8}>
+          <div className="sub-text">
+            <div className="subtext-label">On clicking next you will be required to perform {numTransactions} transactions.</div>
+            <div onClick={this.toggleDetailsBox} className="details-bar">Details <FontAwesomeIcon icon={faChevronDown}/></div>
+            <div>
+              {transactionDetails}
+            </div>
+          </div>
         </Col>
         </Row>
       </Form>

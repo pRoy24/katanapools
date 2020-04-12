@@ -369,3 +369,21 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
     margin-bottom: 10px;
   }
 }
+
+.sub-text {
+  font-size: 12px;
+  color: #404040;
+  .subtext-label {
+    display: inline-block;
+  }
+  .details-bar {
+    font-weight: 600;
+    margin-left: 6px;
+    display: inline-block;
+    cursor: pointer;
+  }
+}
+
+.step-3-sub {
+  padding-top: 20px;
+}

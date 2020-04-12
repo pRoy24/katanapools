@@ -5,6 +5,7 @@ import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, 
   deploySmartTokenError, deploySmartTokenSuccess, deployRelayConverterStatus, setRelayTokenContractReceipt, setPoolFundedStatus,
   setActivationStatus, setPoolCreationReceipt, setTokenListDetails, resetPoolStatus,
   deployRelayConverterSuccess, setPoolFundedSuccess, setCurrentPoolStatus, setConverterContract,
+  setPoolCreationHeader
 } from '../../../actions/pool';
 
 
@@ -196,9 +197,6 @@ const mapDispatchToProps = (dispatch) => {
       dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Waiting for user approval of pool supply"}));
       smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
 
-
-
-
       dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Creating initial pool supply"}));
       }).then(function(response){
         (async () => {
@@ -223,22 +221,23 @@ const mapDispatchToProps = (dispatch) => {
       smartTokenContract.methods.transferOwnership(args.converterAddress).send({
         from: senderAddress
       }, function(err, txHash){
-        dispatch(setActivationStatus({'type': 'pending', 'message': 'Transferring ownership of pool to converter'}));        
+        dispatch(setActivationStatus({'type': 'pending', 'message': 'Transferring ownership of pool to converter'}));
       }).then(function(transferOwnershipResponse){
-          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to accept pool token ownership'}));   
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to accept pool token ownership'}));
         converterContract.methods.acceptTokenOwnership().send({
           from: senderAddress
         }, function(err, txHash){
-          dispatch(setActivationStatus({'type': 'pending', 'message': 'Converter contract is accepting pool token ownership'}));          
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Converter contract is accepting pool token ownership'}));
         }).then(function(senderAcceptResponse){
-          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to register converter contract to registry'}));              
+          dispatch(setActivationStatus({'type': 'pending', 'message': 'Waiting for user approval to register converter contract to registry'}));
           RegistryUtils.getConverterRegistryAddress().then(function(contractRegistryContractAddress){
           const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, contractRegistryContractAddress);
           ConverterRegistryContract.methods.addConverter(args.converterAddress).send({
             from: senderAddress
           }, function(err, txHash){
-            dispatch(setActivationStatus({'type': 'pending', 'message': 'Registering converter contract with converter registry'}));     
+            dispatch(setActivationStatus({'type': 'pending', 'message': 'Registering converter contract with converter registry'}));
           }).then(function(converterRegistryAddedResponse){
+            dispatch(setPoolCreationHeader('Your pool has been created'));
             dispatch(setActivationStatus({'type': 'success', 'message': 'Finished activating pool'}));
           });
           });
@@ -259,6 +258,9 @@ const mapDispatchToProps = (dispatch) => {
 
       PoolTokenContract.methods.name().call().then(function(poolName){
         PoolTokenContract.methods.symbol().call().then(function(poolSymbol){
+          PoolTokenContract.methods.decimals().call().then(function(poolDecimals){
+
+
           PoolTokenContract.methods.totalSupply().call().then(function(poolSupply){
 
 
@@ -269,9 +271,9 @@ const mapDispatchToProps = (dispatch) => {
 
               BancorConverterContract.methods.getReserveBalance(token1).call()
               .then(function(connectorReserveBalance){
-                const payload = {connectorBalance: fromDecimals(connectorReserveBalance, 18),
+                const payload = {connectorBalance: fromDecimals(connectorReserveBalance, 18), decimals: poolDecimals,
                   connectorWeight: connectorReserveRatio / 10000, poolName: poolName, poolSymbol: poolSymbol,
-                  poolSupply: fromDecimals(poolSupply, 18), numConnectors: connectorTokenCount,
+                  poolSupply: fromDecimals(poolSupply, poolDecimals), numConnectors: connectorTokenCount,
                   connectorAdress: token1,
                 };
 
@@ -279,6 +281,7 @@ const mapDispatchToProps = (dispatch) => {
             })
           })
         })
+          })
           })
           })
       })

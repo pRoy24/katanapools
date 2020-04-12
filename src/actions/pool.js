@@ -46,6 +46,15 @@ export const SET_CURRENT_POOL_STATUS = 'SET_CURRENT_POOL_STATUS';
 
 export const SET_CONVERTER_CONTRACT = 'SET_CONVERTER_CONTRACT';
 
+export const SET_POOL_CREATION_HEADER = 'SET_POOL_CREATION_HEADER';
+
+export function setPoolCreationHeader(payload) {
+  return {
+    type: SET_POOL_CREATION_HEADER,
+    payload: payload
+  }  
+}
+
 export function setConverterContract(payload) {
   return {
     type: SET_CONVERTER_CONTRACT,

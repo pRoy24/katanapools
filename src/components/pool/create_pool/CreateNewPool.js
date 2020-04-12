@@ -189,7 +189,7 @@ export default class CreateNewPool extends Component {
 
     const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
-    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, isCreationStepPending, activationStatus}} = this.props;
+    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, isCreationStepPending, activationStatus, poolCreationHeader}} = this.props;
 
     let transactionStatusMessage = <span/>;
 
@@ -256,7 +256,7 @@ export default class CreateNewPool extends Component {
         transactionStatusMessage = <span/>;
       }
       }
-      
+
       if (isNonEmptyObject(activationStatus)) {
       if (activationStatus.type === 'pending') {
         transactionStatusMessage = (
@@ -267,7 +267,7 @@ export default class CreateNewPool extends Component {
           )
       } else {
         transactionStatusMessage = <span/>;
-      }        
+      }
       }
     }
     let currentPage = <span/>;
@@ -296,7 +296,7 @@ export default class CreateNewPool extends Component {
 
     return (
       <div>
-        <CreateNewPoolToolbar/>
+        <CreateNewPoolToolbar poolCreationHeader={poolCreationHeader}/>
         <div className="create-pool-wizard-container">
            {transactionStatusMessage}
            {currentPage}
@@ -327,6 +327,7 @@ class TransactioReceiptPage extends Component {
         <div>Amount: {item.amount}</div>
       </ListGroupItem>)
     })
+
     if (isNonEmptyObject(poolCreationReceipt)) {
       receiptObject = (
         <div className="create-pool-form-container">
