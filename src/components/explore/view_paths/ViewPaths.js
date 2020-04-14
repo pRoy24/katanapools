@@ -289,7 +289,7 @@ class ConversionPathList extends Component {
                         <FontAwesomeIcon icon={faArrowRight} />
                       </div>
                 }
-                return <div className="meta-item-cell-container" key={cell.meta.symbol + "idx"}>
+                return <div className="meta-item-cell-container" key={cell.meta.symbol + {idx}+"idx"}>
                       <div className="meta-item-cell">
                         <div className="token-label-cell">{cell.meta.symbol}</div>
                         <div className="token-name-cell">{cell.meta.name}</div>

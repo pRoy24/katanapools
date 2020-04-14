@@ -71,7 +71,16 @@ export class Ethereum {
         const sourceDecimals = await getDecimals(this, sourceToken);
         const targetDecimals = await getDecimals(this, targetToken);
         const rates = await getRates(this, paths, utils.toWei(amount, sourceDecimals));
-        return [paths, rates.map(rate => utils.fromWei(rate, targetDecimals))];
+        let pathSendData = [];
+        let rateData = [];
+        rates.forEach(function(item, idx){
+            if (item !== null) {
+              pathSendData.push(paths[idx]);
+              rateData.push(item);
+            }
+        });
+        let abc = [pathSendData, rateData];
+        return abc;
     }
 
     async getConverterVersion(converter) {
@@ -103,12 +112,23 @@ export const getDecimals = async function(_this, token) {
 };
 
 export const getRates = async function(_this, paths, amount) {
-    const calls = paths.map(path => [_this.bancorNetwork._address, _this.bancorNetwork.methods.getReturnByPath(path, amount).encodeABI()]);
-    return _this.multicallContract.methods.aggregate(calls, false).call().then(function(dataResponse){
+   let pathResponseData = paths.map(function(path){
+    return _this.bancorNetwork.methods.getReturnByPath(path, amount).call().then(function(data){
+        return data;
+        }).catch(function(err){
+            return null;
+        })
+    });
 
-        const returnData = dataResponse.returnData;
-
-        return returnData.map(item => item.success ? Web3.utils.toBN(item.data.substr(0, 66)).toString() : "0");
+    return Promise.all(pathResponseData).then(function(response){
+        let rd = response.map(function(ds){
+           if (ds && ds[0]) {
+             return ds[0];
+           } else {
+             return null;
+           }
+        });
+        return rd;
     });
 };
 
