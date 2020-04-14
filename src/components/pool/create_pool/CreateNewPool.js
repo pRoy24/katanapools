@@ -133,7 +133,16 @@ export default class CreateNewPool extends Component {
         is greater than wallet balance for ${tokenItem.symbol}`});
         isValidationError = true;
       }
+      if (parseFloat(tokenItem.amount) <= 0) {
+        self.setState({isError: true, errorMessage: `Amount entered for ${tokenItem.symbol} must be greater than 0`});
+        isValidationError = true;
+      }
     });
+
+    if (parseFloat(vals.initialSupply) <= 0) {
+        self.setState({isError: true, errorMessage: `Pool supply must be greater than 0`});
+        isValidationError = true;
+    }
 
     const args = {
       convertibleTokens: vals.tokenAddressList,
@@ -141,6 +150,7 @@ export default class CreateNewPool extends Component {
       smartTokenAddress: smartTokenContract._address,
       converterAddress: vals.converterAddress
     }
+
 
 
     if (!isValidationError) {
@@ -389,7 +399,6 @@ class TransactioReceiptPage extends Component {
           <ListGroup>
           {poolConvertibleTokens}
           </ListGroup>
-          <div>Provide your pool address to <a href="https://web.telegram.org/#/im?p=@BancorDevelopers" target="_blank">Bancor developers channel</a> for verification.</div>
         </Container>
         </div>
         )
