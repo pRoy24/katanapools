@@ -7,6 +7,7 @@ import {setConvertibleTokens, setSmartTokens, setConvertibleTokensBySmartTokensM
 import {getAllPathsWithRates} from '../../utils/PathUtils';
 import {getConvertibleTokensInRegistry, getSmartTokensInRegistry,
 getSmartTokensWithSymbolsInRegistry, getConvertibleTokensBySmartTokens, multiCallTokenData} from '../../utils/ConverterUtils';
+import {getConvertibleTokens, getConvertibleTokensSuccess, getConvertibleTokensFailure } from '../../actions/app';
 import {getTokenData} from '../../utils/RegistryUtils';
 
 const mapStateToProps = state => {
@@ -30,19 +31,14 @@ const mapDispatchToProps = (dispatch) => {
     },
 
     getAllConvertibleTokens: () => {
-      getConvertibleTokensInRegistry().then(function(dataResponse){
-        multiCallTokenData(dataResponse).then(function(tokenDetailList){
-          dispatch(setConvertibleTokens(tokenDetailList));
-        })
-      })
-    },
+      dispatch(getConvertibleTokens()).then(function(dataResponse){
+        if (dataResponse.payload.status === 200) {
+          dispatch(getConvertibleTokensSuccess(dataResponse.payload.data.data));
+        }
+      }).catch(function(err){
+        dispatch(getConvertibleTokensFailure(err));
+      });
 
-    getAllConvertibleTokensV2: () => {
-      getConvertibleTokensInRegistry().then(function(dataResponse){
-        multiCallTokenData(dataResponse).then(function(tokenDetailList){
-          dispatch(setConvertibleTokens(tokenDetailList));
-        })
-      })
     },
 
     getAllSmartTokens: () => {

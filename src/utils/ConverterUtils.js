@@ -57,7 +57,7 @@ const Decimal = require('decimal.js');
   }
 
   export function multiCallTokenData(tokenList) {
-    return getTokenListNameAndSymbol(tokenList).then(function(dataResponse){
+    return resolveTokenListNameAndSymbol(tokenList).then(function(dataResponse){
       return getTokenListMeta(dataResponse).then(function(tokenListDetails){
         return tokenListDetails;
       });
@@ -346,6 +346,27 @@ function fetchTokenSymbolAndName(address) {
   }
 }
 
+
+// Promise based method to resolve token name and symbol
+function resolveTokenListNameAndSymbol(tokenList) {
+  const web3 = window.web3;
+
+  let tokenListData = tokenList.map(function(address){
+    const CurrentToken = new web3.eth.Contract(ERC20Token, address);
+    return CurrentToken.methods.symbol().call().then(function(symbol){
+      return CurrentToken.methods.name().call().then(function(name){
+        return {'name': name, 'symbol': symbol, 'address': address};
+      })
+    }).catch(function(err){
+      return null;
+    })
+  });
+
+  return Promise.all(tokenListData).then(function(dataResponse){
+    return dataResponse.filter(Boolean);
+  })
+}
+
 // Multicalls token list data and returns response
 function getTokenListNameAndSymbol(tokenList) {
 
@@ -397,14 +418,7 @@ function getTokenListNameAndSymbol(tokenList) {
 function getTokenListMeta(tokenList) {
   let tokenListPromises = tokenList.map(function(item){
     const tokenSymbol = item.symbol;
-    return axios.get(`https://api.bancor.network/0.1/currencies/${tokenSymbol}`).then(function(tokenApiMeta){
-      const imgFile = tokenApiMeta.data.data.primaryCommunityImageName || "";
-      const [name, ext] = imgFile.split(".");
-      let imgURI = `https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/${name}_200w.${ext}`;
-      return Object.assign({}, item, {imageURI: imgURI}, {meta: tokenApiMeta.data.data});
-    }).catch(function(err){
-       return Object.assign({}, item, {imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'});
-    });
+    return new Promise((resolve, reject) => resolve( Object.assign({}, item, {imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'})))
   });
   return Promise.all(tokenListPromises).then(function(dataResponse){
     return dataResponse;

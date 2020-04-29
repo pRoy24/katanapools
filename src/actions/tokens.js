@@ -1,3 +1,7 @@
+import axios from 'axios';
+
+const API_SERVER = process.env.REACT_APP_API_SERVER;
+
 export const SET_CONVERTIBLE_TOKEN_PATHS = 'SET_CONVERTIBLE_TOKEN_PATHS';
 
 export const SET_CONVERTIBLE_TOKENS = 'SET_CONVERTIBLE_TOKENS';
@@ -20,6 +24,50 @@ export const RESET_TO_PATH_LIST = 'RESET_TO_PATH_LIST';
 
 
 export const RESET_TOKEN_PATHS = 'RESET_TOKEN_PATHS';
+
+export const GET_TOKEN_PATHS_WITH_RATE = 'GET_TOKEN_PATHS_WITH_RATE';
+
+export const GET_TOKEN_PATHS_WITH_RATE_SUCCESS = 'GET_TOKEN_PATHS_WITH_RATE_SUCCESS';
+
+export const GET_TOKEN_PATHS_WITH_RATE_FAILURE = 'GET_TOKEN_PATHS_WITH_RATE_FAILURE';
+
+export const SET_FROM_PATH_LIST_LOADING = 'SET_FROM_PATH_LIST_LOADING';
+
+export const SET_TO_PATH_LIST_LOADING = 'SET_TO_PATH_LIST_LOADING';
+
+export function setFromPathListLoading() {
+    return {
+        type: SET_FROM_PATH_LIST_LOADING
+    }
+}
+
+export function setToPathListLoading() {
+    return {
+        type: SET_TO_PATH_LIST_LOADING
+    }
+}
+
+export function getTokenPathsWithRate(fromToken, toToken, type, amount) {
+    const request = axios.get(`${API_SERVER}/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`);
+    return {
+        type: GET_TOKEN_PATHS_WITH_RATE,
+        payload: request
+    }
+}
+
+export function getTokenPathsWithRateSuccess(response) {
+    return {
+        type: GET_TOKEN_PATHS_WITH_RATE_SUCCESS,
+        payload: response
+    }
+}
+
+export function getTokenPathsWithRateFailure(err) {
+    return {
+        type: GET_TOKEN_PATHS_WITH_RATE_FAILURE,
+        payload: err
+    }
+}
 
 export function resetTokenPaths() {
     return {

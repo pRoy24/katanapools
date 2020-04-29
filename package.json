@@ -2,6 +2,7 @@
   "name": "Katana",
   "version": "0.1.0",
   "private": false,
+  "type": "module",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.27",
     "@fortawesome/free-solid-svg-icons": "^5.12.1",
@@ -15,6 +16,7 @@
     "bootstrap": "^4.4.1",
     "decimal.js": "^10.2.0",
     "moment": "^2.24.0",
+    "node-fetch": "^2.6.0",
     "node-sass": "^4.13.1",
     "prop-types": "^15.7.2",
     "react": "^16.13.0",

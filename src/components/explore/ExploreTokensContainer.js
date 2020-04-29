@@ -1,7 +1,9 @@
 import {connect} from 'react-redux';
 import ExploreTokens from './ExploreTokens';
 import {setUserEnvironment} from '../../actions/user';
-import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, resetToPathList, resetTokenPaths} from '../../actions/tokens';
+import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, resetToPathList, resetTokenPaths,
+  getTokenPathsWithRate, getTokenPathsWithRateSuccess, getTokenPathsWithRateFailure
+} from '../../actions/tokens';
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
 import {Ethereum} from '../../utils/sdk/sdkUtils';
@@ -25,42 +27,19 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
 
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
-      dispatch(swapTokenStatus({}));
-      if (type === 'from') {
-        dispatch(resetFromPathList());
-      }
-      if (type === 'to') {
-        dispatch(resetToPathList());
-      }
-      let ethGraph = new Ethereum();
-      ethGraph.init().then(function(initResponse){
-        ethGraph.getAllPathsAndRates(fromToken.address, toToken.address, amount).then(function(fromPathWithPrice){
-
-        let pathList = fromPathWithPrice[0];
-        let pathPrices = fromPathWithPrice[1];
-        let pathWithMeta = pathList.map(function(pathData, idx){
-
-           return getNetworkPathMeta(pathData).then(function(pathMeta){
-
-
-            return (Object.assign({}, {path: pathMeta}, {price: pathPrices[idx]}));
-
-          }).catch(function(err){
-            return null;
-          })
-        }, pathPrices);
-        Promise.all(pathWithMeta).then(function(metaData){
-          metaData = metaData.filter(Boolean);
+      dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
+        if (response.payload.status  === 200) {
+          console.log(response.payload.data.data);
           if (type === 'from') {
-         dispatch(setFromPathListWithRates(metaData));
+            dispatch(setFromPathListWithRates(response.payload.data.data));
           } else {
-         dispatch(setToPathListWithRates(metaData));
+            dispatch(setToPathListWithRates(response.payload.data.data));
           }
-        })
+        }
+      }).catch(function(err){
+        dispatch(getTokenPathsWithRateFailure(err));
       })
 
-
-      })
     },
 
     submitSwap: (networkPath, transferAmount, selectedTransferToken) => {

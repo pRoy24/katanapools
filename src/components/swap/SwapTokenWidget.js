@@ -8,6 +8,7 @@ import {toDecimals, fromDecimals} from '../../utils/eth';
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken, getDecimalsOfToken
 } from '../../utils/ConverterUtils';
+
 import {Decimal} from 'decimal.js';
 var RegistryUtils = require('../../utils/RegistryUtils');
 
@@ -24,41 +25,8 @@ export default class SwapTokenWidget extends Component {
         this.state = Initial_State;
   }
 
-
-
   getConversionData = (fromToken, toToken, amount) => {
-    const self = this;
-
-    getDecimalsOfToken(fromToken.address).then(function(fromTokenDecimals){
-      getDecimalsOfToken(toToken.address).then(function(toTokenDecimals){
-
-
-    const fromAmount = toDecimals(amount, fromTokenDecimals);
-    if (fromToken.address !== toToken.address) {
-      RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
-        RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
-
-          getNetworkPathMeta(networkPath).then(function(networkMeta){
-            self.setState({'pathMeta': networkMeta});
-          })
-
-          getExpectedReturn(networkPath, fromAmount).then(function(expectedReturn){
-            let networkFee = fromDecimals(expectedReturn[1], toTokenDecimals);
-            if (networkFee) {
-              networkFee = parseFloat(networkFee).toFixed(3)
-            }
-
-            self.setState({receiveAmount: fromDecimals(expectedReturn[0], toTokenDecimals),
-            transactionFee: networkFee, networkPath: networkPath})
-          })
-        })
-      })
-    } else {
-        self.setState({receiveAmount: amount,totalFee : 0})
-    }
-
-    });
-    });
+    this.props.fetchTokenPathsWithRates(fromToken, toToken, "from", amount);
   }
 
 
@@ -94,7 +62,7 @@ export default class SwapTokenWidget extends Component {
     }
   }
   componentWillReceiveProps(nextProps) {
-    const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck} = nextProps;
+    const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck, fromPathListWithRate, fromPathLoading} = nextProps;
     if (toAmount !== this.props.toAmount) {
       this.setState({receiveAmount:toAmount });
     }
@@ -106,6 +74,23 @@ export default class SwapTokenWidget extends Component {
       if (transferAmount > 0) {
       self.getConversionData(tokenData[0], tokenData[1],
                     transferAmount)}
+    };
+
+    if (this.props.fromPathLoading && !nextProps.fromPathLoading && nextProps.fromPathListWithRate.length > 0)
+    {
+      const nextFromPath = nextProps.fromPathListWithRate;
+      let bestRate = nextFromPath[0].price;
+      let bestPath = nextFromPath[0].path;
+
+      nextFromPath.forEach(function(item){
+        if (item.price > bestRate) {
+          bestRate = item.price;
+          bestPath = item.path;
+        }
+      });
+      this.setState({networkPath: bestPath, receiveAmount: bestRate, pathMeta: bestPath});
+
+
     }
   }
 
