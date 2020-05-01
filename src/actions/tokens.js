@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import {getRequest} from './common';
+
 const API_SERVER = process.env.REACT_APP_API_SERVER;
 
 export const SET_CONVERTIBLE_TOKEN_PATHS = 'SET_CONVERTIBLE_TOKEN_PATHS';
@@ -48,7 +50,8 @@ export function setToPathListLoading() {
 }
 
 export function getTokenPathsWithRate(fromToken, toToken, type, amount) {
-    const request = axios.get(`${API_SERVER}/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`);
+    const request =  getRequest(`/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`, 'GET');
+    // const request = axios.get(`${API_SERVER}/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`);
     return {
         type: GET_TOKEN_PATHS_WITH_RATE,
         payload: request
@@ -134,3 +137,5 @@ export function setConvertibleTokensBySmartTokensMap(dataList) {
         payload: dataList
     }
 }
+
+

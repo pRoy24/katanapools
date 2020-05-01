@@ -75,13 +75,11 @@ export default class Landing extends Component {
     } else if (this.state.currentView === 'prompt'){
       appHome = <Web3Prompt/>
     }
-    if (window.web3 && window.web3.currentProvider && window.web3.currentProvider.selectedAddress === null) {
-      return  <div className="install-prompt">Please click connect on Metamask prompt to continue.</div>
-    }
+
     return (
       <Container>
         <div>
-          {appHome}
+         <AppHome {...this.props}/>
         </div>
       </Container>
       )
