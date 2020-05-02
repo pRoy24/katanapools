@@ -24,25 +24,17 @@ export default class PoolTokens extends Component {
 
   componentWillMount() {
     const {user: {providerConnected}} = this.props;
-    if (providerConnected) {
-      this.props.getSmartTokensWithSymbols();
-    }
+    this.props.getAllSmartTokens();
   }
 
   componentWillReceiveProps(nextProps) {
     const {user: {providerConnected}} = nextProps;
-    if (providerConnected && !this.props.user.providerConnected) {
-      this.props.getSmartTokensWithSymbols();
-    }
-
-
   }
 
   render() {
   const {smartTokensWithReserves, user: {providerConnected}} = this.props;
-  if (!providerConnected) {
-    return <span/>;
-  }
+  console.log(smartTokensWithReserves);
+
   return (
     <div>
       <Container>
@@ -50,7 +42,10 @@ export default class PoolTokens extends Component {
           <Route path="/pool/create">
             <CreateNewPoolContainer getSmartTokensWithSymbols={this.props.getSmartTokensWithSymbols}/>
           </Route>
-          <Route path="/pool/view">
+          <Route exact path="/pool/view">
+            <ViewPoolsContainer smartTokensWithReserves={smartTokensWithReserves}/>
+          </Route>
+          <Route path="/pool/view/:token">
             <ViewPoolsContainer smartTokensWithReserves={smartTokensWithReserves}/>
           </Route>
         </Switch>

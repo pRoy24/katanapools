@@ -110,6 +110,7 @@ export default class SelectedPool extends Component {
 
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
+    console.log(currentSelectedPool);
     const {reservesNeeded, reservesAdded} = this.state;
 
     let reserveRatio = '';

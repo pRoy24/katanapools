@@ -8,6 +8,7 @@ import {toDecimals, fromDecimals} from '../../utils/eth';
 import {getConvertibleTokensInRegistry, getReturnValueData, getPathTypesFromNetworkPath,
   getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken, getDecimalsOfToken
 } from '../../utils/ConverterUtils';
+import {isNonEmptyArray} from '../../utils/ObjectUtils';
 
 import {Decimal} from 'decimal.js';
 var RegistryUtils = require('../../utils/RegistryUtils');
@@ -26,6 +27,7 @@ export default class SwapTokenWidget extends Component {
   }
 
   getConversionData = (fromToken, toToken, amount) => {
+    console.log("Getting amount");
     this.props.fetchTokenPathsWithRates(fromToken, toToken, "from", amount);
   }
 
@@ -47,7 +49,7 @@ export default class SwapTokenWidget extends Component {
     receiveSelectChanged = (val) => {
       const {transferAmount} = this.state;
       this.setState({selectedReceiveToken: val, showReceiveSelect: false});
-                this.getConversionData(this.state.selectedTransferToken, val, transferAmount);
+      this.getConversionData(this.state.selectedTransferToken, val, transferAmount);
     }
 
   componentWillMount() {
@@ -63,6 +65,8 @@ export default class SwapTokenWidget extends Component {
   }
   componentWillReceiveProps(nextProps) {
     const {toAmount, tokenData, smartTokenCheck, convertibleTokenCheck, fromPathListWithRate, fromPathLoading} = nextProps;
+
+
     if (toAmount !== this.props.toAmount) {
       this.setState({receiveAmount:toAmount });
     }
@@ -75,10 +79,10 @@ export default class SwapTokenWidget extends Component {
       self.getConversionData(tokenData[0], tokenData[1],
                     transferAmount)}
     };
-
-    if (this.props.fromPathLoading && !nextProps.fromPathLoading && nextProps.fromPathListWithRate.length > 0)
+    
+    if (this.props.fromPathLoading && !nextProps.fromPathLoading && isNonEmptyArray(fromPathListWithRate))
     {
-      const nextFromPath = nextProps.fromPathListWithRate;
+      const nextFromPath = fromPathListWithRate;
       let bestRate = nextFromPath[0].price;
       let bestPath = nextFromPath[0].path;
 
@@ -88,6 +92,7 @@ export default class SwapTokenWidget extends Component {
           bestPath = item.path;
         }
       });
+
       this.setState({networkPath: bestPath, receiveAmount: bestRate, pathMeta: bestPath});
 
 

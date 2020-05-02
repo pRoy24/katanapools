@@ -51,7 +51,6 @@ export function setToPathListLoading() {
 
 export function getTokenPathsWithRate(fromToken, toToken, type, amount) {
     const request =  getRequest(`/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`, 'GET');
-    // const request = axios.get(`${API_SERVER}/token_paths_with_rates?fromToken=${fromToken}&toToken=${toToken}&type=${type}&amount=${amount}`);
     return {
         type: GET_TOKEN_PATHS_WITH_RATE,
         payload: request

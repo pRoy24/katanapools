@@ -2,7 +2,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Container, Row, Col, Button} from 'react-bootstrap';
-
+import {isEmptyObject} from '../../utils/ObjectUtils';
 import SwapTokensContainer from '../swap/SwapTokensContainer';
 import ExploreTokensContainer from '../explore/ExploreTokensContainer';
 import PoolTokensContainer from '../pool/PoolTokensContainer';
@@ -95,24 +95,23 @@ class AppHome extends Component {
     this.web3 = window.web3;
   }
 
-  componentWillMount() {
-
-      //  this.props.getConvertibleToSmartTokenMap();
-  }
-
-
   render() {
+    let appPrompt = <span/>;
+
     const web3 = window.web3;
 
+    if (isEmptyObject(web3)) {
+      appPrompt = <Web3Prompt/>;
+    }
     return (
       <div>
+          {appPrompt}
           <Switch>
           <Route path="/swap">
-            <SwapTokensContainer  getAllConvertibleTokens={this.props.getAllConvertibleTokens}
-        getAllSmartTokens={this.props.getAllSmartTokens}/>
+            <SwapTokensContainer  getAllConvertibleTokens={this.props.getAllConvertibleTokens} getAllSmartTokens={this.props.getAllSmartTokens}/>
           </Route>
           <Route path="/pool">
-            <PoolTokensContainer getSmartTokensWithSymbols={this.props.getSmartTokensWithSymbols}/>
+            <PoolTokensContainer getAllSmartTokens={this.props.getAllSmartTokens}/>
           </Route>
           <Route path="/explore">
             <ExploreTokensContainer getAllConvertibleTokens={this.props.getAllConvertibleTokens}  getAllSmartTokens={this.props.getAllSmartTokens}

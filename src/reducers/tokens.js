@@ -4,7 +4,9 @@ RESET_FROM_PATH_LIST, RESET_TO_PATH_LIST, RESET_TOKEN_PATHS, GET_TOKEN_PATHS_WIT
   GET_TOKEN_PATHS_WITH_RATE_FAILURE, SET_FROM_PATH_LIST_LOADING, SET_TO_PATH_LIST_LOADING
 } from '../actions/tokens';
 
-import {GET_CONVERTIBLE_TOKENS, GET_CONVERTIBLE_TOKENS_SUCCESS, GET_CONVERTIBLE_TOKENS_FAILURE} from '../actions/app';
+import {GET_CONVERTIBLE_TOKENS, GET_CONVERTIBLE_TOKENS_SUCCESS, GET_CONVERTIBLE_TOKENS_FAILURE, GET_SMART_TOKENS,
+  GET_SMART_TOKENS_SUCCESS, GET_SMART_TOKENS_FAILURE
+} from '../actions/app';
 
 
 const initialState = {
@@ -38,9 +40,9 @@ export default function tokensReducer (state = initialState, action) {
     case SET_CONVERTIBLE_TOKEN_PATHS:
         return {...state}
     case SET_FROM_PATH_LIST_WITH_RATE:
-      return {...state, fromPathListWithRate: action.payload, fromPathLoading: false}
+      return {...state, fromPathListWithRate: action.payload.data, fromPathLoading: false}
     case SET_TO_PATH_LIST_WITH_RATE:
-      return {...state, toPathListWithRate: action.payload,  toPathLoading: false}
+      return {...state, toPathListWithRate: action.payload.data,  toPathLoading: false}
     case SET_SMART_TOKENS_WITH_RESERVES:
       return {...state, smartTokensWithReserves: action.payload}
     case RESET_FROM_PATH_LIST:
@@ -52,9 +54,14 @@ export default function tokensReducer (state = initialState, action) {
     case GET_CONVERTIBLE_TOKENS:
       return {...state, convertibleTokens: []};
     case GET_CONVERTIBLE_TOKENS_SUCCESS:
-      return {...state, convertibleTokens: action.payload};
+      console.log()
+      return {...state, convertibleTokens: action.payload.data};
+    case GET_SMART_TOKENS:
+      return {...state, smartTokens: []};
+    case GET_SMART_TOKENS_SUCCESS:
+      return {...state, smartTokens: action.payload.data};
     case GET_TOKEN_PATHS_WITH_RATE:
-      return {...state, }
+      return {...state}
     case GET_TOKEN_PATHS_WITH_RATE_SUCCESS:
       return {...state}
     case GET_TOKEN_PATHS_WITH_RATE_FAILURE:

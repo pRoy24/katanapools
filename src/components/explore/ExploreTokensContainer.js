@@ -29,11 +29,10 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
       dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
         if (response.payload.status  === 200) {
-          console.log(response.payload.data.data);
           if (type === 'from') {
-            dispatch(setFromPathListWithRates(response.payload.data.data));
+            dispatch(setFromPathListWithRates(response.payload.data));
           } else {
-            dispatch(setToPathListWithRates(response.payload.data.data));
+            dispatch(setToPathListWithRates(response.payload.data));
           }
         }
       }).catch(function(err){

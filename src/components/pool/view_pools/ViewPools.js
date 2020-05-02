@@ -4,14 +4,16 @@ import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@for
 import {ListGroupItem, ListGroup, Row, Col, Button, Alert} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
+import {withRouter} from 'react-router-dom'
 import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/ObjectUtils';
 
 
-export default class ViewPool extends Component {
+class ViewPool extends Component {
   constructor(props) {
     super(props);
-    this.state = {poolData: []};
+    this.state = {poolData: [], poolSymbol: ''};
   }
+
   filterInputList = (searchVal) => {
     const searchString = searchVal && searchVal.length > 0 ?searchVal.toLowerCase() : '';
     const {poolData} = this.state;
@@ -25,9 +27,18 @@ export default class ViewPool extends Component {
     }
     this.setState({poolData: filteredPoolData});
   }
+
   componentWillMount() {
-    const {smartTokensWithReserves} = this.props;
-    this.setState({poolData: smartTokensWithReserves});
+    const {smartTokensWithReserves, history, location} = this.props;
+    let poolSymbol = "ETHBNT";
+    if (location && location.pathname) {
+      const poolSymbolTokens = location.pathname.split("/pool/view/");
+      if (poolSymbolTokens && poolSymbolTokens.length > 1) {
+        poolSymbol = poolSymbolTokens[1].trim();
+      }
+    }
+
+    this.setState({poolData: smartTokensWithReserves, poolSymbol: poolSymbol});
   }
   componentWillUnmount() {
     this.setState({poolData: [], })
@@ -39,16 +50,25 @@ export default class ViewPool extends Component {
       this.setState({poolData: smartTokensWithReserves});
     }
   }
+
+  getPoolDetailsPage = (selectedPool) => {
+    const {history} = this.props;
+    history.replace(`/pool/view/${selectedPool.symbol}`);
+   this.props.getPoolDetails(selectedPool);
+  }
   render() {
-    const {poolData} = this.state;
+    const {poolData, poolSymbol} = this.state;
     return (
       <div>
         <ViewPoolToolbar filterInputList={this.filterInputList}/>
-        <ViewPoolWidget {...this.props} poolData={poolData}/>
+        <ViewPoolWidget {...this.props} poolData={poolData} poolSymbol={poolSymbol} getPoolDetailsPage={this.getPoolDetailsPage}/>
       </div>
       )
   }
 }
+
+
+export default withRouter(ViewPool);
 
 class ViewPoolWidget extends Component {
   constructor(props) {
@@ -57,13 +77,11 @@ class ViewPoolWidget extends Component {
   }
 
   componentWillMount() {
-    const {poolData} = this.props;
+    const {poolData, poolSymbol} = this.props;
 
     if (isNonEmptyArray(poolData)) {
-
-
           let selectedPoolIndex = poolData.findIndex(function(item){
-            return item.symbol === 'ETHBNT';
+            return item.symbol.toLowerCase() === poolSymbol.toLowerCase();
           });
           if (selectedPoolIndex !== -1) {
             this.setState({selectedPoolIndex: selectedPoolIndex});
@@ -80,17 +98,17 @@ class ViewPoolWidget extends Component {
     this.setState({isError: false, errorMessage: ''});
   }
   setSelectedPool (selectedPool, idx) {
-    this.props.getPoolDetails(selectedPool);
+    this.props.getPoolDetailsPage(selectedPool);
     this.setState({selectedPoolIndex: idx});
 
   }
 
   componentWillReceiveProps(nextProps) {
-    const {poolData} = nextProps;
+    const {poolData, poolSymbol} = nextProps;
 
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
           let selectedPoolIndex = poolData.findIndex(function(item){
-            return item.symbol === 'ETHBNT';
+            return item.symbol.toLowerCase() === poolSymbol.toLowerCase();
           });
           if (selectedPoolIndex !== -1) {
             this.setState({selectedPoolIndex: selectedPoolIndex});

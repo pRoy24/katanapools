@@ -1,3 +1,5 @@
+import {getRequest} from './common';
+
 export const DEPLOY_SMART_TOKEN_INIT = 'DEPLOY_SMART_TOKEN_INIT';
 
 export const DEPLOY_SMART_TOKEN_PENDING = 'DEPLOY_SMART_TOKEN_PENDING';
@@ -48,11 +50,38 @@ export const SET_CONVERTER_CONTRACT = 'SET_CONVERTER_CONTRACT';
 
 export const SET_POOL_CREATION_HEADER = 'SET_POOL_CREATION_HEADER';
 
+export const GET_POOL_DETAILS = 'GET_POOL_DETAILS';
+export const GET_POOL_DETAILS_SUCCESS = 'GET_POOL_DETAILS_SUCCESS';
+export const GET_POOL_DETAILS_FAILURE = 'GET_POOL_DETAILS_FAILURE';
+
+
+export function getPoolDetails(address) {
+  const request = getRequest(`/pool_token?address=${address}`, 'GET');
+  return {
+    type: GET_POOL_DETAILS,
+    payload: request
+  }
+}
+
+export function getPoolDetailsSuccess(response) {
+  return {
+    type: GET_POOL_DETAILS_SUCCESS,
+    payload: response
+  }
+}
+
+export function getPoolDetailsFailure(error) {
+  return {
+    type: GET_POOL_DETAILS_FAILURE,
+    payload: error
+  }
+}
+
 export function setPoolCreationHeader(payload) {
   return {
     type: SET_POOL_CREATION_HEADER,
     payload: payload
-  }  
+  }
 }
 
 export function setConverterContract(payload) {

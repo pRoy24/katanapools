@@ -3,7 +3,7 @@ import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN
 SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
   SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS, RESET_POOL_STATUS,
   DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS, SET_CURRENT_POOL_STATUS, RESET_POOL_HISTORY,
-  SET_CONVERTER_CONTRACT, SET_POOL_CREATION_HEADER
+  SET_CONVERTER_CONTRACT, SET_POOL_CREATION_HEADER, GET_POOL_DETAILS, GET_POOL_DETAILS_SUCCESS, GET_POOL_DETAILS_FAILURE
 } from '../actions/pool';
 
 const initialState = {
@@ -159,6 +159,13 @@ export default function poolReducer (state = initialState, action) {
       return {...state, currentSelectedPool: {}, currentSelectedPoolError: true}
     case SET_POOL_TRANSACTION_STATUS:
       return {...state, poolTransactionStatus: action.payload}
+    case GET_POOL_DETAILS:
+      return {...state, currentSelectedPool: {}};
+    case GET_POOL_DETAILS_SUCCESS:
+      console.log(action.payload.data);
+      return {...state, currentSelectedPool: action.payload.data};
+    case GET_POOL_DETAILS_FAILURE:
+      return {...state, currentSelectedPool: {}};
     default:
       return state
   }

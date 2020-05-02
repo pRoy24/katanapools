@@ -2,12 +2,12 @@ import {connect} from 'react-redux';
 import Landing from './Landing';
 import {setUserEnvironment, setProviderConnected} from '../../actions/user';
 import {setConvertibleTokens, setSmartTokens, setConvertibleTokensBySmartTokensMap,
-  setSmartTokensWithReserves
+  setSmartTokensWithReserves,
 } from '../../actions/tokens';
 import {getAllPathsWithRates} from '../../utils/PathUtils';
 import {getConvertibleTokensInRegistry, getSmartTokensInRegistry,
 getSmartTokensWithSymbolsInRegistry, getConvertibleTokensBySmartTokens, multiCallTokenData} from '../../utils/ConverterUtils';
-import {getConvertibleTokens, getConvertibleTokensSuccess, getConvertibleTokensFailure } from '../../actions/app';
+import {getConvertibleTokens, getConvertibleTokensSuccess, getConvertibleTokensFailure, getSmartTokens, getSmartTokensSuccess, getSmartTokensFailure } from '../../actions/app';
 import {getTokenData} from '../../utils/RegistryUtils';
 
 const mapStateToProps = state => {
@@ -33,7 +33,7 @@ const mapDispatchToProps = (dispatch) => {
     getAllConvertibleTokens: () => {
       dispatch(getConvertibleTokens()).then(function(dataResponse){
         if (dataResponse.payload.status === 200) {
-          dispatch(getConvertibleTokensSuccess(dataResponse.payload.data.data));
+          dispatch(getConvertibleTokensSuccess(dataResponse.payload.data));
         }
       }).catch(function(err){
         dispatch(getConvertibleTokensFailure(err));
@@ -42,11 +42,15 @@ const mapDispatchToProps = (dispatch) => {
     },
 
     getAllSmartTokens: () => {
-      getSmartTokensInRegistry().then(function(dataResponse){
-        getTokenData(dataResponse).then(function(tokenDetailList){
-          dispatch(setSmartTokens(tokenDetailList));
-        })
+      dispatch(getSmartTokens()).then(function(response){
+        if (response.payload.status === 200) {
+          dispatch(getSmartTokensSuccess(response.payload.data));
+        }
+      }).catch(function(err){
+        dispatch(getSmartTokensFailure(err));
       })
+
+
     },
 
     getSmartTokensWithSymbols: () => {

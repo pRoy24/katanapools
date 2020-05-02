@@ -3,7 +3,7 @@ import ViewPools from './ViewPools';
 import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
-  setPoolTransactionStatus, resetPoolHistory
+  setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
 
@@ -34,7 +34,14 @@ const mapDispatchToProps = (dispatch) => {
 
     getPoolDetails: (poolRow) => {
         dispatch(setCurrentSelectedPool({}));
-        getPoolRowMeta(poolRow, dispatch);
+       // getPoolRowMeta(poolRow, dispatch);
+       dispatch(getPoolDetails(poolRow.address)).then(function(response){
+         if (response.payload.status === 200) {
+           dispatch(getPoolDetailsSuccess(response.payload.data));
+         } else {
+           dispatch(getPoolDetailsFailure(response.payload.error));
+         }
+       })
     },
 
     refetchPoolDetails: (poolRow) => {

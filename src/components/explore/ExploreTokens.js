@@ -71,12 +71,7 @@ class ExploreTokensAdvanced extends Component {
         };
     }
     componentWillMount() {
-        const {user: {providerConnected}} = this.props;
-        if (providerConnected) {
-            this.props.getAllConvertibleTokens();
-        }
-
-
+        this.props.getAllConvertibleTokens();
         const {tokens: {convertibleTokens}}  = this.props;
         if (isNonEmptyArray(convertibleTokens)) {
             this.setState({fromConvertibleTokens: convertibleTokens, toConvertibleTokens: convertibleTokens});
@@ -162,7 +157,7 @@ class ExploreTokensAdvanced extends Component {
 
     render() {
 
-        const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate, fromPathLoading, toPathLoading}, user: {providerConnected}} = this.props;
+        const {tokens: {convertibleTokens, fromPathListWithRate, toPathListWithRate, fromPathLoading, toPathLoading}} = this.props;
 
         const {selectedFromIdx, selectedToIdx, searchFromToken, searchToToken, fromConvertibleTokens,
         toConvertibleTokens, fromToken, toToken} = this.state;
@@ -210,9 +205,7 @@ class ExploreTokensAdvanced extends Component {
         })}
         </div>
         }
-        if (!providerConnected) {
-            return <span/>;
-        }
+
         return (
              <Row>
              <Col lg={2} style={{'paddingRight': 0}}>
