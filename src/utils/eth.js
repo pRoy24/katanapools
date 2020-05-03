@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import {isEmptyString} from './ObjectUtils';
 
 export const zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -23,3 +24,11 @@ export const toFixed = amount => {
     return "<0.001";
   }
 };
+
+
+export function getWalletAddress() {
+    const web3 = window.web3;
+
+    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+    return currentWalletAddress;
+}

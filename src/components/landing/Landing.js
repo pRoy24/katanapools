@@ -2,7 +2,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Container, Row, Col, Button} from 'react-bootstrap';
-import {isEmptyObject} from '../../utils/ObjectUtils';
+import {isEmptyObject, isEmptyString} from '../../utils/ObjectUtils';
 import SwapTokensContainer from '../swap/SwapTokensContainer';
 import ExploreTokensContainer from '../explore/ExploreTokensContainer';
 import PoolTokensContainer from '../pool/PoolTokensContainer';
@@ -24,7 +24,6 @@ export default class Landing extends Component {
     this.state = {currentView: 'pending'};
   }
   componentWillMount() {
-
     let web3 = window.web3;
     const self = this;
     window.addEventListener('load', async() => {
@@ -40,11 +39,9 @@ export default class Landing extends Component {
            this.setState({currentView: 'prompt'});
         }
       window.ethereum.on('accountsChanged', function (accounts) {
-
         async function reload() {
           window.web3 = new Web3(window.ethereum);
           try {
-
             await window.ethereum.enable();
             self.props.setUserEnvironment();
             self.setState({currentView: ''}, function(){
@@ -100,7 +97,7 @@ class AppHome extends Component {
 
     const web3 = window.web3;
 
-    if (isEmptyObject(web3)) {
+    if (isEmptyObject(web3) || isEmptyObject(web3.currentProvider) || isEmptyString(web3.currentProvider.selectedAddress)) {
       appPrompt = <Web3Prompt/>;
     }
     return (

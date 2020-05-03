@@ -162,7 +162,6 @@ export default function poolReducer (state = initialState, action) {
     case GET_POOL_DETAILS:
       return {...state, currentSelectedPool: {}};
     case GET_POOL_DETAILS_SUCCESS:
-      console.log(action.payload.data);
       return {...state, currentSelectedPool: action.payload.data};
     case GET_POOL_DETAILS_FAILURE:
       return {...state, currentSelectedPool: {}};

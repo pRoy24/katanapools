@@ -4,6 +4,7 @@ import './App.scss';
 import LandingContainer from './components/landing/LandingContainer';
 import TopNavContainer from './components/nav/TopNavContainer';
 import BottomNav from './components/nav/BottomNav';
+import 'react-toastify/dist/ReactToastify.css';
 
 import {
   BrowserRouter as Router,

@@ -5,7 +5,7 @@ import {ListGroupItem, ListGroup, Row, Col, Button, Alert} from 'react-bootstrap
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
 import {withRouter} from 'react-router-dom'
-import {isNonEmptyObject, isEmptyArray, isNonEmptyArray} from '../../../utils/ObjectUtils';
+import {isNonEmptyObject, isEmptyArray, isNonEmptyArray, isEmptyObject} from '../../../utils/ObjectUtils';
 
 
 class ViewPool extends Component {
@@ -104,7 +104,7 @@ class ViewPoolWidget extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {poolData, poolSymbol} = nextProps;
+    const {poolData, poolSymbol, pool: {currentSelectedPool}} = nextProps;
 
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
           let selectedPoolIndex = poolData.findIndex(function(item){
@@ -115,6 +115,13 @@ class ViewPoolWidget extends Component {
             this.props.getPoolDetails(poolData[selectedPoolIndex]);
           }
     }
+
+
+    if (isEmptyObject(this.props.pool.currentSelectedPool) && isNonEmptyObject(nextProps.pool.currentSelectedPool)) {
+      this.props.fetchUserPoolDetails(currentSelectedPool);
+    }
+
+
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -158,6 +165,7 @@ class ViewPoolWidget extends Component {
                         </div>
                         )
     if (isNonEmptyObject(currentSelectedPool)) {
+      console.log(this.props);
       selectedPool =  <SelectedPool {...this.props} setErrorMessage={this.setErrorMessage} resetErrorMessage={this.resetErrorMessage}/>
     }
     let transactionStatusMessage = <span/>;

@@ -33,7 +33,6 @@ export default class PoolTokens extends Component {
 
   render() {
   const {smartTokensWithReserves, user: {providerConnected}} = this.props;
-  console.log(smartTokensWithReserves);
 
   return (
     <div>

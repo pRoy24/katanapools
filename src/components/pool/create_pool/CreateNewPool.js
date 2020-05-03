@@ -9,6 +9,7 @@ import Step1Container from './steps/step1/Step1Container';
 import Step2Container from './steps/step2/Step2Container';
 import Step3Container from './steps/step3/Step3Container';
 import {isEmptyObject, isNonEmptyObject, isEmptyString} from '../../../utils/ObjectUtils';
+import {getWalletAddress} from '../../../utils/eth'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import 'react-material-stepper/dist/react-stepper.css';
@@ -41,8 +42,18 @@ export default class CreateNewPool extends Component {
   deployConverterContract = (vals) => {
     const web3 = window.web3;
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
+
+
+
     let isValidationError = false;
     const self = this;
+
+    const walletAddress = getWalletAddress();
+    if (isEmptyString(walletAddress)) {
+         isValidationError = true;
+         self.setState({isError: true, errorMessage: `Please connect a web3 provider to make this transaction`});
+    }
+
     this.setState({convertibleTokenAddress: vals.convertibleTokenAddress, relayTokenAddress: smartTokenStatus.contractAddress});
     const {tokenArrayList} = vals;
    let tokenAddressList = [];

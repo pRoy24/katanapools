@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Container, Row, Col, Form, Button, Alert} from 'react-bootstrap';
 import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
+import {isEmptyString} from '../../../utils/ObjectUtils';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment'
 const BigNumber = require('bignumber.js');
@@ -73,14 +74,23 @@ export default class SelectedPool extends Component {
     reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
 
     let isError = false;
-    reservesNeeded.forEach(function(reserveItem){
-      const amountNeeded = new Decimal(reserveItem.neededDisplay);
-      const amountAvailable = new Decimal(reserveItem.userBalance);
-      if (amountNeeded.greaterThan(amountAvailable)) {
-        isError = true;
-        self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
-      }
-    })
+    const web3 = window.web3;
+
+    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+    if (isEmptyString(currentWalletAddress)) {
+      isError = true;
+      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
+    }
+    else if (reservesNeeded.length > 0) {
+      reservesNeeded.forEach(function(reserveItem){
+        const amountNeeded = new Decimal(reserveItem.neededDisplay);
+        const amountAvailable = new Decimal(reserveItem.userBalance);
+        if (amountNeeded.greaterThan(amountAvailable)) {
+          isError = true;
+          self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
+        }
+      })
+    }
     if (!isError) {
       this.props.resetErrorMessage();
       this.props.submitPoolBuy(args);
@@ -89,7 +99,7 @@ export default class SelectedPool extends Component {
 
   submitSellPoolToken = () => {
     const {pool: {currentSelectedPool}} = this.props;
-
+    const self = this;
     const existingPoolTokenBalance = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
     const {liquidateAmount, reservesAdded} = this.state;
     const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
@@ -97,6 +107,15 @@ export default class SelectedPool extends Component {
       'poolAddress': currentSelectedPool.address
     };
     let isError = false;
+
+    const web3 = window.web3;
+
+    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+    if (isEmptyString(currentWalletAddress)) {
+      isError = true;
+      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
+    }
+
     if(parseFloat(liquidateAmount) > parseFloat(existingPoolTokenBalance)) {
       isError = true;
       this.props.setErrorMessage(`User balance for ${currentSelectedPool.symbol} is less than needed amount of ${liquidateAmount}`);
@@ -110,7 +129,6 @@ export default class SelectedPool extends Component {
 
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
-    console.log(currentSelectedPool);
     const {reservesNeeded, reservesAdded} = this.state;
 
     let reserveRatio = '';
@@ -262,9 +280,6 @@ export default class SelectedPool extends Component {
           </Col>
         </Row>
 
-        <Row>
-
-        </Row>
         <Row>
 
         </Row>

@@ -1,4 +1,4 @@
-import {MulticallContract} from '../utils/sdk/abis/index';
+
 import axios from 'axios';
 var RegistryUtils = require('./RegistryUtils');
 const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
@@ -367,53 +367,6 @@ function resolveTokenListNameAndSymbol(tokenList) {
   })
 }
 
-// Multicalls token list data and returns response
-function getTokenListNameAndSymbol(tokenList) {
-
-  const web3 = window.web3;
-  let MutltiCallAddress = '0xf3ad7e31b052ff96566eedd218a823430e74b406';
-  if (web3.currentProvider.networkVersion === '1') {
-    MutltiCallAddress = '0x5eb3fa2dfecdde21c950813c665e9364fa609bd2';
-  }
-  const MulticallTokenContract = new web3.eth.Contract(MulticallContract, MutltiCallAddress);
-
-  const calls = [];
-  let tokenData = [];
-  tokenList.forEach(function(item, idx){
-    tokenData[idx] = {'address': item};
-    let CurrentToken = new web3.eth.Contract(ERC20Token, item);
-    calls.push([item, CurrentToken.methods.symbol().encodeABI()]);
-    calls.push([item, CurrentToken.methods.name().encodeABI()])
-  })
-
- return MulticallTokenContract.methods.aggregate(calls, false).call().then(function(response){
-  const responseData = response.returnData;
-  responseData.forEach(function(dataItem, idx){
-
-    let currentIndex = parseInt(idx / 2);
-    let callData = web3.utils.hexToUtf8(dataItem.data);
-    callData = callData.toString().trim();
-    let trimmedWord = '';
-    for (let i =0; i < callData.length; i++) {
-      if (callData[i] === ' ' || callData[i].charCodeAt() == 0) {
-        continue;
-      }
-      else {
-        for (let j = i+1; j < callData.length; j++) {
-          trimmedWord += callData[j];
-        }
-        break;
-      }
-    }
-    if (idx % 2 === 0) {
-      tokenData[currentIndex].symbol = trimmedWord
-    } else {
-      tokenData[currentIndex].name = trimmedWord
-    }
-  });
-  return tokenData;
-});
-}
 
 function getTokenListMeta(tokenList) {
   let tokenListPromises = tokenList.map(function(item){

@@ -1,13 +1,16 @@
 import React, {Component} from 'react';
-import {isNonEmptyArray, isNonEmptyObject, isEmptyObject} from '../../../utils/ObjectUtils';
+import {isNonEmptyArray, isNonEmptyObject, isEmptyObject, isEmptyString} from '../../../utils/ObjectUtils';
 import {ListGroupItem, ListGroup, Row, Col, Button, Form, InputGroup} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faArrowRight,  faChevronCircleDown, faChevronDown, faChevronUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight,  faChevronCircleDown, faChevronDown,
+faChevronUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import AddressDisplay from '../../common/AddressDisplay';
+import { ToastContainer, toast } from 'react-toastify';
+ import 'react-toastify/dist/ReactToastify.css';
 
 export default class ViewPaths extends Component {
     render() {
-        const {fromPathListWithRate, toPathListWithRate, fromToken, toToken, fromPathLoading, toPathLoading} = this.props;
+        const {fromPathListWithRate, toPathListWithRate, fromToken, toToken, fromPathLoading, toPathLoading, setProviderNotification} = this.props;
 
         let paths = <span/>;
         let fromPathListItems = <span/>;
@@ -16,13 +19,14 @@ export default class ViewPaths extends Component {
             const sortedPathList = fromPathListWithRate.sort((a, b)=>(b.price - a.price));
             fromPathListItems = <ConversionPathList fromToken={fromToken} toToken={toToken}
             pathList={sortedPathList} type={"from"} transferAmountChanged={this.props.transferAmountChanged}
-            submitSwap={this.props.submitSwap}/>
+            submitSwap={this.props.submitSwap} setProviderNotification={setProviderNotification}/>
         }
 
         if (isNonEmptyArray(toPathListWithRate)) {
             const sortedPathList = toPathListWithRate.sort((a, b)=>(b.price - a.price));
             toPathListItems = <ConversionPathList fromToken={toToken} toToken={fromToken} pathList={sortedPathList}
-            type={"to"} transferAmountChanged={this.props.transferAmountChanged} submitSwap={this.props.submitSwap}/>
+            type={"to"} transferAmountChanged={this.props.transferAmountChanged} submitSwap={this.props.submitSwap}
+            setProviderNotification={setProviderNotification}/>
         }
 
         let tokenPairDescription = <span/>;
@@ -184,11 +188,18 @@ class ConversionPathList extends Component {
     }
 
     submitSwap(idx) {
+        const web3 = window.web3;
+        const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+        if (isEmptyString(currentWalletAddress)) {
+          this.props.setProviderNotification();
+        } else {
+
         const {pathList, fromToken} = this.props;
         const {transferAmount} = this.state;
         const currentPath = pathList[idx];
         const pathTokens = currentPath.path.map((i) => (i.address));
         this.props.submitSwap(pathTokens, transferAmount, fromToken);
+        }
     }
     render() {
         let {fromToken, toToken, pathList} = this.props;

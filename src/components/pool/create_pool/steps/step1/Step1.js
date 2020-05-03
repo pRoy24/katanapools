@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
         ListGroup, ListGroupItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import {getReserveTokenNameAndSymbol} from '../../../../../utils/ConverterUtils';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {  faPlus, faSpinner, faTimes, faQuestionCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
@@ -110,6 +111,7 @@ export default class Step1 extends Component {
   setPoolNameAndSymbol = (newTokenAddressList) => {
     const {poolType, baseReserveSelected} = this.state;
     const self = this;
+
 
     let poolNameDefault = "";
     let poolSymbolDefault = "";

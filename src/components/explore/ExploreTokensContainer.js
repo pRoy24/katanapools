@@ -6,7 +6,7 @@ import {setFromPathListWithRates, setToPathListWithRates, resetFromPathList, res
 } from '../../actions/tokens';
 import {setPaths} from '../../actions/path';
 import {fetchTokenPathsWithRates, createTokenMap} from '../../utils/ConverterUtils';
-import {Ethereum} from '../../utils/sdk/sdkUtils';
+
 import  {getExpectedReturn, submitSwapToken,getNetworkPathMeta, getBalanceOfToken,getDecimalsOfToken,
 } from '../../utils/ConverterUtils';
 import {swapTokenStatus} from '../../actions/swap';
@@ -25,7 +25,10 @@ const mapStateToProps = state => {
 const mapDispatchToProps = (dispatch, ownProps) => {
   return {
 
-
+    setProviderNotification: () => {
+      dispatch(swapTokenStatus({type: 'error', 'message': `Please connect a web3 wallet provider to make transactions`}));
+    },
+    
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
       dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
         if (response.payload.status  === 200) {

@@ -218,7 +218,7 @@ class ExploreTokensAdvanced extends Component {
                fromToken={fromToken} toToken={toToken} fromPathLoading={fromPathLoading} toPathLoading={toPathLoading}
                fromPathListWithRate={fromPathListWithRate}
                toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}
-               submitSwap={this.props.submitSwap}/>
+               submitSwap={this.props.submitSwap} setProviderNotification={this.props.setProviderNotification}/>
              </Col>
              <Col lg={2} style={{'paddingLeft': 0}}>
                  <ListGroup className="token-selector-list">
