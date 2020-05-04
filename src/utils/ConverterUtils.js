@@ -214,6 +214,12 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
+    console.log("***");
+    console.log(path);
+    console.log(amount);
+    console.log(fromAddress);
+    console.log(isEth);
+    console.log("***");
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;

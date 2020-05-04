@@ -5,8 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight,  faChevronCircleDown, faChevronDown,
 faChevronUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import AddressDisplay from '../../common/AddressDisplay';
-import { ToastContainer, toast } from 'react-toastify';
- import 'react-toastify/dist/ReactToastify.css';
+
 
 export default class ViewPaths extends Component {
     render() {

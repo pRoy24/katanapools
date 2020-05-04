@@ -27,7 +27,6 @@ export default class SwapTokenWidget extends Component {
   }
 
   getConversionData = (fromToken, toToken, amount) => {
-    console.log("Getting amount");
     this.props.fetchTokenPathsWithRates(fromToken, toToken, "from", amount);
   }
 
@@ -114,6 +113,8 @@ export default class SwapTokenWidget extends Component {
 
   submitSwapTransaction = () => {
     const {networkPath, transferAmount, selectedTransferToken} = this.state;
+    
+    const path = networkPath.map((i)=>(i.address));
     const self = this;
 
     let isEth = false;
@@ -123,7 +124,7 @@ export default class SwapTokenWidget extends Component {
 
     getDecimalsOfToken(selectedTransferToken.address).then(function(tokenDecimals){
 
-
+    console.log(selectedTransferToken);
     const fromAmount = toDecimals(transferAmount, tokenDecimals);
 
     getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
@@ -131,7 +132,7 @@ export default class SwapTokenWidget extends Component {
       const requiredBalance = new Decimal(transferAmount);
       if (requiredBalance.lessThan(availableBalance)) {
           self.setState({'widgetError': ''});
-          submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
+          submitSwapToken(path, fromAmount, selectedTransferToken.address, isEth).then(function(response){
         }).catch(function(err){
           if (err.message) {
             self.setState({'widgetError': err.message});

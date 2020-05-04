@@ -165,7 +165,6 @@ class ViewPoolWidget extends Component {
                         </div>
                         )
     if (isNonEmptyObject(currentSelectedPool)) {
-      console.log(this.props);
       selectedPool =  <SelectedPool {...this.props} setErrorMessage={this.setErrorMessage} resetErrorMessage={this.resetErrorMessage}/>
     }
     let transactionStatusMessage = <span/>;
