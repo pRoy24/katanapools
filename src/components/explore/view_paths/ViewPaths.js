@@ -204,8 +204,18 @@ class ConversionPathList extends Component {
         let {fromToken, toToken, pathList} = this.props;
         const {showMain, transferAmount} = this.state;
         const self = this;
+        if (pathList.length === 0) {
+            return <span/>;
+        }
+        
+        console.log(pathList);
+        console.log("GGG");
+        
         if (showMain) {
          let viewAllPaths = <span/>;
+         
+         
+         
          if (pathList.length > 2) {
              viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
          }
