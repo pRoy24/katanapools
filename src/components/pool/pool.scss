@@ -99,7 +99,7 @@
 }
 
 .selected-pool-buy-sell-row {
-  margin-top: 20px;
+
   text-align: left;
 
 }
@@ -196,6 +196,7 @@
 
 .select-pool-toolbar {
   cursor: pointer;
+  text-align: left;
 }
 
 .toggle-btn {
@@ -387,3 +388,59 @@ box-shadow: inset -2px 2px 10px -5px rgba(64,64,64,1);
 .step-3-sub {
   padding-top: 20px;
 }
+
+.pool-graph-container {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.pool-action-container {
+  text-align: left;
+  border: 2px solid #dbdbdb;
+  border-radius: 2px;
+  width: 96%;
+  padding: 10px 4px;
+  display: block;
+  margin-top: 20px;
+  .action-label {
+  font-weight: 500;
+  margin-left: 10px;
+  margin-bottom: 4px;
+  }
+}
+
+.pool-allowance-container {
+ text-align: left;
+ border: 2px solid #dbdbdb;
+ border-radius: 2px;
+ width: 96%;
+ padding: 4px;
+ display: block;
+ .allowance-label {
+  font-weight: 500;
+  margin-left: 10px;
+ }
+
+.selected-pool-balance {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+}
+.btn {
+  height: 30px;
+  font-size: 10px;
+  background: #fff !important;
+  color: #000 !important;
+  border: 1px solid #a9a9a9 !important;
+  margin-top: -16px;
+  margin-left: 10px;
+}
+
+.revoke-approval-btn {
+  background: #d9534f !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+}
+

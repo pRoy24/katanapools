@@ -5,7 +5,7 @@ import {connect} from 'react-redux';
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
   setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure
 } from '../../../actions/pool';
-import {getConvertibleTokensBySmartTokens, getBalanceOfToken} from '../../../utils/ConverterUtils';
+import {getConvertibleTokensBySmartTokens, getBalanceOfToken, getAllowanceOfToken, setTokenAllowance, revokeTokenAllowance} from '../../../utils/ConverterUtils';
 import {isEmptyString} from '../../../utils/ObjectUtils';
 import axios from 'axios';
 import  {toDecimals, fromDecimals} from '../../../utils/eth';
@@ -34,8 +34,8 @@ const mapDispatchToProps = (dispatch) => {
   return {
 
     getPoolDetails: (poolRow) => {
-        dispatch(setCurrentSelectedPool({}));
-       dispatch(getPoolDetails(poolRow.address)).then(function(response){
+      dispatch(setCurrentSelectedPool({}));
+      dispatch(getPoolDetails(poolRow.address)).then(function(response){
          if (response.payload.status === 200) {
            dispatch(getPoolDetailsSuccess(response.payload.data));
          } else {
@@ -44,9 +44,6 @@ const mapDispatchToProps = (dispatch) => {
        })
     },
 
-    refetchPoolDetails: (poolRow) => {
-        getPoolRowMeta(poolRow, dispatch);
-    },
 
     fetchUserPoolDetails: (poolRow) => {
       getUserPoolHoldings(poolRow).then(function(updatePoolRowResponse){
@@ -65,14 +62,10 @@ const mapDispatchToProps = (dispatch) => {
         if (item.symbol === 'ETH') {
           reserveContract = new web3.eth.Contract(EtherToken, item.address);
           const reserveAmount = item.neededMin;
-          // get deposit amount from eth token
 
           // if amount to deposit is > balance then deposit remainder
           return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
           if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
-
-
-
 
           return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
@@ -180,26 +173,37 @@ const mapDispatchToProps = (dispatch) => {
         }
 
       })
+    },
+    
+    setTokenAllowances: (amount, poolRow) => {
+
+      let poolSetAllowance = poolRow.reserves.map(function(item, idx){
+        return setTokenAllowance(item.address, poolRow.converter, item.decimals, amount).then(function(response){
+          return response;
+        })
+      });
+      
+      return Promise.all(poolSetAllowance).then(function(response){
+        return response;
+      })
+    },
+    
+    revokeTokenAllowances: (poolRow) => {
+      let poolRevokeAllowance = poolRow.reserves.map(function(item, idx){
+        return revokeTokenAllowance(item.address, poolRow.converter).then(function(response){
+          return response;
+        })
+      });
+      
+      return Promise.all(poolRevokeAllowance).then(function(response){
+        return response;
+      })      
     }
   }
 }
 
 
-function getReserveBalance(BancorConverterContract, reserveTokenAddress) {
-  return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
-    return reserveTokenBalance;
-  }).catch(function(err){
-    return 0;
-  });
-}
 
-function getReserveRatio(BancorConverterContract, reserveTokenAddress) {
-  return  BancorConverterContract.methods.getReserveRatio(reserveTokenAddress).call().then(function(reserveTokenBalance){
-    return reserveTokenBalance;
-  }).catch(function(err){
-    return '-';
-  });
-}
 
 function getApproval(contract, owner, spender, amount, dispatch) {
   const web3 = window.web3;
@@ -217,8 +221,7 @@ function getApproval(contract, owner, spender, amount, dispatch) {
     const amountAllowed = new Decimal(minAllowance);
     const amountNeeded = new Decimal(minAmount);
 
-
-    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive() && !amountAllowed.isZero()) {
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Previous user allowance found. reseting allowance'}));
     return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
       from: owner
@@ -259,7 +262,8 @@ function getUserPoolHoldings(poolRow) {
   }
   const poolSmartTokenAddress = poolRow.address;
   const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
-
+  const converterAddress = poolRow.converter;
+  
   let poolReserveHoldingsRequest = poolRow.reserves.map(function(item){
     const reserveTokenAddress = item.address;
     let isEth = false;
@@ -267,8 +271,15 @@ function getUserPoolHoldings(poolRow) {
       isEth = true;
     }
     return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
+      return getAllowanceOfToken(reserveTokenAddress, converterAddress).then(function(allowanceResponse){
+        
+  
       const availableUserBalance = fromDecimals(balanceResponse, item.decimals);
-      return Object.assign({}, item, {userBalance: availableUserBalance});
+      const availableUserAllowance = fromDecimals(allowanceResponse, item.decimals);
+      
+      return Object.assign({}, item, {userBalance: availableUserBalance, userAllowance: availableUserAllowance});
+      
+      })
     })
   });
    return Promise.all(poolReserveHoldingsRequest).then(function(response){
@@ -278,90 +289,6 @@ function getUserPoolHoldings(poolRow) {
         return poolRow;
     });
   });
-}
-
-function getPoolRowMeta(poolRow, dispatch) {
-        const web3 = window.web3;
-
-        const senderAddress = web3.currentProvider.selectedAddress;
-
-
-        RegistryUtils.getConverterRegistryAddress().then(function(converterContractRegistryAddress){
-          const poolSmartTokenAddress = poolRow.address;
-
-          RegistryUtils.getTokenDetails(poolSmartTokenAddress).then(function(smartTokenDetails){
-            dispatch(setCurrentSelectedPool(smartTokenDetails));
-
-          RegistryUtils.getConverterAddressList(converterContractRegistryAddress, [poolSmartTokenAddress]).then(function(converters){
-            RegistryUtils.getERC20DData(poolSmartTokenAddress).then(function(tokenData){
-
-          const poolConverterAddress = converters[0];
-
-          const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolConverterAddress);
-
-          const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
-
-          BancorConverterContract.methods.reserveTokenCount().call().then(function(numReserveTokens){
-
-            let reserveTokenList = [];
-            for (let a =0; a < numReserveTokens; a++) {
-            const reserveTokenAddress = BancorConverterContract.methods.reserveTokens(a).call().then(function(resTokenAddress){
-              return resTokenAddress;
-            });
-            reserveTokenList.push(reserveTokenAddress);
-            }
-            Promise.all(reserveTokenList).then(function(reserveTokenAddressList){
-              let reserveTokenData = reserveTokenAddressList.map(function(reserveTokenAddress){
-                    return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
-                      return getReserveRatio(BancorConverterContract, reserveTokenAddress).then(function(reserveRatio){
-                       return RegistryUtils.getTokenLightDetails(reserveTokenAddress).then(function(tokenData){
-                         if (tokenData === null || tokenData === undefined) {
-                           return null;
-                         }
-                         let isEth = false;
-                         if (tokenData && tokenData.symbol === 'ETH') {
-                           isEth = true;
-                         }
-                         return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
-                          const availableReserveBalance = fromDecimals(reserveTokenBalance, tokenData.decimals);
-                          const availableUserBalance = fromDecimals(balanceResponse, tokenData.decimals);
-                          let reserveData = Object.assign({}, tokenData, {reserveBalance: availableReserveBalance}, {reserveRatio: reserveRatio},
-                          {userBalance: availableUserBalance});
-                          return reserveData;
-                        })
-                       })
-                      });
-                    })
-            });
-
-
-
-            BancorConverterContract.methods.conversionFee().call().then(function(conversionFee){
-              const conversinFeePercent = conversionFee / 10000;
-
-
-                     Promise.all(reserveTokenData).then(function(reserveDetail){
-
-                       getSenderBalanceOfToken(SmartTokenContract, senderAddress).then(function(balanceData){
-
-
-                        reserveDetail = reserveDetail.filter(Boolean);
-                        const finalPayload = Object.assign({}, smartTokenDetails, {senderBalance: balanceData}, {converter: poolConverterAddress},
-                        {reserves: reserveDetail}, {conversionFee: conversinFeePercent});
-                        dispatch(setCurrentSelectedPool(finalPayload));
-                     })
-                     });
-                      })
-                    });
-                  });
-            }).catch(function(err){
-            dispatch(setCurrentSelectedPool({}));
-          });
-        });
-      });
-
-
-    });
 }
 
 function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {

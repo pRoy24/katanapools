@@ -1,10 +1,13 @@
 import React, {Component} from 'react';
-import {Container, Row, Col, Form, Button, Alert} from 'react-bootstrap';
+import {Container, Row, Col, Form, Button, Alert, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import AddressDisplay from '../../common/AddressDisplay';
 import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {isEmptyString} from '../../../utils/ObjectUtils';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
-import moment from 'moment'
+import moment from 'moment';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+
 const BigNumber = require('bignumber.js');
 const Decimal = require('decimal.js');
 export default class SelectedPool extends Component {
@@ -126,7 +129,16 @@ export default class SelectedPool extends Component {
       this.props.submitPoolSell(args);
     }
   }
-
+  showApprovalDialog = () => {
+    const {pool: {currentSelectedPool}} = this.props;
+    this.props.setTokenAllowances(1000000000, currentSelectedPool);
+  }
+  
+  showRevokeDialog = () => {
+    const {pool: {currentSelectedPool}} = this.props;
+    this.props.revokeTokenAllowances(currentSelectedPool);
+  }
+  
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError, poolHistory}, pool} = this.props;
     const {reservesNeeded, reservesAdded} = this.state;
@@ -199,10 +211,12 @@ export default class SelectedPool extends Component {
 
     let poolLiquidateAction = <span/>;
     let poolFundAction = <span/>;
+    let tokenAllowances = <span/>;
+    
     if (currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0){
       poolLiquidateAction = (
         <div>
-            <div>Liquitate Pool Holdings</div>
+            <div className="action-label">Liquitate Pool Holdings</div>
             <Form.Control type="number" placeholder="Enter amount to liquidate" onChange={this.onLiquidateInputChanged}/>
             <div className="action-info-col">
             {liquidateInfo}
@@ -212,7 +226,7 @@ export default class SelectedPool extends Component {
         )
       poolFundAction = (
         <div>
-            <div>Fund Pool Holdings</div>
+            <div className="action-label">Fund Pool Holdings</div>
             <Form.Control type="number" placeholder="Enter amount to fund" onChange={this.onFundInputChanged}/>
             <div className="action-info-col">
             {fundInfo}
@@ -220,7 +234,34 @@ export default class SelectedPool extends Component {
             </div>
         </div>
         )
+        
+    let tokenAllowanceReserves = currentSelectedPool.reserves.map(function(item, idx){
+      return <div key={`allowance-${idx}`} className="selected-pool-balance">
+      {item.symbol} {item.userAllowance ? parseFloat(item.userAllowance).toFixed(5) : '-'}
+      </div>
+    });
+    
+    tokenAllowances = 
+    <Row>
+    <Col lg={8}>
+      {tokenAllowanceReserves}
+      </Col>
+      <Col lg={4}>
+      <Button onClick={this.showApprovalDialog}>Approve reserves </Button>
+      <Button onClick={this.showRevokeDialog} className="revoke-approval-btn">Revoke approval </Button>
+      </Col>
+    </Row>
     }
+    
+
+function allowanceToolTip(props) {
+   return <Tooltip {...props}>
+    <div>Token allowances refer to amount you have approved the converter contract to spend.</div>
+    <div>Set allowances for BancorConverter for faster pool funding and liquidation and save on Gas costs</div>
+    
+    </Tooltip>;
+}
+
 
     return (
       <div>
@@ -265,24 +306,36 @@ export default class SelectedPool extends Component {
             <div className="cell-data">{userHoldingsList}</div>
           </Col>
         </Row>
+        <Row>
+         <Col lg={12}>
+          <div className="pool-allowance-container">
+           <div className="allowance-label">
+           Your pool allowances 
+           <OverlayTrigger
+              placement="right"
+              delay={{ show: 250, hide: 400 }}
+              overlay={allowanceToolTip}>
+              <FontAwesomeIcon icon={faQuestionCircle} className="info-tooltip-btn"/>
+            </OverlayTrigger>
+           </div>
+           
+           {tokenAllowances}
+         
+           </div>
+         </Col>
+        </Row>
+         <div className="pool-action-container">
         <Row className="selected-pool-buy-sell-row">
-          <Col lg={3}>
+       
+          <Col lg={5}>
             {poolFundAction}
           </Col>
-          <Col lg={3}>
+          <Col lg={5}>
             {poolLiquidateAction}
           </Col>
-          <Col lg={6}>
-          <div className="volume-graph-container">
-            <VolumeGraph selectedPool={currentSelectedPool} poolHistory={poolHistory} fetchConversionVolume={this.props.fetchConversionVolume}
-            resetPoolHistory={this.props.resetPoolHistory}/>
-            </div>
-          </Col>
+        
         </Row>
-
-        <Row>
-
-        </Row>
+    </div>  
       </div>
 
       )
@@ -291,11 +344,8 @@ export default class SelectedPool extends Component {
 
 class VolumeGraph extends Component {
   componentWillMount() {
-
     const {selectedPool} = this.props;
-
     this.props.fetchConversionVolume(selectedPool);
-
   }
 
   componentWillReceiveProps(nextProps) {

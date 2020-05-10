@@ -129,7 +129,7 @@ class ViewPoolWidget extends Component {
     const {selectedPoolIndex} = this.state;
     const currentPoolRow = poolData[selectedPoolIndex];
     if (prevProps.pool.poolTransactionStatus.type === 'pending' && poolTransactionStatus.type === 'success') {
-      this.props.refetchPoolDetails(currentPoolRow);
+      this.props.getPoolDetails(currentPoolRow);
     }
   }
 

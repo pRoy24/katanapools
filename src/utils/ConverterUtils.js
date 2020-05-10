@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import {toDecimals, fromDecimals} from './eth';
 var RegistryUtils = require('./RegistryUtils');
 const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
 const BancorConverter = require('../contracts/BancorConverter');
@@ -202,7 +203,87 @@ const Decimal = require('decimal.js');
         })
       })
     }
+  };
+  
+  export function getAllowanceOfToken(tokenAddress, spenderAddress) {
+    const web3 = window.web3;
+    const senderAddress = web3.currentProvider.selectedAddress;
 
+    if (senderAddress === undefined || senderAddress === null) {
+      return new Promise((resolve)=>(resolve('0')));
+    }
+
+      const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
+      return erc20Contract.methods.allowance(senderAddress, spenderAddress).call().then(function(addressAllowanceResponse){
+        return addressAllowanceResponse;
+      });
+  }
+  
+  export function setTokenAllowance(tokenAddress, spenderAddress, decimals, amount) {
+    const web3 = window.web3;
+    amount = toDecimals(amount, decimals);
+    const owner = web3.currentProvider.selectedAddress;
+    if (owner === undefined || owner === null) {
+      return new Promise((resolve)=>(resolve('0')));
+    }
+
+  const contract = new web3.eth.Contract(ERC20Token, tokenAddress);
+  return contract.methods.decimals().call().then(function(amountDecimals){
+  return contract.methods.allowance(owner, spenderAddress).call().then(function(allowance) {
+    if (!allowance || typeof allowance === undefined) {
+      allowance = 0;
+    }
+    let minAmount = amount;
+    let minAllowance = allowance;
+
+    const amountAllowed = new Decimal(minAllowance);
+    const amountNeeded = new Decimal(minAmount);
+
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+
+    return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), 0).send({
+      from: owner
+    }).then(function(approveResetResponse){
+
+    return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), amount).send({
+       from: owner
+    }, function(err, txHash){
+
+    }).then(function(allowanceResponse){
+
+      return allowanceResponse;
+    })
+    });
+    } else if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isZero()) {
+        return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), amount).send({
+           from: owner
+        }, function(err, txHash){
+
+        }).then(function(allowanceResponse){
+
+          return allowanceResponse;
+        })
+    } else {
+      return null;
+    }
+  });
+  });
+  
+      
+  }
+  
+  
+  export function revokeTokenAllowance(tokenAddress, spenderAddress) {
+    const web3 = window.web3;
+
+    const owner = web3.currentProvider.selectedAddress;  
+      const contract = new web3.eth.Contract(ERC20Token, tokenAddress);
+      
+    return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), 0).send({
+      from: owner
+    }).then(function(approveResetResponse){
+      return approveResetResponse;
+    });    
   }
 
   export function getDecimalsOfToken(tokenAddress) {
@@ -214,12 +295,6 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
-    console.log("***");
-    console.log(path);
-    console.log(amount);
-    console.log(fromAddress);
-    console.log(isEth);
-    console.log("***");
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
