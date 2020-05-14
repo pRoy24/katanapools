@@ -155,7 +155,7 @@ const Decimal = require('decimal.js');
       offset = 100;
     }
 
-    return getPathReturnValue(path, amountMin, baseReserveAmountMin).then(function(pathDataResponse){
+    return getPathReturnValue(path, baseReserveAmountMin).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
       if (pathAmountDisplay >= amount) {
@@ -168,7 +168,7 @@ const Decimal = require('decimal.js');
     });
   }
   
-  function getPathReturnValue(path, amount, baseReserveAmountMin) {
+  function getPathReturnValue(path, baseReserveAmountMin) {
     const web3 = window.web3;
 
 
@@ -329,6 +329,14 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
+    
+    console.log("***");
+    console.log(path);
+    console.log(amount);
+    console.log(fromAddress);
+    console.log(isEth);
+    console.log("***")
+    
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
@@ -357,20 +365,14 @@ const Decimal = require('decimal.js');
         let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
 
         return getApprovalBasedOnAllowance(erc20Contract, bnAddress, amount).then(function(approvalResponse){
-          console.log(approvalResponse);
-          console.log("BBBB");
-          console.log(amount);
-          console.log("GGGG");
-          
+
           return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, affiliate_account_address, affiliate_fee)
             .send({
               'from': senderAddress,
             }).catch(function(err){
-              console.log("eRor");
-              console.log(err);
+              console.log("ERROR");
               // Handle error
             }).then(function(pathDataResponse){
-              console.log(pathDataResponse);
               return pathDataResponse;
             }).catch(function(err){
 
@@ -416,6 +418,12 @@ const Decimal = require('decimal.js');
       const totalAmount = new Decimal(expectedReturn[0]).add(expectedReturn[1]);
       return totalAmount;
     });
+  }
+  
+  export function getTokenWithdrawConversionAmount(tokenPath, amount) {
+    return getPathReturnValue(tokenPath, amount).then(function(response){
+      return new Decimal(response[0]);
+    })
   }
   
 

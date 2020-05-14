@@ -54,6 +54,21 @@ export const GET_POOL_DETAILS = 'GET_POOL_DETAILS';
 export const GET_POOL_DETAILS_SUCCESS = 'GET_POOL_DETAILS_SUCCESS';
 export const GET_POOL_DETAILS_FAILURE = 'GET_POOL_DETAILS_FAILURE';
 
+export const GET_POOL_APPROVAL = 'GET_POOL_APPROVAL';
+export const GET_POOL_APPROVAL_SUCCESS = 'GET_POOL_APPROVAL_SUCCESS';
+export const GET_POOL_APPROVAL_FAILURE = 'GET_POOL_APPROVAL_FAILURE';
+
+export function getPoolApproval() {
+  return {
+    type: GET_POOL_APPROVAL
+  }
+}
+
+export function getPoolApprovalSuccess() {
+  return {
+    type: GET_POOL_APPROVAL_SUCCESS
+  }
+}
 
 export function getPoolDetails(address) {
   const request = getRequest(`/pool_token?address=${address}`, 'GET');

@@ -3,7 +3,8 @@ import { DEPLOY_SMART_TOKEN_INIT, DEPLOY_SMART_TOKEN_PENDING, DEPLOY_SMART_TOKEN
 SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CURRENT_SELECTED_POOL, SET_CURRENT_SELECTED_POOL_ERROR,
   SET_TOKEN_LIST_DETAILS, SET_TOKEN_LIST_ROW, SET_POOL_HISTORY, SET_POOL_TRANSACTION_STATUS, RESET_POOL_STATUS,
   DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS, SET_CURRENT_POOL_STATUS, RESET_POOL_HISTORY,
-  SET_CONVERTER_CONTRACT, SET_POOL_CREATION_HEADER, GET_POOL_DETAILS, GET_POOL_DETAILS_SUCCESS, GET_POOL_DETAILS_FAILURE
+  SET_CONVERTER_CONTRACT, SET_POOL_CREATION_HEADER, GET_POOL_DETAILS, GET_POOL_DETAILS_SUCCESS, GET_POOL_DETAILS_FAILURE,
+  GET_POOL_APPROVAL, GET_POOL_APPROVAL_SUCCESS
 } from '../actions/pool';
 
 const initialState = {
@@ -26,6 +27,7 @@ const initialState = {
   poolStatus: {},
   converterContract: {},
   poolCreationHeader: 'Create new liquidity pool',
+  poolApproval: ''
 }
 
 const deploy_steps = [
@@ -40,6 +42,11 @@ const deploy_steps = [
 export default function poolReducer (state = initialState, action) {
   let currentTokenList;
   switch (action.type) {
+    case GET_POOL_APPROVAL:
+      return {...state, poolApproval: 'init'};
+    case GET_POOL_APPROVAL_SUCCESS:
+      return {...state, poolApproval: 'success'};
+      
     case SET_POOL_CREATION_HEADER:
       return {...state, poolCreationHeader: action.payload}
     case SET_CONVERTER_CONTRACT:

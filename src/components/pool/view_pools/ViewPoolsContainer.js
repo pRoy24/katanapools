@@ -3,7 +3,8 @@ import ViewPools from './ViewPools';
 import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
-  setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure
+  setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure,
+  getPoolApproval, getPoolApprovalSuccess, 
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken, getAllowanceOfToken, setTokenAllowance, revokeTokenAllowance, submitSwapToken} from '../../../utils/ConverterUtils';
 import {isEmptyString} from '../../../utils/ObjectUtils';
@@ -30,7 +31,7 @@ const mapStateToProps = state => {
   }
 }
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = (dispatch, ownProps) => {
   return {
 
     getPoolDetails: (poolRow) => {
@@ -180,21 +181,17 @@ const mapDispatchToProps = (dispatch) => {
     },
     
     setTokenAllowances: (amount, poolRow, type) => {
-      
-
-      
        return getSpenderAddress(type, poolRow.converter).then(function(spenderAddress){
-         
+         dispatch(getPoolApproval());
+        let poolSetAllowance = poolRow.reserves.map(function(item, idx){
+          return setTokenAllowance(item.address, spenderAddress, item.decimals, amount).then(function(response){
+
+            return response;
+          })
+       });
       
-      
-      let poolSetAllowance = poolRow.reserves.map(function(item, idx){
-        return setTokenAllowance(item.address, spenderAddress, item.decimals, amount).then(function(response){
-          return response;
-        })
-      });
-      
-     
       return Promise.all(poolSetAllowance).then(function(response){
+            dispatch(getPoolApprovalSuccess());        
         return response;
       });
       
@@ -219,7 +216,7 @@ const mapDispatchToProps = (dispatch) => {
 
 function getSpenderAddress(type, converterAddress) {
   if (type === 'pool') {
-    return new Promise((resolve)=>(converterAddress));
+    return new Promise((resolve, reject) => resolve(converterAddress));
   } else {
     return RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
           return bnAddress;
