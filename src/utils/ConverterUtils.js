@@ -137,15 +137,49 @@ const Decimal = require('decimal.js');
 
   }
 
-  export function getExpectedReturn(path, amount) {
+  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount) {
+    const amountMin = toDecimals(amount, 18);
+    const baseReserveAmountMin = toDecimals(baseReserveAmount, 18);
+
+    let offset = 0.5;
+    let baseAmountNum = new Decimal(initialBase);
+    if (baseAmountNum.lessThanOrEqualTo(10)) {
+      offset = 0.05;
+    } else if (baseAmountNum.greaterThan(10) && baseAmountNum.lessThanOrEqualTo(100)) {
+      offset = 0.5;
+    } else if (baseAmountNum.greaterThan(100) && baseAmountNum.lessThanOrEqualTo(1000)){
+      offset = 5;
+    } else if (baseAmountNum.greaterThan(1000) && baseAmountNum.lessThanOrEqualTo(10000)) {
+      offset = 50;
+    } else {
+      offset = 100;
+    }
+
+    return getPathReturnValue(path, amountMin, baseReserveAmountMin).then(function(pathDataResponse){
+      let pathAmount = pathDataResponse[0];
+      const pathAmountDisplay = fromDecimals(pathAmount, 18);
+      if (pathAmountDisplay >= amount) {
+        return pathDataResponse;
+      } else {
+        let newAmount = toDecimals(new Decimal(amount).add(offset).toString(), 18);
+
+        return getExpectedReturn(path, amount, initialBase, newAmount);
+      }
+    });
+  }
+  
+  function getPathReturnValue(path, amount, baseReserveAmountMin) {
     const web3 = window.web3;
+
 
     return RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
       const bancorNetworkContract = new web3.eth.Contract(BancorNetwork, bnAddress);
-      return bancorNetworkContract.methods.getReturnByPath(path, amount).call().then(function(pathDataResponse){
+      return bancorNetworkContract.methods.getReturnByPath(path, baseReserveAmountMin).call().then(function(pathDataResponse){
+     
         return pathDataResponse;
       });
     });
+    
   }
   // Returns the balance of token if ERC20 and balance of Ethereum + balance of ethereum deposited into Ether token if Ether
   export function getFullBalanceOfToken(tokenAddress, isEth) {
@@ -323,15 +357,20 @@ const Decimal = require('decimal.js');
         let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
 
         return getApprovalBasedOnAllowance(erc20Contract, bnAddress, amount).then(function(approvalResponse){
-
-
+          console.log(approvalResponse);
+          console.log("BBBB");
+          console.log(amount);
+          console.log("GGGG");
+          
           return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, affiliate_account_address, affiliate_fee)
             .send({
               'from': senderAddress,
-              value: undefined
             }).catch(function(err){
+              console.log("eRor");
+              console.log(err);
               // Handle error
             }).then(function(pathDataResponse){
+              console.log(pathDataResponse);
               return pathDataResponse;
             }).catch(function(err){
 
@@ -365,7 +404,20 @@ const Decimal = require('decimal.js');
   }
 
 
-
+  export function getTokenConversionPath(fromToken, toToken) {
+    return RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
+      return RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
+          return networkPath;
+        })
+      })
+  }
+  export function getTokenConversionAmount(tokenPath, amount, baseReserveAmount) {
+    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseReserveAmount).then(function(expectedReturn){
+      const totalAmount = new Decimal(expectedReturn[0]).add(expectedReturn[1]);
+      return totalAmount;
+    });
+  }
+  
 
 function getConvertibleToSmartTokensMap() {
       let web3 = window.web3;
@@ -466,6 +518,7 @@ function getApprovalBasedOnAllowance(contract, spender, amount) {
 
   return contract.methods.decimals().call().then(function(amountDecimals){
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
+
     if (!allowance || typeof allowance === undefined) {
       allowance = 0;
     }
@@ -477,7 +530,7 @@ function getApprovalBasedOnAllowance(contract, spender, amount) {
     const amountNeeded = new Decimal(minAmount);
 
 
-    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive() && !amountAllowed.isZero()) {
 
     return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
       from: owner

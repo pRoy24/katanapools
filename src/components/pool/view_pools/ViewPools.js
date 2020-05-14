@@ -145,7 +145,7 @@ class ViewPoolWidget extends Component {
       poolDataList =
       <span>
         <ListGroupItem>
-              Symbol
+          Symbol
         </ListGroupItem>
        {
          poolData.map(function(poolRow, idx){
@@ -153,7 +153,7 @@ class ViewPoolWidget extends Component {
          if (idx === selectedPoolIndex) {
            cellActive = 'cell-active';
          }
-           return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow, idx)} key={'pool-select-'+idx} className={`select-pool-toolbar ${cellActive}`}>
+        return <ListGroupItem onClick={self.setSelectedPool.bind(self, poolRow, idx)} key={'pool-select-'+idx} className={`select-pool-toolbar ${cellActive}`}>
               {poolRow.symbol}
            </ListGroupItem>
          })
@@ -180,7 +180,7 @@ class ViewPoolWidget extends Component {
     }
     return (
       <div>
-              {transactionStatusMessage}
+      {transactionStatusMessage}
       <div className="app-toolbar-container">
         <Row style={{'marginBottom': '40px'}}>
         <Col lg={2}>
