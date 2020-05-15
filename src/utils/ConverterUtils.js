@@ -273,7 +273,7 @@ const Decimal = require('decimal.js');
     const amountAllowed = new Decimal(minAllowance);
     const amountNeeded = new Decimal(minAmount);
 
-    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive()) {
+    if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive() && !amountAllowed.isZero()) {
 
     return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), 0).send({
       from: owner
@@ -329,13 +329,6 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
-    
-    console.log("***");
-    console.log(path);
-    console.log(amount);
-    console.log(fromAddress);
-    console.log(isEth);
-    console.log("***")
     
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;

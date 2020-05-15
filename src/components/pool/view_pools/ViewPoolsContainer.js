@@ -239,7 +239,7 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
     const amountAllowed = new Decimal(minAllowance);
     const amountNeeded = new Decimal(minAmount);
-
+    
     if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive() && !amountAllowed.isZero()) {
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Previous user allowance found. reseting allowance'}));
     return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
