@@ -87,11 +87,12 @@ export default class SelectedPool extends Component {
       if (item.symbol === singleReserveSelection) {
         return item;
       }
-    })
-      let currentReserveSupply = new Decimal(selectedBaseReserve.reserveBalance);
-      const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
-      const baseReserveNeeded = currentReserveNeededDisplay;
+    });
+    
+    let currentBaseReserveSupply = new Decimal(selectedBaseReserve.reserveBalance);
+    const currentBaseReserveNeeded = pcIncreaseSupply.times(currentBaseReserveSupply);
+    const currentBaseReserveNeededDisplay = currentBaseReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
+    const currentBaseReserveNeededMin = toDecimals(currentBaseReserveNeeded.toFixed(2, Decimal.ROUND_UP), selectedBaseReserve.decimals);
 
     let reservesNeeded = [];
     
@@ -100,11 +101,11 @@ export default class SelectedPool extends Component {
         let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
         const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
         const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
-        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
+        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
         const payload = {path: null, totalAmount: currentReserveNeededMin, conversionAmount: currentReserveNeededMin,
         quantity: currentReserveNeededDisplay, token: reserveItem};
         
-        reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay}));
+        reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentBaseReserveNeededMin, neededDisplay: currentBaseReserveNeededDisplay}));
             
         return new Promise((resolve, reject) => (resolve(payload)));
       } else {
@@ -124,24 +125,25 @@ export default class SelectedPool extends Component {
             currentReserveNeeded = (pcIncreaseSupply.times(currentReserveSupply)).dividedBy(pc1);
 
            } else {
+          //   let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
+          //   currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
+           }
+
              let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
              currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-           }
-          
-           console.log(currentReserveNeeded.toString());
-           
+             
            currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
-           currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
+           currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
               
-           return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseReserveNeeded).then(function(response){
+           return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, currentBaseReserveNeededDisplay).then(function(response){
 
-            const responseAmount = fromDecimals(response, 18);
+            const responseAmount = fromDecimals(response.base, 18);
             
-            console.log(currentReserveNeededMin);
-            
-            reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay, baseReserveNeededMin: response}));
+            const approvalNeededMin = toDecimals(currentReserveNeeded.toFixed(1, Decimal.ROUND_UP), reserveItem.decimals);  
 
-            return {path: conversionPath, totalAmount: response, conversionAmount: currentReserveNeededMin,
+            reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: response.reserve, neededDisplay: currentReserveNeededDisplay, approvalNeededMin: approvalNeededMin}));
+
+            return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin,
                     quantity: responseAmount, token: reserveItem}
            });
         });

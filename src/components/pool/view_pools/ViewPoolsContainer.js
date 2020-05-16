@@ -57,7 +57,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
 
     submitPoolBuyWithSingleReserve: (payload) => {
-      console.log(payload);
       const args = payload.paths;
       const baseToken = args.find(function(item){
         return item.path === null;
@@ -80,7 +79,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       });
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
-        console.log("Finished swap");
         createBuyWithArguments(payload.funding, dispatch);
         // Call buy with args
       });
@@ -278,8 +276,6 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 
 function getUserPoolHoldings(poolRow) {
-  console.log(poolRow);
-  
   const web3 = window.web3;
   const senderAddress = web3.currentProvider.selectedAddress;
   if (isEmptyString(senderAddress)) {
@@ -384,7 +380,6 @@ function createBuyWithArguments(args, dispatch) {
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
 
-      
       let resNeededApproval = args.reservesNeeded.map(function(item){
         let reserveContract = {};
         if (item.symbol === 'ETH') {
@@ -426,8 +421,6 @@ function createBuyWithArguments(args, dispatch) {
 
       Promise.all(resNeededApproval).then(function(approvalResponse){
         
-          console.log("FINISHE GETTING APPROVAL");
-          
           ConverterContract.methods.fund(args.poolTokenProvided).send({
             from: senderAddress
           }, function(err, txHash){

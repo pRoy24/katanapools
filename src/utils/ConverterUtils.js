@@ -142,14 +142,11 @@ const Decimal = require('decimal.js');
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
-      console.log("Amount after conversion "+pathAmountDisplay);
-      console.log("Amount needed "+amount);
       const pathAmountDecimals = new Decimal(pathAmountDisplay);
       const amountDecimals = new Decimal(amount);
-      console.log(pathAmountDecimals.greaterThanOrEqualTo(amountDecimals));
-      
+
       if (pathAmountDecimals.greaterThanOrEqualTo(amountDecimals)) {
-        return baseReserveAmount;
+        return {'base': baseReserveAmount, 'reserve': pathAmount};;
       } else {
         let newAmount = new Decimal(initialBase).add(offset).toString();
         let newAmountDisplay = toDecimals(newAmount, 18);
@@ -384,7 +381,6 @@ const Decimal = require('decimal.js');
       })
   }
   export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
-   // console.log("geeting conversion amount");
    let baseAmountDecimals = toDecimals(baseReserveAmount, 18);;
     return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals).then(function(totalAmount){
       return totalAmount;
