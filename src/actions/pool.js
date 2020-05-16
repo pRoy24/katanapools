@@ -58,6 +58,22 @@ export const GET_POOL_APPROVAL = 'GET_POOL_APPROVAL';
 export const GET_POOL_APPROVAL_SUCCESS = 'GET_POOL_APPROVAL_SUCCESS';
 export const GET_POOL_APPROVAL_FAILURE = 'GET_POOL_APPROVAL_FAILURE';
 
+export const GET_POOL_REVOCATION = 'GET_POOL_REVOCATION';
+export const GET_POOL_REVOCATION_SUCCESS = 'GET_POOL_REVOCATION_SUCCESS';
+
+
+export function getPoolRevocation() {
+  return {
+    type: GET_POOL_REVOCATION
+  }
+}
+
+export function getPoolRevocationSuccess() {
+  return {
+    type: GET_POOL_REVOCATION_SUCCESS
+  }
+}
+
 export function getPoolApproval() {
   return {
     type: GET_POOL_APPROVAL

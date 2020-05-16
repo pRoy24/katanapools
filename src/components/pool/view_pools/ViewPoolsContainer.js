@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
   setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure,
-  getPoolApproval, getPoolApprovalSuccess, 
+  getPoolApproval, getPoolApprovalSuccess, getPoolRevocation, getPoolRevocationSuccess,
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken, getAllowanceOfToken, setTokenAllowance, revokeTokenAllowance, submitSwapToken} from '../../../utils/ConverterUtils';
 import {isEmptyString} from '../../../utils/ObjectUtils';
@@ -199,7 +199,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     
     revokeTokenAllowances: (poolRow, type) => {
       return getSpenderAddress(type, poolRow.converter).then(function(spenderAddress){
-              
+        dispatch(getPoolRevocation());
       let poolRevokeAllowance = poolRow.reserves.map(function(item, idx){
         return revokeTokenAllowance(item.address,spenderAddress).then(function(response){
           return response;
@@ -207,6 +207,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       });
       
       return Promise.all(poolRevokeAllowance).then(function(response){
+        dispatch(getPoolRevocationSuccess());
         return response;
       })
       });

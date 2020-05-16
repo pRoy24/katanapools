@@ -94,7 +94,7 @@ export default class SelectedPool extends Component {
     let currentBaseReserveSupply = new Decimal(selectedBaseReserve.reserveBalance);
     const currentBaseReserveNeeded = pcIncreaseSupply.times(currentBaseReserveSupply);
     const currentBaseReserveNeededDisplay = currentBaseReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
-    const currentBaseReserveNeededMin = toDecimals(currentBaseReserveNeeded.toFixed(2, Decimal.ROUND_UP), selectedBaseReserve.decimals);
+    const currentBaseReserveNeededMin = toDecimals(currentBaseReserveNeeded.toFixed(1, Decimal.ROUND_UP), selectedBaseReserve.decimals);
 
     let reservesNeeded = [];
     
@@ -131,6 +131,9 @@ export default class SelectedPool extends Component {
              currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
            }
 
+         //  let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
+        //   currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
+             
            currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
            currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
               
@@ -261,7 +264,24 @@ export default class SelectedPool extends Component {
     reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
 
     const payload = {paths: singleTokenFundConversionPaths, funding: fundingArgs};
-    this.props.submitPoolBuyWithSingleReserve(payload);
+
+
+    let totalReserveAmount  = new Decimal(0);
+    let baseReserveItem = {};
+    singleTokenFundConversionPaths.forEach(function(item){
+      if (item.path === null) {
+        baseReserveItem = item;
+      }
+      totalReserveAmount = totalReserveAmount.add(new Decimal(item.quantity));
+    });
+    
+    const userBalance = baseReserveItem.token.userBalance;
+
+    if (totalReserveAmount.lessThanOrEqualTo(userBalance)) {
+       this.props.submitPoolBuyWithSingleReserve(payload);
+    } else {
+      console.log("Amount needed is more than user balance");
+    }
   }
 
   submitSellPoolTokenWithSingleReserve = () => {

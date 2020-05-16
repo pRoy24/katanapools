@@ -103,7 +103,7 @@ class ViewPoolWidget extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {poolData, poolSymbol, pool: {currentSelectedPool, poolApproval}} = nextProps;
+    const {poolData, poolSymbol, pool: {currentSelectedPool, poolApproval, poolRevocation}} = nextProps;
 
     if (isEmptyArray(this.props.poolData) && isNonEmptyArray(poolData)) {
           let selectedPoolIndex = poolData.findIndex(function(item){
@@ -121,6 +121,9 @@ class ViewPoolWidget extends Component {
 
     if (poolApproval === 'success' && this.props.pool.poolApproval === 'init') {
       this.props.fetchUserPoolDetails(currentSelectedPool);      
+    }
+    if (poolRevocation === 'success' && this.props.pool.poolRevocation === 'init') {
+       this.props.fetchUserPoolDetails(currentSelectedPool);        
     }
   }
 
