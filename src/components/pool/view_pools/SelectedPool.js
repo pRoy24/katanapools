@@ -90,7 +90,7 @@ export default class SelectedPool extends Component {
     })
       let currentReserveSupply = new Decimal(selectedBaseReserve.reserveBalance);
       const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
+      const currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
       const baseReserveNeeded = currentReserveNeededDisplay;
 
     let reservesNeeded = [];
@@ -99,8 +99,8 @@ export default class SelectedPool extends Component {
       if (reserveItem.symbol === singleReserveSelection) {
         let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
         const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-        const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(0, Decimal.ROUND_UP), reserveItem.decimals);
-        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
+        const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
+        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
         const payload = {path: null, totalAmount: currentReserveNeededMin, conversionAmount: currentReserveNeededMin,
         quantity: currentReserveNeededDisplay, token: reserveItem};
         
@@ -116,26 +116,29 @@ export default class SelectedPool extends Component {
             
            let currentReserveNeededMin = 0;
            let currentReserveNeededDisplay = 0;
-
+           let currentReserveNeeded = 0;
            // If pool is being used for conversion then supply will be decreased after conversion
            if (usePoolForConversion) {
             let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
             let pc1 = pcIncreaseSupply.add(1);
-             const currentReserveNeeded = (pcIncreaseSupply.times(currentReserveSupply)).dividedBy(pc1);
-             currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(0, Decimal.ROUND_UP), reserveItem.decimals);
-             currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
+            currentReserveNeeded = (pcIncreaseSupply.times(currentReserveSupply)).dividedBy(pc1);
 
            } else {
              let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-             const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-              currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(0, Decimal.ROUND_UP), reserveItem.decimals);
-              currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
+             currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
            }
-
+          
+           console.log(currentReserveNeeded.toString());
+           
+           currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
+           currentReserveNeededDisplay = currentReserveNeeded.toFixed(4, Decimal.ROUND_UP).toString();
+              
            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseReserveNeeded).then(function(response){
 
             const responseAmount = fromDecimals(response, 18);
-
+            
+            console.log(currentReserveNeededMin);
+            
             reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay, baseReserveNeededMin: response}));
 
             return {path: conversionPath, totalAmount: response, conversionAmount: currentReserveNeededMin,
@@ -465,6 +468,7 @@ export default class SelectedPool extends Component {
             singleTokenWithdrawConversionPaths.forEach(function(item){
               totalReserveAmount += parseFloat(item.quantity);
             });
+            totalReserveAmount = totalReserveAmount.toFixed(4);
             withdrawActiveAmount = <div>You will receive {totalReserveAmount} {singleTokenWithdrawReserveSelection.symbol}</div>
           }
         poolLiquidateAction = (
@@ -511,7 +515,7 @@ export default class SelectedPool extends Component {
             singleTokenFundConversionPaths.forEach(function(item){
               totalReserveAmount += parseFloat(item.quantity);
             });
-            
+            totalReserveAmount = totalReserveAmount.toFixed(4);
             
             fundActiveAmount = <div>You will need to stake {totalReserveAmount} {singleTokenFundReserveSelection.symbol}</div>
           }

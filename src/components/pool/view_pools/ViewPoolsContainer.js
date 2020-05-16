@@ -57,7 +57,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
 
     submitPoolBuyWithSingleReserve: (payload) => {
-
+      console.log(payload);
       const args = payload.paths;
       const baseToken = args.find(function(item){
         return item.path === null;
@@ -71,7 +71,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
             isEth = true;
           }
 
-          
           return submitSwapToken(item.path, item.totalAmount, baseToken.token.address, isEth).then(function(res){
             return res;
           })
@@ -81,7 +80,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       });
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
-
+        console.log("Finished swap");
         createBuyWithArguments(payload.funding, dispatch);
         // Call buy with args
       });
@@ -279,6 +278,8 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 
 function getUserPoolHoldings(poolRow) {
+  console.log(poolRow);
+  
   const web3 = window.web3;
   const senderAddress = web3.currentProvider.selectedAddress;
   if (isEmptyString(senderAddress)) {
@@ -288,9 +289,9 @@ function getUserPoolHoldings(poolRow) {
   const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
   const converterAddress = poolRow.converter;
-  const BancorConverterContract = new web3.eth.Contract(BancorConverter, converterAddress);
-  
+
   return  RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
+
    
   let poolReserveHoldingsRequest = poolRow.reserves.map(function(item){
     const reserveTokenAddress = item.address;
@@ -309,10 +310,12 @@ function getUserPoolHoldings(poolRow) {
       const availableUserBalance = fromDecimals(balanceResponse, item.decimals);
       const availableUserAllowance = fromDecimals(allowanceResponse, item.decimals);
       const availableUserSwapAllowance = fromDecimals(swapAllowanceResponse, item.decimals);
-
-      return Object.assign({}, item, {userBalance: availableUserBalance, userAllowance: availableUserAllowance,
+      
+      const tokenBalancePayload = {userBalance: availableUserBalance, userAllowance: availableUserAllowance,
         swapAllowance: availableUserSwapAllowance
-      });
+      };
+      
+      return Object.assign({}, item, tokenBalancePayload);
       });
       });
     })
@@ -422,6 +425,9 @@ function createBuyWithArguments(args, dispatch) {
       });
 
       Promise.all(resNeededApproval).then(function(approvalResponse){
+        
+          console.log("FINISHE GETTING APPROVAL");
+          
           ConverterContract.methods.fund(args.poolTokenProvided).send({
             from: senderAddress
           }, function(err, txHash){

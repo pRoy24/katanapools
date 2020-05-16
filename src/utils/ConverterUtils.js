@@ -142,7 +142,13 @@ const Decimal = require('decimal.js');
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
-      if (pathAmountDisplay >= amount) {
+      console.log("Amount after conversion "+pathAmountDisplay);
+      console.log("Amount needed "+amount);
+      const pathAmountDecimals = new Decimal(pathAmountDisplay);
+      const amountDecimals = new Decimal(amount);
+      console.log(pathAmountDecimals.greaterThanOrEqualTo(amountDecimals));
+      
+      if (pathAmountDecimals.greaterThanOrEqualTo(amountDecimals)) {
         return baseReserveAmount;
       } else {
         let newAmount = new Decimal(initialBase).add(offset).toString();
@@ -224,7 +230,6 @@ const Decimal = require('decimal.js');
     if (senderAddress === undefined || senderAddress === null) {
       return new Promise((resolve)=>(resolve('0')));
     }
-
       const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
       return erc20Contract.methods.allowance(senderAddress, spenderAddress).call().then(function(addressAllowanceResponse){
         return addressAllowanceResponse;

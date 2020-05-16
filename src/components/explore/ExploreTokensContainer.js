@@ -30,7 +30,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
     
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
-      console.log("FETCH FETCH");
       dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
         if (response.payload.status  === 200) {
           if (type === 'from') {
@@ -50,9 +49,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       if (selectedTransferToken.symbol === 'ETH') {
         isEth = true;
       }
-
       getDecimalsOfToken(selectedTransferToken.address).then(function(tokenDecimals){
-
 
       const fromAmount = toDecimals(transferAmount, tokenDecimals);
       getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
