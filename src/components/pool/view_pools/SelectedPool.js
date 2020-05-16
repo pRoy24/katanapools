@@ -18,7 +18,8 @@ export default class SelectedPool extends Component {
       fundAllReservesActive: 'reserve-active', fundOneReserveActive: '',
       singleTokenFundReserveSelection: '', singleTokenFundReserveAmount: 0, singleTokenFundConversionPaths: [],
       singleTokenWithdrawReserveSelection: '', singleTokenWithdrawReserveAmount: 0, singleTokenWithdrawConversionPaths: [],
-      withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active', approvalDisplay: false
+      withdrawOneReserveActive: '', withdrawAllReservesActive: 'reserve-active', approvalDisplay: false,
+      calculatingFunding: false, calculatingWithdraw: false
     }
   }
 
@@ -74,6 +75,7 @@ export default class SelectedPool extends Component {
   }
 
   calculateFundingAmountWithOneReserve = (inputFund) => {
+    this.setState({calculatingFunding: true});
     const {pool: {currentSelectedPool}} = this.props;  
     const self = this;
     const {singleTokenFundReserveSelection} = this.state;
@@ -104,7 +106,7 @@ export default class SelectedPool extends Component {
         const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
         const payload = {path: null, totalAmount: currentReserveNeededMin, conversionAmount: currentReserveNeededMin,
         quantity: currentReserveNeededDisplay, token: reserveItem};
-        
+
         reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentBaseReserveNeededMin, neededDisplay: currentBaseReserveNeededDisplay}));
             
         return new Promise((resolve, reject) => (resolve(payload)));
@@ -125,13 +127,10 @@ export default class SelectedPool extends Component {
             currentReserveNeeded = (pcIncreaseSupply.times(currentReserveSupply)).dividedBy(pc1);
 
            } else {
-          //   let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-          //   currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-           }
-
              let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
              currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-             
+           }
+
            currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
            currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
               
@@ -142,7 +141,7 @@ export default class SelectedPool extends Component {
             const approvalNeededMin = toDecimals(currentReserveNeeded.toFixed(1, Decimal.ROUND_UP), reserveItem.decimals);  
 
             reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: response.reserve, neededDisplay: currentReserveNeededDisplay, approvalNeededMin: approvalNeededMin}));
-
+      
             return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin,
                     quantity: responseAmount, token: reserveItem}
            });
@@ -151,7 +150,7 @@ export default class SelectedPool extends Component {
     });
     
     Promise.all(reservesMap).then(function(response){
-      self.setState({singleTokenFundConversionPaths: response, reservesNeeded: reservesNeeded});
+      self.setState({singleTokenFundConversionPaths: response, reservesNeeded: reservesNeeded, calculatingFunding: false});
     });
   }
   
@@ -219,7 +218,7 @@ export default class SelectedPool extends Component {
   
   calculateLiquidateAmountWithOneReserve = (liquidateFund) => {
     const {pool: {currentSelectedPool}} = this.props;
-
+    this.setState({calculatingWithdraw: true});
     const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
     const removeSupply = new BigNumber(liquidateFund);
     const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
@@ -248,7 +247,8 @@ export default class SelectedPool extends Component {
     });
     const self = this;
     Promise.all(reservesMap).then(function(mapData){
-      self.setState({singleTokenWithdrawConversionPaths: mapData})
+      
+      self.setState({singleTokenWithdrawConversionPaths: mapData, calculatingWithdraw: false});
     })
 
     this.setState({reservesAdded: reservesAdded});
@@ -346,16 +346,24 @@ export default class SelectedPool extends Component {
   
   onSingleReserveFundInputChanged = (evt) => {
     const singleInputFund = evt.target.value;
-    
-    if (!isNaN(parseFloat(singleInputFund))) {
-      this.calculateFundingAmountWithOneReserve(singleInputFund);
-      this.setState({singleReserveAmount: singleInputFund});
-    } 
+    this.setState({singleReserveAmount: singleInputFund});
+  }
+  
+  calculateSingleInputFund = () => {
+    const {singleReserveAmount} = this.state;
+    if (!isNaN(parseFloat(singleReserveAmount))) {
+      this.calculateFundingAmountWithOneReserve(singleReserveAmount);
+    }
+  }
+  
+  calculateSingleInputWithdraw = () => {
+    const {singleTokenWithdrawReserveAmount} = this.state;
+    this.calculateLiquidateAmountWithOneReserve(singleTokenWithdrawReserveAmount);
   }
   
   onSingleReserveLiquidateFundChanged = (evt) => {
     const singleLiquidateFund = evt.target.value;
-    this.calculateLiquidateAmountWithOneReserve(singleLiquidateFund);
+   // this.calculateLiquidateAmountWithOneReserve(singleLiquidateFund);
     this.setState({singleTokenWithdrawReserveAmount: singleLiquidateFund});
   }  
   
@@ -363,10 +371,20 @@ export default class SelectedPool extends Component {
     const {pool: {currentSelectedPool, currentSelectedPoolError}} = this.props;
     const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths,
       withdrawAllReservesActive, withdrawOneReserveActive, singleTokenWithdrawReserveSelection, singleTokenFundReserveSelection,
-      singleTokenWithdrawConversionPaths
+      singleTokenWithdrawConversionPaths, calculatingFunding, calculatingWithdraw
     } = this.state;
     const self = this;
-
+    
+    let isPurchaseBtnDisabled = false;
+    let isWithdrawBtnDisabled = false;
+    
+    if (calculatingFunding) {
+      isPurchaseBtnDisabled = true;
+    }
+    if (calculatingWithdraw) {
+      isWithdrawBtnDisabled = true;
+    }
+    
     let reserveRatio = '';
 
     reserveRatio = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ?currentSelectedPool.reserves.map(function(item){
@@ -486,12 +504,15 @@ export default class SelectedPool extends Component {
               </div>
               <div>
                  <label>Amount of pool tokens to withdraw</label>
-                <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveLiquidateFundChanged}/>
+                 <div>
+                  <Form.Control type="number" placeholder="Pool tokens to withdraw" onChange={this.onSingleReserveLiquidateFundChanged}/>
+                  <Button className="calculate-btn" disabled={isWithdrawBtnDisabled} onClick={this.calculateSingleInputWithdraw}>Calculate</Button>
+                </div>
               </div>
             </div>
                 <div className="action-info-col">
                 {withdrawActiveAmount}
-                <Button onClick={this.submitSellPoolTokenWithSingleReserve} className="pool-action-btn">Withdraw</Button>
+                <Button onClick={this.submitSellPoolTokenWithSingleReserve} disabled={isWithdrawBtnDisabled} className="pool-action-btn">Withdraw</Button>
                 </div>
             </div>
             )
@@ -535,12 +556,16 @@ export default class SelectedPool extends Component {
             </div>
             <div>
               <label>Amount of pool tokens to fund</label>
-              <Form.Control type="number" placeholder="Enter amount of pool tokens to fund" onChange={this.onSingleReserveFundInputChanged}/>
+              <div>
+              <Form.Control type="number" placeholder="Enter amount of pool tokens to fund" onChange={this.onSingleReserveFundInputChanged} className="single-reserve-amount-text"/>
+                <Button className="calculate-btn" disabled={isPurchaseBtnDisabled} onClick={this.calculateSingleInputFund}>Calculate</Button>
+              </div>
+         
             </div>
             </div>
                 <div className="action-info-col">
                 {fundActiveAmount}
-                <Button onClick={this.submitBuyPoolTokenWithSingleReserve} className="pool-action-btn">Purchase</Button>
+                <Button onClick={this.submitBuyPoolTokenWithSingleReserve} className="pool-action-btn" disabled={isPurchaseBtnDisabled}>Purchase</Button>
                 </div>
             </div>
             )

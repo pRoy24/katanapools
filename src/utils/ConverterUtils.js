@@ -124,21 +124,10 @@ const Decimal = require('decimal.js');
 
   }
 
-  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount) {
-  //  const baseReserveAmountMin = toDecimals(baseReserveAmount, 18);
-    let offset = 0.5;
-    let baseAmountNum = new Decimal(initialBase);
-    if (baseAmountNum.lessThanOrEqualTo(10)) {
-      offset = 0.05;
-    } else if (baseAmountNum.greaterThan(10) && baseAmountNum.lessThanOrEqualTo(100)) {
-      offset = 0.5;
-    } else if (baseAmountNum.greaterThan(100) && baseAmountNum.lessThanOrEqualTo(1000)){
-      offset = 5;
-    } else if (baseAmountNum.greaterThan(1000) && baseAmountNum.lessThanOrEqualTo(10000)) {
-      offset = 50;
-    } else {
-      offset = 100;
-    }
+  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, counter = 1, offset = 0.5) {
+
+
+    // console.log("initial base "+baseReserveAmount);
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
@@ -148,11 +137,32 @@ const Decimal = require('decimal.js');
       if (pathAmountDecimals.greaterThanOrEqualTo(amountDecimals)) {
         return {'base': baseReserveAmount, 'reserve': pathAmount};;
       } else {
+
+        if (counter % 5 === 0) {
+          offset = offset * 2;
+        } 
         let newAmount = new Decimal(initialBase).add(offset).toString();
         let newAmountDisplay = toDecimals(newAmount, 18);
-        return getExpectedReturn(path, amount, newAmount, newAmountDisplay);
+
+        return getExpectedReturn(path, amount, newAmount, newAmountDisplay, counter + 1, offset);
       }
     });
+  }
+  
+  function getOffsetValue(baseAmountNum) {
+    let offset;
+    if (baseAmountNum.lessThanOrEqualTo(10)) {
+      offset = 0.5;
+    } else if (baseAmountNum.greaterThan(10) && baseAmountNum.lessThanOrEqualTo(100)) {
+      offset = 0.5;
+    } else if (baseAmountNum.greaterThan(100) && baseAmountNum.lessThanOrEqualTo(1000)){
+      offset = 5;
+    } else if (baseAmountNum.greaterThan(1000) && baseAmountNum.lessThanOrEqualTo(10000)) {
+      offset = 50;
+    } else {
+      offset = 100;
+    }
+    return offset;
   }
   
   function getPathReturnValue(path, baseReserveAmountMin) {
@@ -337,7 +347,7 @@ const Decimal = require('decimal.js');
             .send({
               'from': senderAddress,
             }).catch(function(err){
-              console.log("ERROR");
+
               // Handle error
             }).then(function(pathDataResponse){
               return pathDataResponse;
@@ -381,8 +391,10 @@ const Decimal = require('decimal.js');
       })
   }
   export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
-   let baseAmountDecimals = toDecimals(baseReserveAmount, 18);;
-    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals).then(function(totalAmount){
+   let baseAmountDecimals = toDecimals(baseReserveAmount, 18);
+    let baseAmountNum = new Decimal(baseReserveAmount);
+    const offset = getOffsetValue(baseAmountNum);
+    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, 1, offset).then(function(totalAmount){
       return totalAmount;
     });
   }
