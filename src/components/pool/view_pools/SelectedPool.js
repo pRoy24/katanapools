@@ -73,69 +73,6 @@ export default class SelectedPool extends Component {
     }
   }
 
-
-  submitBuyPoolToken = () => {
-
-    const {fundAmount, reservesNeeded} = this.state;
-    const {pool: {currentSelectedPool}} = this.props;
-    const self = this;
-    const args = {poolTokenProvided: toDecimals(fundAmount, currentSelectedPool.decimals),
-    reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
-
-    let isError = false;
-    const web3 = window.web3;
-
-    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
-    if (isEmptyString(currentWalletAddress)) {
-      isError = true;
-      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
-    }
-    else if (reservesNeeded.length > 0) {
-      reservesNeeded.forEach(function(reserveItem){
-        const amountNeeded = new Decimal(reserveItem.neededDisplay);
-        const amountAvailable = new Decimal(reserveItem.userBalance);
-        if (amountNeeded.greaterThan(amountAvailable)) {
-          isError = true;
-          self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
-        }
-      })
-    }
-    if (!isError) {
-      this.props.resetErrorMessage();
-      this.props.submitPoolBuy(args);
-    }
-  }
-
-  submitSellPoolToken = () => {
-    const {pool: {currentSelectedPool}} = this.props;
-    const self = this;
-    const existingPoolTokenBalance = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
-    const {liquidateAmount, reservesAdded} = this.state;
-    const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
-    reservesAdded: reservesAdded, converterAddress: currentSelectedPool.converter,
-      'poolAddress': currentSelectedPool.address
-    };
-    let isError = false;
-
-    const web3 = window.web3;
-
-    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
-    if (isEmptyString(currentWalletAddress)) {
-      isError = true;
-      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
-    }
-
-    if(parseFloat(liquidateAmount) > parseFloat(existingPoolTokenBalance)) {
-      isError = true;
-      this.props.setErrorMessage(`User balance for ${currentSelectedPool.symbol} is less than needed amount of ${liquidateAmount}`);
-    }
-
-    if (!isError){
-      this.props.resetErrorMessage();
-      this.props.submitPoolSell(args);
-    }
-  }
-  
   calculateFundingAmountWithOneReserve = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;  
     const self = this;
@@ -213,6 +150,68 @@ export default class SelectedPool extends Component {
     });
   }
   
+  submitBuyPoolToken = () => {
+
+    const {fundAmount, reservesNeeded} = this.state;
+    const {pool: {currentSelectedPool}} = this.props;
+    const self = this;
+    const args = {poolTokenProvided: toDecimals(fundAmount, currentSelectedPool.decimals),
+    reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
+
+    let isError = false;
+    const web3 = window.web3;
+
+    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+    if (isEmptyString(currentWalletAddress)) {
+      isError = true;
+      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
+    }
+    else if (reservesNeeded.length > 0) {
+      reservesNeeded.forEach(function(reserveItem){
+        const amountNeeded = new Decimal(reserveItem.neededDisplay);
+        const amountAvailable = new Decimal(reserveItem.userBalance);
+        if (amountNeeded.greaterThan(amountAvailable)) {
+          isError = true;
+          self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
+        }
+      })
+    }
+    if (!isError) {
+      this.props.resetErrorMessage();
+      this.props.submitPoolBuy(args);
+    }
+  }
+
+  submitSellPoolToken = () => {
+    const {pool: {currentSelectedPool}} = this.props;
+    const self = this;
+    const existingPoolTokenBalance = fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals);
+    const {liquidateAmount, reservesAdded} = this.state;
+    const args = {poolTokenSold: toDecimals(liquidateAmount, currentSelectedPool.decimals),
+    reservesAdded: reservesAdded, converterAddress: currentSelectedPool.converter,
+      'poolAddress': currentSelectedPool.address
+    };
+    let isError = false;
+
+    const web3 = window.web3;
+
+    const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
+    if (isEmptyString(currentWalletAddress)) {
+      isError = true;
+      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
+    }
+
+    if(parseFloat(liquidateAmount) > parseFloat(existingPoolTokenBalance)) {
+      isError = true;
+      this.props.setErrorMessage(`User balance for ${currentSelectedPool.symbol} is less than needed amount of ${liquidateAmount}`);
+    }
+
+    if (!isError){
+      this.props.resetErrorMessage();
+      this.props.submitPoolSell(args);
+    }
+  }
+  
   calculateLiquidateAmountWithOneReserve = (liquidateFund) => {
     const {pool: {currentSelectedPool}} = this.props;
 
@@ -244,8 +243,6 @@ export default class SelectedPool extends Component {
     });
     const self = this;
     Promise.all(reservesMap).then(function(mapData){
-      //console.log(mapData);
-      
       self.setState({singleTokenWithdrawConversionPaths: mapData})
     })
 
@@ -253,7 +250,6 @@ export default class SelectedPool extends Component {
   }
   
   submitBuyPoolTokenWithSingleReserve = () => {
-
     const {singleReserveAmount, reservesNeeded, singleTokenFundConversionPaths} = this.state;
     const {pool: {currentSelectedPool}} = this.props;
     const fundingArgs = {poolTokenProvided: toDecimals(singleReserveAmount, currentSelectedPool.decimals),
@@ -281,7 +277,6 @@ export default class SelectedPool extends Component {
     if (type === 'all') {
       this.setState({fundOneReserveActive: '', singleTokenFundReserveAmount: 0});
       this.setState({fundAllReservesActive: 'reserve-active', reservesNeeded: [], singleTokenFundConversionPaths: []});
-      
     } else {
       this.setState({fundAllReservesActive: ''});
       this.setState({fundOneReserveActive: 'reserve-active'});
@@ -291,14 +286,22 @@ export default class SelectedPool extends Component {
 
   fundSingleBaseChanged = (evtKey, evt) => {
     const {pool: {currentSelectedPool}} = this.props;
+    const {singleInputFund, inputFund, singleReserveAmount} = this.state;
     const currentSelection = currentSelectedPool.reserves.find((a)=>(a.symbol === evtKey));
-    this.setState({singleTokenFundReserveSelection: currentSelection});
+    const self = this;
+    this.setState({singleTokenFundReserveSelection: currentSelection}, function(){
+      self.calculateFundingAmountWithOneReserve(singleReserveAmount);
+    });
   }
 
   withdrawSingleBaseChanged = (eventKey, evt) => {
     const {pool: {currentSelectedPool}} = this.props;
+    const {singleTokenWithdrawReserveAmount} = this.state;
+    const self = this;
     const currentSelection = currentSelectedPool.reserves.find((a)=>(a.symbol === eventKey));
-    this.setState({singleTokenWithdrawReserveSelection: currentSelection});
+    this.setState({singleTokenWithdrawReserveSelection: currentSelection}, function(){
+      self.calculateLiquidateAmountWithOneReserve(singleTokenWithdrawReserveAmount);      
+    });
   }
   
   withdrawReserveToggle = (type) => {
@@ -338,6 +341,7 @@ export default class SelectedPool extends Component {
   
   onSingleReserveFundInputChanged = (evt) => {
     const singleInputFund = evt.target.value;
+    
     if (!isNaN(parseFloat(singleInputFund))) {
       this.calculateFundingAmountWithOneReserve(singleInputFund);
       this.setState({singleReserveAmount: singleInputFund});
