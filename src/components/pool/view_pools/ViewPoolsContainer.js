@@ -57,20 +57,22 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
 
     submitPoolBuyWithSingleReserve: (payload) => {
+
       const args = payload.paths;
       const baseToken = args.find(function(item){
         return item.path === null;
       })
 
       let tokenTransferMapping = args.map(function(item, idx){
+        
         if (item.path !== null) {
           let isEth = false;
           if (baseToken.token.symbol === 'ETH') {
             isEth = true;
           }
 
-          const amount = toDecimals(parseFloat(item.quantity), baseToken.token.decimals);
-          return submitSwapToken(item.path, amount, baseToken.token.address, isEth).then(function(res){
+          
+          return submitSwapToken(item.path, item.totalAmount, baseToken.token.address, isEth).then(function(res){
             return res;
           })
         } else {
@@ -198,16 +200,19 @@ const mapDispatchToProps = (dispatch, ownProps) => {
        });
     },
     
-    revokeTokenAllowances: (poolRow) => {
+    revokeTokenAllowances: (poolRow, type) => {
+      return getSpenderAddress(type, poolRow.converter).then(function(spenderAddress){
+              
       let poolRevokeAllowance = poolRow.reserves.map(function(item, idx){
-        return revokeTokenAllowance(item.address, poolRow.converter).then(function(response){
+        return revokeTokenAllowance(item.address,spenderAddress).then(function(response){
           return response;
         })
       });
       
       return Promise.all(poolRevokeAllowance).then(function(response){
         return response;
-      })      
+      })
+      });
     }
   }
 }
@@ -375,6 +380,8 @@ function createBuyWithArguments(args, dispatch) {
       const senderAddress = web3.currentProvider.selectedAddress;
       const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
+
+      
       let resNeededApproval = args.reservesNeeded.map(function(item){
         let reserveContract = {};
         if (item.symbol === 'ETH') {
@@ -384,10 +391,14 @@ function createBuyWithArguments(args, dispatch) {
 
           // if amount to deposit is > balance then deposit remainder
           return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
-          if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
-          return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
+
+            
+            if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
+          
+            return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
           }).then(function(response){
+            
             return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
               return response;
             });
@@ -395,6 +406,7 @@ function createBuyWithArguments(args, dispatch) {
           });
 
           } else {
+            
                return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
               return res;
             });

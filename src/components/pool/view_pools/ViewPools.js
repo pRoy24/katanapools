@@ -1,12 +1,11 @@
 import React, {Component} from 'react';
 import ViewPoolToolbar from './ViewPoolToolbar';
-import { faArrowLeft, faArrowRight,  faChevronCircleDown, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import {ListGroupItem, ListGroup, Row, Col, Button, Alert} from 'react-bootstrap';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import {ListGroupItem, ListGroup, Row, Col, Alert} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
 import {withRouter} from 'react-router-dom'
 import {isNonEmptyObject, isEmptyArray, isNonEmptyArray, isEmptyObject} from '../../../utils/ObjectUtils';
-
 
 class ViewPool extends Component {
   constructor(props) {
@@ -29,7 +28,7 @@ class ViewPool extends Component {
   }
 
   componentWillMount() {
-    const {smartTokensWithReserves, history, location} = this.props;
+    const {smartTokensWithReserves, location} = this.props;
     let poolSymbol = "ETHBNT";
     if (location && location.pathname) {
       const poolSymbolTokens = location.pathname.split("/pool/view/");

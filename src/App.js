@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.scss';
 import LandingContainer from './components/landing/LandingContainer';
 import TopNavContainer from './components/nav/TopNavContainer';
@@ -7,9 +6,6 @@ import BottomNav from './components/nav/BottomNav';
 
 import {
   BrowserRouter as Router,
-  Switch,
-  Route,
-  Link
 } from "react-router-dom";
 
 

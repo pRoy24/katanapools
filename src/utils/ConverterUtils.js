@@ -1,18 +1,13 @@
-
-import axios from 'axios';
 import {toDecimals, fromDecimals} from './eth';
 var RegistryUtils = require('./RegistryUtils');
 const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
 const BancorConverter = require('../contracts/BancorConverter');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
-
-const SwapActions = require('../actions/swap');
 const Decimal = require('decimal.js');
 
   export function getConvertibleTokensInRegistry() {
     let web3 = window.web3;
-
     return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
       return converterRegistry.methods.getConvertibleTokens().call()
@@ -27,7 +22,6 @@ const Decimal = require('decimal.js');
 
   export function getSmartTokensInRegistry() {
     let web3 = window.web3;
-
     return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
       return converterRegistry.methods.getSmartTokens().call()
@@ -72,9 +66,7 @@ const Decimal = require('decimal.js');
   }
   export function getReturnValueData(toAddress, fromAddress) {
         let web3 = window.web3;
-
         let ConverterContract = new web3.eth.Contract(BancorConverter, toAddress);
-
         return ConverterContract.methods.getReturn(toAddress, fromAddress, 100).call().then(function(dataResponse){
           return dataResponse;
         })
@@ -82,11 +74,8 @@ const Decimal = require('decimal.js');
 
   export function getPathTypesFromNetworkPath(networkPath) {
     const web3 = window.web3;
-
-
     return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
-
     let pathWithTypes = networkPath.map(function(pathCell){
       return converterRegistry.methods.isConvertibleToken(pathCell).call().then(function(pathTypeResponse){
         if (pathTypeResponse === true) {
@@ -110,9 +99,7 @@ const Decimal = require('decimal.js');
         return pathWithtype;
       });
       return responseData;
-
     })
-
     });
   }
 
@@ -138,9 +125,7 @@ const Decimal = require('decimal.js');
   }
 
   export function getExpectedReturn(path, amount, initialBase, baseReserveAmount) {
-    const amountMin = toDecimals(amount, 18);
-    const baseReserveAmountMin = toDecimals(baseReserveAmount, 18);
-
+  //  const baseReserveAmountMin = toDecimals(baseReserveAmount, 18);
     let offset = 0.5;
     let baseAmountNum = new Decimal(initialBase);
     if (baseAmountNum.lessThanOrEqualTo(10)) {
@@ -154,28 +139,24 @@ const Decimal = require('decimal.js');
     } else {
       offset = 100;
     }
-
-    return getPathReturnValue(path, baseReserveAmountMin).then(function(pathDataResponse){
+    return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
       if (pathAmountDisplay >= amount) {
-        return pathDataResponse;
+        return baseReserveAmount;
       } else {
-        let newAmount = toDecimals(new Decimal(amount).add(offset).toString(), 18);
-
-        return getExpectedReturn(path, amount, initialBase, newAmount);
+        let newAmount = new Decimal(initialBase).add(offset).toString();
+        let newAmountDisplay = toDecimals(newAmount, 18);
+        return getExpectedReturn(path, amount, newAmount, newAmountDisplay);
       }
     });
   }
   
   function getPathReturnValue(path, baseReserveAmountMin) {
     const web3 = window.web3;
-
-
     return RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
       const bancorNetworkContract = new web3.eth.Contract(BancorNetwork, bnAddress);
       return bancorNetworkContract.methods.getReturnByPath(path, baseReserveAmountMin).call().then(function(pathDataResponse){
-     
         return pathDataResponse;
       });
     });
@@ -185,7 +166,6 @@ const Decimal = require('decimal.js');
   export function getFullBalanceOfToken(tokenAddress, isEth) {
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
-
     if (senderAddress === undefined || senderAddress === null) {
       return new Promise((resolve)=>(resolve('0')));
     }
@@ -197,9 +177,7 @@ const Decimal = require('decimal.js');
     } else {
       // get balance of Ether already deposited into the Ether contract
       let erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
-
       return erc20Contract.methods.balanceOf(senderAddress).call().then(function(addressBalanceResponse){
-
       return new Promise((resolve, reject) => {
         // Get coinbase Ether balance
         web3.eth.getBalance(senderAddress, function(err, etherBalance){
@@ -302,17 +280,13 @@ const Decimal = require('decimal.js');
     }
   });
   });
-  
-      
   }
   
   
   export function revokeTokenAllowance(tokenAddress, spenderAddress) {
     const web3 = window.web3;
-
     const owner = web3.currentProvider.selectedAddress;  
-      const contract = new web3.eth.Contract(ERC20Token, tokenAddress);
-      
+    const contract = new web3.eth.Contract(ERC20Token, tokenAddress);
     return contract.methods.approve(web3.utils.toChecksumAddress(spenderAddress), 0).send({
       from: owner
     }).then(function(approveResetResponse){
@@ -321,7 +295,7 @@ const Decimal = require('decimal.js');
   }
 
   export function getDecimalsOfToken(tokenAddress) {
-         const web3 = window.web3;
+      const web3 = window.web3;
       const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
       return erc20Contract.methods.decimals().call().then(function(decimals){
         return decimals;
@@ -329,11 +303,9 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
-    
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
-
     let affiliate_account_address = '0xaC98a5eFfaEB7A0578E93cF207ceD12866092947';
     const affiliate_fee = '3000';
 
@@ -406,9 +378,10 @@ const Decimal = require('decimal.js');
         })
       })
   }
-  export function getTokenConversionAmount(tokenPath, amount, baseReserveAmount) {
-    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseReserveAmount).then(function(expectedReturn){
-      const totalAmount = new Decimal(expectedReturn[0]).add(expectedReturn[1]);
+  export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
+   // console.log("geeting conversion amount");
+   let baseAmountDecimals = toDecimals(baseReserveAmount, 18);;
+    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals).then(function(totalAmount){
       return totalAmount;
     });
   }
@@ -504,7 +477,6 @@ function resolveTokenListNameAndSymbol(tokenList) {
 
 function getTokenListMeta(tokenList) {
   let tokenListPromises = tokenList.map(function(item){
-    const tokenSymbol = item.symbol;
     return new Promise((resolve, reject) => resolve( Object.assign({}, item, {imageURI: 'https://storage.googleapis.com/bancor-prod-file-store/images/communities/cache/f80f2a40-eaf5-11e7-9b5e-179c6e04aa7c_200w.png'})))
   });
   return Promise.all(tokenListPromises).then(function(dataResponse){

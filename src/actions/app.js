@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {getRequest} from './common';
 const API_SERVER = process.env.REACT_APP_API_SERVER;
 

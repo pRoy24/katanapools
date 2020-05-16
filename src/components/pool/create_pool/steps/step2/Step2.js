@@ -1,9 +1,8 @@
 import React, {Component} from 'react';
-import {Form, Button, Container, Row, Col, Alert, InputGroup, ButtonGroup,
-        ListGroup, ListGroupItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Form, Button, Container, Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {  faPlus, faSpinner, faTimes, faQuestionCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
 export default class Step2 extends Component {
 
