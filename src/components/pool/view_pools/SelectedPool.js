@@ -99,6 +99,7 @@ export default class SelectedPool extends Component {
   }
 
   calculateFundingAmountWithOneReserve = (inputFund) => {
+    if (!isNaN(parseFloat(inputFund))) {
     this.setState({calculatingFunding: true, fundingCalculateInit: false});
     const {pool: {currentSelectedPool}} = this.props;  
     const self = this;
@@ -107,8 +108,6 @@ export default class SelectedPool extends Component {
     const singleReserveSelection = singleTokenFundReserveSelection.symbol;
 
     const totalSupply = currentSelectedPool.totalSupply;
-    const addSupply = new Decimal(inputFund);
-    const pcIncreaseSupply = addSupply.dividedBy(fromDecimals(totalSupply, currentSelectedPool.decimals));
 
     let totalRatio = 0;
     currentSelectedPool.reserves.forEach(function(reserve){
@@ -172,6 +171,7 @@ export default class SelectedPool extends Component {
     });
     
     })
+    }
   }
   
   submitBuyPoolToken = () => {
