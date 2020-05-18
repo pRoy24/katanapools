@@ -7,7 +7,7 @@ import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
-import {getTokenConversionPath, getTokenFundConversionAmount, getTokenWithdrawConversionAmount} from '../../../utils/ConverterUtils';
+import {getTokenConversionPath, getTokenFundConversionAmount, getTokenWithdrawConversionAmount, getFundAmount} from '../../../utils/ConverterUtils';
 
 const BigNumber = require('bignumber.js');
 const Decimal = require('decimal.js');
@@ -56,21 +56,38 @@ export default class SelectedPool extends Component {
 
   calculateFundingAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
+    const self = this;
+    
     if (!isNaN(inputFund) && parseFloat(inputFund) > 0) {
-      const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-      const addSupply = new Decimal(inputFund);
-      const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
+
+      let totalRatio = 0;
+      currentSelectedPool.reserves.forEach(function(reserve){
+        totalRatio += parseInt(reserve.reserveRatio);
+      })
 
       const currentReserves = currentSelectedPool.reserves;
-      const reservesNeeded = currentReserves.map(function(item){
-        const currentReserveSupply = new Decimal(item.reserveBalance);
-        const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-        const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), item.decimals);
+      
+      const reservesNeededPromise = currentReserves.map(function(item){
 
-        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP);
-        return Object.assign({}, item, {neededMin: currentReserveNeededMin, neededDisplay: currentReserveNeededDisplay});
+        const totalSupply = currentSelectedPool.totalSupply;
+        const reserveBalance = item.reserveBalance;
+        
+        const amount = toDecimals(inputFund, currentSelectedPool.decimals);
+
+        return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(neededMin){
+          
+         const neededDisplay = new Decimal(fromDecimals(neededMin, item.decimals)).toFixed(4, Decimal.ROUND_UP);
+          const approvalNeededDisplay = parseFloat(neededDisplay) + 0.05 * neededDisplay;
+          const approvalNeededMin = toDecimals(approvalNeededDisplay, item.decimals);
+          let reserveObject = Object.assign({}, item, {neededMin: approvalNeededMin, neededDisplay: neededDisplay});
+          return reserveObject;
+        });
       });
-      this.setState({reservesNeeded: reservesNeeded});
+      
+      Promise.all(reservesNeededPromise).then(function(neededResponse){
+         self.setState({reservesNeeded: neededResponse});
+      })
+     
     }
   }
 
@@ -81,34 +98,38 @@ export default class SelectedPool extends Component {
     const {singleTokenFundReserveSelection} = this.state;
     const currentReserves = currentSelectedPool.reserves;
     const singleReserveSelection = singleTokenFundReserveSelection.symbol;
-    const totalSupply = new Decimal(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-    const addSupply = new Decimal(inputFund);
-    const pcIncreaseSupply = addSupply.dividedBy(totalSupply);
 
+    const totalSupply = currentSelectedPool.totalSupply;
+    const addSupply = new Decimal(inputFund);
+    const pcIncreaseSupply = addSupply.dividedBy(fromDecimals(totalSupply, currentSelectedPool.decimals));
+
+    let totalRatio = 0;
+    currentSelectedPool.reserves.forEach(function(reserve){
+      totalRatio += parseInt(reserve.reserveRatio);
+    })
+      
     let selectedBaseReserve = currentSelectedPool.reserves.find(function(item){
       if (item.symbol === singleReserveSelection) {
         return item;
       }
     });
-    
-    let currentBaseReserveSupply = new Decimal(selectedBaseReserve.reserveBalance);
-    const currentBaseReserveNeeded = pcIncreaseSupply.times(currentBaseReserveSupply);
-    const currentBaseReserveNeededDisplay = currentBaseReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
-    const currentBaseReserveNeededMin = toDecimals(currentBaseReserveNeeded.toFixed(1, Decimal.ROUND_UP), selectedBaseReserve.decimals);
 
-    let reservesNeeded = [];
+    const baseReserveBalance = selectedBaseReserve.reserveBalance;
     
+    const amount = toDecimals(inputFund, currentSelectedPool.decimals);
+
+   getFundAmount(totalSupply, baseReserveBalance, totalRatio, amount).then(function(baseNeededMin){
+      const baseNeededDisplay = new Decimal(fromDecimals(baseNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
+      const baseApprovalNeededDisplay = parseFloat(baseNeededDisplay) + 0.05 * baseNeededDisplay;
+      const baseApprovalNeededMin = toDecimals(baseApprovalNeededDisplay, selectedBaseReserve.decimals);
+
+      let reservesNeeded = [];
+      
     let reservesMap = currentReserves.map(function(reserveItem){
       if (reserveItem.symbol === singleReserveSelection) {
-        let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-        const currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-        const currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
-        const currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
-        const payload = {path: null, totalAmount: currentReserveNeededMin, conversionAmount: currentReserveNeededMin,
-        quantity: currentReserveNeededDisplay, token: reserveItem};
-
-        reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentBaseReserveNeededMin, neededDisplay: currentBaseReserveNeededDisplay}));
-            
+        const payload = {path: null, totalAmount: baseApprovalNeededMin, conversionAmount: baseNeededMin,
+        quantity: baseApprovalNeededDisplay, token: reserveItem};
+        reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: baseApprovalNeededMin, neededDisplay: baseApprovalNeededDisplay}));
         return new Promise((resolve, reject) => (resolve(payload)));
       } else {
         return getTokenConversionPath(selectedBaseReserve, reserveItem).then(function(conversionPath){
@@ -119,35 +140,22 @@ export default class SelectedPool extends Component {
             
            let currentReserveNeededMin = 0;
            let currentReserveNeededDisplay = 0;
-           let currentReserveNeeded = 0;
+
+           let reserveBalance = reserveItem.reserveBalance;
+           
            // If pool is being used for conversion then supply will be decreased after conversion
-           if (usePoolForConversion) {
-            let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-            let pc1 = pcIncreaseSupply.add(1);
-            currentReserveNeeded = (pcIncreaseSupply.times(currentReserveSupply)).dividedBy(pc1);
-
-           } else {
-             let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-             currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-           }
-
-         //  let currentReserveSupply = new Decimal(reserveItem.reserveBalance);
-        //   currentReserveNeeded = pcIncreaseSupply.times(currentReserveSupply);
-             
-           currentReserveNeededMin = toDecimals(currentReserveNeeded.toFixed(2, Decimal.ROUND_UP), reserveItem.decimals);
-           currentReserveNeededDisplay = currentReserveNeeded.toFixed(2, Decimal.ROUND_UP).toString();
-              
-           return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, currentBaseReserveNeededDisplay).then(function(response){
-
-            const responseAmount = fromDecimals(response.base, 18);
+          return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(reserveNeededMin){
             
-            const approvalNeededMin = toDecimals(currentReserveNeeded.toFixed(1, Decimal.ROUND_UP), reserveItem.decimals);  
+            currentReserveNeededDisplay = new Decimal(fromDecimals(reserveNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
+            const currentApprovalNeededDisplay = parseFloat(currentReserveNeededDisplay) + 0.05 * currentReserveNeededDisplay;
+            const currentApprovalNeededMin = toDecimals(currentApprovalNeededDisplay, reserveItem.decimals);
 
-            reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: response.reserve, neededDisplay: currentReserveNeededDisplay, approvalNeededMin: approvalNeededMin}));
-      
-            return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin,
-                    quantity: responseAmount, token: reserveItem}
-           });
+            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay).then(function(response){
+              const responseAmount = fromDecimals(response.base, selectedBaseReserve.decimals);
+              reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentApprovalNeededMin, neededDisplay: currentReserveNeededDisplay}));
+              return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin, quantity: responseAmount, token: reserveItem}
+            });
+          });
         });
       }
     });
@@ -155,6 +163,8 @@ export default class SelectedPool extends Component {
     Promise.all(reservesMap).then(function(response){
       self.setState({singleTokenFundConversionPaths: response, reservesNeeded: reservesNeeded, calculatingFunding: false});
     });
+    
+    })
   }
   
   submitBuyPoolToken = () => {
@@ -169,24 +179,8 @@ export default class SelectedPool extends Component {
     const web3 = window.web3;
 
     const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
-    if (isEmptyString(currentWalletAddress)) {
-      isError = true;
-      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
-    }
-    else if (reservesNeeded.length > 0) {
-      reservesNeeded.forEach(function(reserveItem){
-        const amountNeeded = new Decimal(reserveItem.neededDisplay);
-        const amountAvailable = new Decimal(reserveItem.userBalance);
-        if (amountNeeded.greaterThan(amountAvailable)) {
-          isError = true;
-          self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
-        }
-      })
-    }
-    if (!isError) {
-      this.props.resetErrorMessage();
+
       this.props.submitPoolBuy(args);
-    }
   }
 
   submitSellPoolToken = () => {
@@ -263,7 +257,7 @@ export default class SelectedPool extends Component {
     const fundingArgs = {poolTokenProvided: toDecimals(singleReserveAmount, currentSelectedPool.decimals),
     reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
 
-    const payload = {paths: singleTokenFundConversionPaths, funding: fundingArgs};
+    const payload = {swap: singleTokenFundConversionPaths, fund: fundingArgs};
 
 
     let totalReserveAmount  = new Decimal(0);
@@ -444,7 +438,7 @@ export default class SelectedPool extends Component {
     let reserveTokenList = currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0 ? currentSelectedPool.reserves.map(function(item, idx){
       return <div key={`token-${idx}`}>
         <div className="holdings-label">{item.name}</div>
-        <div className="holdings-data">&nbsp;{parseFloat(item.reserveBalance).toFixed(4)}</div>
+        <div className="holdings-data">&nbsp;{parseFloat(fromDecimals(item.reserveBalance, item.decimals)).toFixed(4)}</div>
       </div>
     }) : <span/>;
 
@@ -477,7 +471,7 @@ export default class SelectedPool extends Component {
     }
     let fundInfo = <span/>;
 
-    if (fundAmount && fundAmount > 0) {
+    if (fundAmount && fundAmount > 0 && reservesNeeded && reservesNeeded.length > 0) {
       fundInfo = (
         <div>
             <div>You will needs to stake</div>

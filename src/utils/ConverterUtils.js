@@ -4,6 +4,7 @@ const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.js
 const BancorConverter = require('../contracts/BancorConverter');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
+const BancorForumla = require('../contracts/BancorFormula.json');
 const Decimal = require('decimal.js');
 
   export function getConvertibleTokensInRegistry() {
@@ -125,9 +126,6 @@ const Decimal = require('decimal.js');
   }
 
   export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, counter = 1, offset = 0.5) {
-
-
-    // console.log("initial base "+baseReserveAmount);
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
       const pathAmountDisplay = fromDecimals(pathAmount, 18);
@@ -383,28 +381,40 @@ const Decimal = require('decimal.js');
   }
 
 
-  export function getTokenConversionPath(fromToken, toToken) {
-    return RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
-      return RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
-          return networkPath;
-        })
+export function getTokenConversionPath(fromToken, toToken) {
+  return RegistryUtils.getNetworkPathContractAddress().then(function(networkPathGenerator){
+    return RegistryUtils.getNetworkPath(fromToken.address, toToken.address, networkPathGenerator).then(function(networkPath){
+        return networkPath;
       })
-  }
-  export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
-   let baseAmountDecimals = toDecimals(baseReserveAmount, 18);
-    let baseAmountNum = new Decimal(baseReserveAmount);
-    const offset = getOffsetValue(baseAmountNum);
-    return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, 1, offset).then(function(totalAmount){
-      return totalAmount;
-    });
-  }
-  
-  export function getTokenWithdrawConversionAmount(tokenPath, amount) {
-    return getPathReturnValue(tokenPath, amount).then(function(response){
-      return new Decimal(response[0]);
     })
-  }
-  
+}
+export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
+ let baseAmountDecimals = toDecimals(baseReserveAmount, 18);
+  let baseAmountNum = new Decimal(baseReserveAmount);
+  const offset = getOffsetValue(baseAmountNum);
+  return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, 1, offset).then(function(totalAmount){
+    return totalAmount;
+  });
+}
+
+export function getTokenWithdrawConversionAmount(tokenPath, amount) {
+  return getPathReturnValue(tokenPath, amount).then(function(response){
+    return new Decimal(response[0]);
+  })
+}
+
+
+
+export function getFundAmount(supply, reserveBalance, ratio, amount) {
+  const web3 = window.web3;
+  return RegistryUtils.getContractAddress("BancorFormula").then(function(formulaAddress){
+    const FormulaContract = new web3.eth.Contract(BancorForumla, formulaAddress);
+   return FormulaContract.methods.calculateFundCost(supply, reserveBalance, ratio, amount).call().then(function(response){
+     return response;
+   })
+    // return response;
+  })  
+}
 
 function getConvertibleToSmartTokensMap() {
       let web3 = window.web3;
@@ -500,7 +510,6 @@ function getTokenListMeta(tokenList) {
 function getApprovalBasedOnAllowance(contract, spender, amount) {
   const web3 = window.web3;
   const owner = web3.currentProvider.selectedAddress;
-
 
   return contract.methods.decimals().call().then(function(amountDecimals){
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {

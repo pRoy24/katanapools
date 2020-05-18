@@ -57,19 +57,18 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
 
     submitPoolBuyWithSingleReserve: (payload) => {
-      const args = payload.paths;
-      const baseToken = args.find(function(item){
+      const swapArgs = payload.swap;
+      const baseToken = swapArgs.find(function(item){
         return item.path === null;
       })
 
-      let tokenTransferMapping = args.map(function(item, idx){
+      let tokenTransferMapping = swapArgs.map(function(item, idx){
         
         if (item.path !== null) {
           let isEth = false;
           if (baseToken.token.symbol === 'ETH') {
             isEth = true;
           }
-
           return submitSwapToken(item.path, item.totalAmount, baseToken.token.address, isEth).then(function(res){
             return res;
           })
@@ -79,7 +78,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       });
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
-        createBuyWithArguments(payload.funding, dispatch);
+        createBuyWithArguments(payload.fund, dispatch);
         // Call buy with args
       });
 
@@ -229,7 +228,6 @@ function getSpenderAddress(type, converterAddress) {
 
 function getApproval(contract, owner, spender, amount, dispatch) {
   const web3 = window.web3;
-
   return contract.methods.decimals().call().then(function(amountDecimals){
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
     if (!allowance || typeof allowance === undefined) {
@@ -238,11 +236,9 @@ function getApproval(contract, owner, spender, amount, dispatch) {
     let minAmount = amount;
     let minAllowance = allowance;
 
-    let diff = new BigNumber(minAllowance).minus(new BigNumber(minAmount));
-
     const amountAllowed = new Decimal(minAllowance);
     const amountNeeded = new Decimal(minAmount);
-    
+
     if (amountNeeded.greaterThan(amountAllowed) &&  amountAllowed.isPositive() && !amountAllowed.isZero()) {
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Previous user allowance found. reseting allowance'}));
     return contract.methods.approve(web3.utils.toChecksumAddress(spender), 0).send({
@@ -296,8 +292,12 @@ function getUserPoolHoldings(poolRow) {
     if (item.symbol === 'ETH') {
       isEth = true;
     }
+    const BancorConverterContract = new web3.eth.Contract(BancorConverter, poolRow.converter);
     
     return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
+      
+    return  getReserveBalance(BancorConverterContract, reserveTokenAddress).then(function(reserveTokenBalance){
+                            
       return getAllowanceOfToken(reserveTokenAddress, converterAddress).then(function(allowanceResponse){
       
       return getAllowanceOfToken(reserveTokenAddress, bnAddress).then(function(swapAllowanceResponse){
@@ -309,12 +309,14 @@ function getUserPoolHoldings(poolRow) {
       const availableUserSwapAllowance = fromDecimals(swapAllowanceResponse, item.decimals);
       
       const tokenBalancePayload = {userBalance: availableUserBalance, userAllowance: availableUserAllowance,
-        swapAllowance: availableUserSwapAllowance
+        swapAllowance: availableUserSwapAllowance, reserveBalance: reserveTokenBalance,
       };
       
       return Object.assign({}, item, tokenBalancePayload);
       });
       });
+      
+       });
     })
   });
    return Promise.all(poolReserveHoldingsRequest).then(function(response){
@@ -334,6 +336,14 @@ function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {
   }
   return SmartTokenContract.methods.balanceOf(senderAddress).call().then(function(balanceData){
     return balanceData;
+  });
+}
+
+function getReserveBalance(BancorConverterContract, reserveTokenAddress) {
+  return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
+    return reserveTokenBalance;
+  }).catch(function(err){
+    return 0;
   });
 }
 
@@ -431,6 +441,7 @@ function createBuyWithArguments(args, dispatch) {
           })
       })
 }
+
 
 
 
