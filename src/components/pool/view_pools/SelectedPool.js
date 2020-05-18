@@ -7,7 +7,7 @@ import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
-import {getTokenConversionPath, getTokenFundConversionAmount, getTokenWithdrawConversionAmount, getFundAmount} from '../../../utils/ConverterUtils';
+import {getTokenConversionPath, getTokenFundConversionAmount, getTokenWithdrawConversionAmount, getFundAmount, getLiquidateAmount} from '../../../utils/ConverterUtils';
 
 const BigNumber = require('bignumber.js');
 const Decimal = require('decimal.js');
@@ -38,19 +38,26 @@ export default class SelectedPool extends Component {
   calculateLiquidateAmount = (inputFund) => {
     const {pool: {currentSelectedPool}} = this.props;
     if (!isNaN(inputFund) && parseFloat(inputFund) > 0) {
-      const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-      const removeSupply = new BigNumber(inputFund);
-      const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
+      const totalSupply = currentSelectedPool.totalSupply;
       const currentReserves = currentSelectedPool.reserves;
+      const inputAmount = toDecimals(inputFund, currentSelectedPool.decimals);
 
+      let totalRatio = 0;
+      currentSelectedPool.reserves.forEach(function(reserve){
+        totalRatio += parseInt(reserve.reserveRatio);
+      })
+      
       const reservesAdded = currentReserves.map(function(item){
-        const currentReserveSupply = new BigNumber(item.reserveBalance);
-        const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
-        const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(2), item.decimals);
-        const currentReserveAddedDisplay = currentReserveAdded.toPrecision(2, 0);
-        return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
+        const currentReserveSupply = item.reserveBalance;
+        return getLiquidateAmount(totalSupply, currentReserveSupply, totalRatio, inputAmount).then(function(response){
+          const liquidateBalance = (new Decimal(fromDecimals(response, item.decimals))).toFixed(4);
+            return Object.assign({}, item, {addedMin: response, addedDisplay: liquidateBalance});
+        });
       });
-      this.setState({reservesAdded: reservesAdded});
+      const self = this;
+      Promise.all(reservesAdded).then(function(reserveResponse){
+        self.setState({reservesAdded: reserveResponse});
+      })
     }
   }
 
@@ -71,7 +78,7 @@ export default class SelectedPool extends Component {
 
         const totalSupply = currentSelectedPool.totalSupply;
         const reserveBalance = item.reserveBalance;
-        
+        console.log(reserveBalance);
         const amount = toDecimals(inputFund, currentSelectedPool.decimals);
 
         return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(neededMin){
@@ -175,12 +182,30 @@ export default class SelectedPool extends Component {
     const args = {poolTokenProvided: toDecimals(fundAmount, currentSelectedPool.decimals),
     reservesNeeded: reservesNeeded, converterAddress: currentSelectedPool.converter};
 
+    console.log(reservesNeeded);
+    
     let isError = false;
     const web3 = window.web3;
 
     const currentWalletAddress = web3.currentProvider ? web3.currentProvider.selectedAddress : '';
-
+    if (isEmptyString(currentWalletAddress)) {
+      isError = true;
+      self.props.setErrorMessage(`You need to connect a web3 provider to make this transction.`);
+    }
+    else if (reservesNeeded.length > 0) {
+      reservesNeeded.forEach(function(reserveItem){
+        const amountNeeded = new Decimal(reserveItem.neededDisplay);
+        const amountAvailable = new Decimal(reserveItem.userBalance);
+        if (amountNeeded.greaterThan(amountAvailable)) {
+          isError = true;
+          self.props.setErrorMessage(`User balance for ${reserveItem.symbol} is less than needed amount of ${reserveItem.neededDisplay}`);
+        }
+      })
+    }
+    if (!isError) {
+      this.props.resetErrorMessage();
       this.props.submitPoolBuy(args);
+    }
   }
 
   submitSellPoolToken = () => {
@@ -216,39 +241,54 @@ export default class SelectedPool extends Component {
   calculateLiquidateAmountWithOneReserve = (liquidateFund) => {
     const {pool: {currentSelectedPool}} = this.props;
     this.setState({calculatingWithdraw: true, withdrawCalculateInit: false});
-    const totalSupply = new BigNumber(fromDecimals(currentSelectedPool.totalSupply, currentSelectedPool.decimals));
-    const removeSupply = new BigNumber(liquidateFund);
-    const pcDecreaseSupply = removeSupply.dividedBy(totalSupply);
+
     const currentReserves = currentSelectedPool.reserves;
 
-    const reservesAdded = currentReserves.map(function(item){
-      const currentReserveSupply = new BigNumber(item.reserveBalance);
-      const currentReserveAdded = pcDecreaseSupply.multipliedBy(currentReserveSupply);
-      const currentReserveAddedMin = toDecimals(currentReserveAdded.toFixed(2), item.decimals);
-      const currentReserveAddedDisplay = currentReserveAdded.toPrecision(2, 0);
-      return Object.assign({}, item, {addedMin: currentReserveAddedMin, addedDisplay: currentReserveAddedDisplay});
-    });
-    const {singleTokenWithdrawReserveSelection} = this.state;
-    let reservesMap = reservesAdded.map(function(item, idx){
-      if (item.symbol === singleTokenWithdrawReserveSelection.symbol) {
-        let payload = {path: null, totalAmount: item.addedMin, conversionAmount: item.addedMin, quantity: item.addedDisplay, token: item};
-        return new Promise((resolve, reject) => resolve(payload));
-      } else {
-         return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
-            return getTokenWithdrawConversionAmount(conversionPath, item.addedMin).then(function(response){
-              let quantity = fromDecimals(response.toString(), item.decimals);
-            return {path: conversionPath, totalAmount: response, conversionAmount: item.addedMin, quantity: quantity, token: item}
-            });
-         });
-      }
-    });
+    const totalSupply = currentSelectedPool.totalSupply;
     const self = this;
-    Promise.all(reservesMap).then(function(mapData){
       
-      self.setState({singleTokenWithdrawConversionPaths: mapData, calculatingWithdraw: false});
-    })
+    let totalRatio = 0;
+    currentSelectedPool.reserves.forEach(function(reserve){
+      totalRatio += parseInt(reserve.reserveRatio);
+    });
+    const inputAmount = toDecimals(liquidateFund, currentSelectedPool.decimals);
 
-    this.setState({reservesAdded: reservesAdded});
+    const reservesAddedPromise = currentReserves.map(function(item){
+      const currentReserveSupply = item.reserveBalance;
+      return getLiquidateAmount(totalSupply, currentReserveSupply, totalRatio, inputAmount).then(function(response){
+        const liquidateBalance = (new Decimal(fromDecimals(response, item.decimals))).toFixed(4);
+          return Object.assign({}, item, {addedMin: response, addedDisplay: liquidateBalance});
+      });
+    });
+
+    const {singleTokenWithdrawReserveSelection} = this.state;
+    
+    Promise.all(reservesAddedPromise).then(function(reservesAdded){
+
+      let reservesMap = reservesAdded.map(function(item, idx){
+        if (item.symbol === singleTokenWithdrawReserveSelection.symbol) {
+          let payload = {path: null, totalAmount: item.addedMin, conversionAmount: item.addedMin, quantity: item.addedDisplay, token: item};
+          return new Promise((resolve, reject) => resolve(payload));
+        } else {
+          
+           return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
+              return getTokenWithdrawConversionAmount(conversionPath, item.addedMin).then(function(response){
+                let quantity = fromDecimals(response.toString(), item.decimals);
+              return {path: conversionPath, totalAmount: response, conversionAmount: item.addedMin, quantity: quantity, token: item}
+              });
+           });
+        }
+      });
+  
+
+      Promise.all(reservesMap).then(function(mapData){
+        self.setState({singleTokenWithdrawConversionPaths: mapData, calculatingWithdraw: false});
+      })
+  
+      self.setState({reservesAdded: reservesAdded});
+    
+    });
+
   }
   
   submitBuyPoolTokenWithSingleReserve = () => {
@@ -287,6 +327,9 @@ export default class SelectedPool extends Component {
       'poolAddress': currentSelectedPool.address
     };
     const payload = {paths: singleTokenWithdrawConversionPaths, funding: args}
+    
+
+    
     this.props.submitPoolSellWithSingleReserve(payload);
 
   }
@@ -459,7 +502,7 @@ export default class SelectedPool extends Component {
       poolHoldings = parseFloat(fromDecimals(currentSelectedPool.senderBalance, currentSelectedPool.decimals)).toFixed(4) + " " + currentSelectedPool.symbol;
     }
     let liquidateInfo = <span/>;
-    if (liquidateAmount && liquidateAmount > 0) {
+    if (liquidateAmount && liquidateAmount > 0 && reservesAdded && reservesAdded.length > 0) {
       liquidateInfo = (
         <div>
           <div>You will receive</div>

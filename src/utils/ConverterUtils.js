@@ -412,8 +412,17 @@ export function getFundAmount(supply, reserveBalance, ratio, amount) {
    return FormulaContract.methods.calculateFundCost(supply, reserveBalance, ratio, amount).call().then(function(response){
      return response;
    })
-    // return response;
   })  
+}
+
+export function getLiquidateAmount(supply, reserveBalance, ratio, amount) {
+  const web3 = window.web3;
+  return RegistryUtils.getContractAddress("BancorFormula").then(function(formulaAddress){
+    const FormulaContract = new web3.eth.Contract(BancorForumla, formulaAddress);
+    return FormulaContract.methods.calculateLiquidateReturn(supply, reserveBalance, ratio, amount).call().then(function(response){
+      return response;
+    })
+  });  
 }
 
 function getConvertibleToSmartTokensMap() {
