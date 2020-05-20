@@ -108,6 +108,12 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           return new Promise((resolve, reject) => (resolve()));
         }
       });
+      
+      Promise.all(tokenTransferMapping).then(function(reserveTokenResolve){
+        console.log(reserveTokenResolve)
+      })
+      }).catch(function(err){
+        dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
     },
     
@@ -144,6 +150,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
         } else {
           dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
         }
+      }).catch(function(err){
+                dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
 
     },
@@ -359,7 +367,6 @@ function createSellWithArguments(args, dispatch) {
       }, function(err, txHash){
         dispatch(setPoolTransactionStatus({type: 'pending', message: 'Liquidating pool tokens into reserve tokens.'}));
       }).then(function(sendResponse){
-
         let withdrawEth = args.reservesAdded.map(function(reserve){
           if (reserve.symbol === 'ETH') {
             // withdraw from ether token to wallet
@@ -382,7 +389,9 @@ function createSellWithArguments(args, dispatch) {
           dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
           return;
         }
-      })
+      }).catch(function(err){
+                dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
+      });
 }
 
 function createBuyWithArguments(args, dispatch) {
@@ -415,8 +424,7 @@ function createBuyWithArguments(args, dispatch) {
           });
 
           } else {
-            
-               return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
+            return getApproval(reserveContract, senderAddress, args.converterAddress, reserveAmount, dispatch).then(function(res){
               return res;
             });
           }
@@ -432,13 +440,15 @@ function createBuyWithArguments(args, dispatch) {
 
       Promise.all(resNeededApproval).then(function(approvalResponse){
         
-          ConverterContract.methods.fund(args.poolTokenProvided).send({
+        return  ConverterContract.methods.fund(args.poolTokenProvided).send({
             from: senderAddress
           }, function(err, txHash){
             dispatch(setPoolTransactionStatus({type: 'pending', message: 'Funding pool with reserve tokens'}));
           }).then(function(fundRes){
             dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Funded pool with reserve tokens'}));
           })
+      }).catch(function(err){
+                dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
 }
 

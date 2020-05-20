@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import ViewPoolToolbar from './ViewPoolToolbar';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import {ListGroupItem, ListGroup, Row, Col, Alert} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
@@ -180,6 +180,11 @@ class ViewPoolWidget extends Component {
       transactionStatusMessage = <Alert  variant={"info"}>
               <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/> {poolTransactionStatus.message}
             </Alert>
+    }
+    if (poolTransactionStatus.type === 'error') {
+      transactionStatusMessage = <Alert  variant={"danger"}>
+              <FontAwesomeIcon icon={faTimes}/> {poolTransactionStatus.message}
+            </Alert>      
     }
     return (
       <div>
