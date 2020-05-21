@@ -142,8 +142,6 @@ export default class SelectedPool extends Component {
     
     const amount = toDecimals(inputFund, currentSelectedPool.decimals);
 
-    const pcIncreaseSupply = new Decimal(amount).div(totalSupply);
-    
    getFundAmount(totalSupply, baseReserveBalance, totalRatio, amount).then(function(baseNeededMin){
       const baseNeededDisplay = new Decimal(fromDecimals(baseNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
       const baseApprovalNeededDisplay = parseFloat(baseNeededDisplay) + 0.05 * baseNeededDisplay;
@@ -168,7 +166,7 @@ export default class SelectedPool extends Component {
            let currentReserveNeededDisplay = 0;
 
            let reserveBalance = reserveItem.reserveBalance;
-           
+
            // If pool is being used for conversion then supply will be decreased after conversion
           return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(reserveNeededMin){
             
@@ -178,7 +176,8 @@ export default class SelectedPool extends Component {
             return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay).then(function(response){
               const responseAmount = fromDecimals(response.base, selectedBaseReserve.decimals);
               reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentApprovalNeededMin, neededDisplay: currentReserveNeededDisplay}));
-              return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin, quantity: responseAmount, token: reserveItem}
+              return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin, quantity: responseAmount, 
+              token: reserveItem, usePoolForConversion: usePoolForConversion}
             });
           });
         });
@@ -187,14 +186,17 @@ export default class SelectedPool extends Component {
     
     Promise.all(reservesMap).then(function(response){
     
-      let newBaseReserveBalance = new Decimal(baseReserveBalance);
+      let newBaseReserveBalance = parseFloat(fromDecimals(baseReserveBalance, selectedBaseReserve.decimals));
+      
       response.forEach(function(item){
-        if (item.path !== null) {
-          newBaseReserveBalance = newBaseReserveBalance.add(item.totalAmount);
+        if (item.path !== null && item.usePoolForConversion === true) {
+          newBaseReserveBalance += item.totalAmount;
         }
       });
 
-   getFundAmount(totalSupply, newBaseReserveBalance.toString(), totalRatio, amount).then(function(newBaseNeededMin){
+    const updatedReserveBalance = toDecimals(newBaseReserveBalance, selectedBaseReserve.decimals);
+
+   getFundAmount(totalSupply, updatedReserveBalance, totalRatio, amount).then(function(newBaseNeededMin){
      let baseItemResponse = response.find((a)=>(a.path === null));
      baseItemResponse.totalAmount = newBaseNeededMin;
      baseItemResponse.quantity = fromDecimals(newBaseNeededMin, baseItemResponse.token.decimals);
