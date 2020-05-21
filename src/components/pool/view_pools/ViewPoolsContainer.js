@@ -65,6 +65,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       let tokenTransferMapping = swapArgs.map(function(item, idx){
         
         if (item.path !== null) {
+          dispatch(setPoolTransactionStatus({type: 'pending', message: 'Swapping chosen reserve into other reserves.'}));
           let isEth = false;
           if (baseToken.token.symbol === 'ETH') {
             isEth = true;
@@ -79,7 +80,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
       Promise.all(tokenTransferMapping).then(function(transferResponse){
         createBuyWithArguments(payload.fund, dispatch);
-        // Call buy with args
       });
 
     },
@@ -94,9 +94,10 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       const baseToken = args.find(function(item){
         return item.path === null;
       })
-
+      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Swapping pool reserves for chosen reserves'}));
       let tokenTransferMapping = args.map(function(item, idx){
         if (item.path !== null) {
+          
           let isEth = false;
           if (item.token.symbol === 'ETH') {
             isEth = true;
@@ -110,7 +111,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       });
       
       Promise.all(tokenTransferMapping).then(function(reserveTokenResolve){
-        console.log(reserveTokenResolve)
+        dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully liquidated pool tokens into chosen reserve.'}));
+       // console.log(reserveTokenResolve)
       })
       }).catch(function(err){
         dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
@@ -287,6 +289,7 @@ function getUserPoolHoldings(poolRow) {
   if (isEmptyString(senderAddress)) {
     return new Promise((resolve)=>(resolve(poolRow)));
   }
+  console.log(poolRow);
   const poolSmartTokenAddress = poolRow.address;
   const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
@@ -330,14 +333,24 @@ function getUserPoolHoldings(poolRow) {
   });
    return Promise.all(poolReserveHoldingsRequest).then(function(response){
     return getSenderBalanceOfToken(SmartTokenContract, senderAddress).then(function(balanceData){
+      return getPoolTotalSypply(SmartTokenContract).then(function(totalSupply){
+        
+
         poolRow.reserves = response;
         poolRow.senderBalance = balanceData;
+        poolRow.totalSupply = totalSupply;
         return poolRow;
     });
   });
-  
+   });
   });
   }
+}
+
+function getPoolTotalSypply(SmartTokenContract){
+      return SmartTokenContract.methods.totalSupply().call().then(function(supplyAmount){
+        return supplyAmount;
+      })    
 }
 
 function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {

@@ -124,7 +124,6 @@ export default class SwapTokenWidget extends Component {
 
     getDecimalsOfToken(selectedTransferToken.address).then(function(tokenDecimals){
 
-    console.log(selectedTransferToken);
     const fromAmount = toDecimals(transferAmount, tokenDecimals);
 
     getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){

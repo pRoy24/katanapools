@@ -31,7 +31,6 @@ export default class CreateNewPool extends Component {
 
   resumePoolCreation = () => {
     const {pool: {poolStatus}} = this.props;
-    console.log(poolStatus);
   }
 
   getAddressList = () => {
