@@ -115,6 +115,8 @@ class ViewPoolWidget extends Component {
           }
     }
 
+    const web3 = window.web3;
+    if (web3 && web3.currentProvider) {
     if (isEmptyObject(this.props.pool.currentSelectedPool) && isNonEmptyObject(nextProps.pool.currentSelectedPool)) {
       this.props.fetchUserPoolDetails(currentSelectedPool);
     }
@@ -124,6 +126,7 @@ class ViewPoolWidget extends Component {
     }
     if (poolRevocation === 'success' && this.props.pool.poolRevocation === 'init') {
        this.props.fetchUserPoolDetails(currentSelectedPool);        
+    }
     }
   }
 

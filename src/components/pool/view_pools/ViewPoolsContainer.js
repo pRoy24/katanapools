@@ -282,6 +282,7 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 function getUserPoolHoldings(poolRow) {
   const web3 = window.web3;
+  if (web3 && web3.currentProvider) {
   const senderAddress = web3.currentProvider.selectedAddress;
   if (isEmptyString(senderAddress)) {
     return new Promise((resolve)=>(resolve(poolRow)));
@@ -336,6 +337,7 @@ function getUserPoolHoldings(poolRow) {
   });
   
   });
+  }
 }
 
 function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {

@@ -54,7 +54,6 @@ export default function tokensReducer (state = initialState, action) {
     case GET_CONVERTIBLE_TOKENS:
       return {...state, convertibleTokens: []};
     case GET_CONVERTIBLE_TOKENS_SUCCESS:
-      console.log()
       return {...state, convertibleTokens: action.payload.data};
     case GET_SMART_TOKENS:
       return {...state, smartTokens: []};

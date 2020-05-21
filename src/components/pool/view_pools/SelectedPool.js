@@ -57,7 +57,7 @@ export default class SelectedPool extends Component {
         totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
       })
       if (totalRatio === 0) {
-        totalRatio = 100;
+        totalRatio = 1000000 ;
       }
     
       const reservesAdded = currentReserves.map(function(item){
@@ -85,7 +85,7 @@ export default class SelectedPool extends Component {
         totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
       })
       if (totalRatio === 0) {
-        totalRatio = 100;
+        totalRatio = 1000000 ;
       }
     
       const currentReserves = currentSelectedPool.reserves;
@@ -129,7 +129,7 @@ export default class SelectedPool extends Component {
       totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
     })
     if (totalRatio === 0) {
-      totalRatio = 100;
+        totalRatio = 1000000 ;
     }
     
     let selectedBaseReserve = currentSelectedPool.reserves.find(function(item){
@@ -138,10 +138,12 @@ export default class SelectedPool extends Component {
       }
     });
 
-    const baseReserveBalance = selectedBaseReserve.reserveBalance;
+    let baseReserveBalance = selectedBaseReserve.reserveBalance;
     
     const amount = toDecimals(inputFund, currentSelectedPool.decimals);
 
+    const pcIncreaseSupply = new Decimal(amount).div(totalSupply);
+    
    getFundAmount(totalSupply, baseReserveBalance, totalRatio, amount).then(function(baseNeededMin){
       const baseNeededDisplay = new Decimal(fromDecimals(baseNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
       const baseApprovalNeededDisplay = parseFloat(baseNeededDisplay) + 0.05 * baseNeededDisplay;
@@ -173,7 +175,6 @@ export default class SelectedPool extends Component {
             currentReserveNeededDisplay = new Decimal(fromDecimals(reserveNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
             const currentApprovalNeededDisplay = parseFloat(currentReserveNeededDisplay) + 0.05 * currentReserveNeededDisplay;
             const currentApprovalNeededMin = toDecimals(currentApprovalNeededDisplay, reserveItem.decimals);
-
             return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay).then(function(response){
               const responseAmount = fromDecimals(response.base, selectedBaseReserve.decimals);
               reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentApprovalNeededMin, neededDisplay: currentReserveNeededDisplay}));
@@ -185,7 +186,22 @@ export default class SelectedPool extends Component {
     });
     
     Promise.all(reservesMap).then(function(response){
-      self.setState({singleTokenFundConversionPaths: response, reservesNeeded: reservesNeeded, calculatingFunding: false});
+    
+      let newBaseReserveBalance = new Decimal(baseReserveBalance);
+      response.forEach(function(item){
+        if (item.path !== null) {
+          newBaseReserveBalance = newBaseReserveBalance.add(item.totalAmount);
+        }
+      });
+
+   getFundAmount(totalSupply, newBaseReserveBalance.toString(), totalRatio, amount).then(function(newBaseNeededMin){
+     let baseItemResponse = response.find((a)=>(a.path === null));
+     baseItemResponse.totalAmount = newBaseNeededMin;
+     baseItemResponse.quantity = fromDecimals(newBaseNeededMin, baseItemResponse.token.decimals);
+     let neeedBase = reservesNeeded.find((a)=>(a.symbol === selectedBaseReserve.symbol));
+     neeedBase.neededMin = newBaseNeededMin;
+     self.setState({singleTokenFundConversionPaths: response, reservesNeeded: reservesNeeded, calculatingFunding: false});
+   });
     });
     
     })
@@ -268,7 +284,7 @@ export default class SelectedPool extends Component {
       totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
     });
     if (totalRatio === 0) {
-      totalRatio = 100;
+        totalRatio = 1000000 ;
     }
     const inputAmount = toDecimals(liquidateFund, currentSelectedPool.decimals);
 
