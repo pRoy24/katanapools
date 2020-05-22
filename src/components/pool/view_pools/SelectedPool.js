@@ -156,6 +156,8 @@ export default class SelectedPool extends Component {
         reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: baseApprovalNeededMin, neededDisplay: baseApprovalNeededDisplay}));
         return new Promise((resolve, reject) => (resolve(payload)));
       } else {
+        console.log(reserveItem);
+        
         return getTokenConversionPath(selectedBaseReserve, reserveItem).then(function(conversionPath){
            let usePoolForConversion = false;
            if (conversionPath.indexOf(currentSelectedPool.address) !== -1) {
@@ -168,12 +170,15 @@ export default class SelectedPool extends Component {
            let reserveBalance = reserveItem.reserveBalance;
 
            // If pool is being used for conversion then supply will be decreased after conversion
+
           return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(reserveNeededMin){
-            
+
             currentReserveNeededDisplay = new Decimal(fromDecimals(reserveNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
+            
             const currentApprovalNeededDisplay = parseFloat(currentReserveNeededDisplay) + 0.05 * currentReserveNeededDisplay;
             const currentApprovalNeededMin = toDecimals(currentApprovalNeededDisplay, reserveItem.decimals);
-            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay).then(function(response){
+
+            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay, reserveItem.decimals).then(function(response){
               const responseAmount = fromDecimals(response.base, selectedBaseReserve.decimals);
               reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentApprovalNeededMin, neededDisplay: currentReserveNeededDisplay}));
               return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin, quantity: responseAmount, 
@@ -197,6 +202,7 @@ export default class SelectedPool extends Component {
     const updatedReserveBalance = toDecimals(newBaseReserveBalance, selectedBaseReserve.decimals);
 
    getFundAmount(totalSupply, updatedReserveBalance, totalRatio, amount).then(function(newBaseNeededMin){
+     
      let baseItemResponse = response.find((a)=>(a.path === null));
      baseItemResponse.totalAmount = newBaseNeededMin;
      baseItemResponse.quantity = fromDecimals(newBaseNeededMin, baseItemResponse.token.decimals);
@@ -293,6 +299,7 @@ export default class SelectedPool extends Component {
     const reservesAddedPromise = currentReserves.map(function(item){
       const currentReserveSupply = item.reserveBalance;
       return getLiquidateAmount(totalSupply, currentReserveSupply, totalRatio, inputAmount).then(function(response){
+
         const liquidateBalance = (new Decimal(fromDecimals(response, item.decimals))).toFixed(4);
           return Object.assign({}, item, {addedMin: response, addedDisplay: liquidateBalance});
       });
@@ -304,13 +311,20 @@ export default class SelectedPool extends Component {
 
       let reservesMap = reservesAdded.map(function(item, idx){
         if (item.symbol === singleTokenWithdrawReserveSelection.symbol) {
+          
+          console.log("BB" + item.addedDisplay);
+          
           let payload = {path: null, totalAmount: item.addedMin, conversionAmount: item.addedMin, quantity: item.addedDisplay, token: item};
           return new Promise((resolve, reject) => resolve(payload));
         } else {
           
            return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
               return getTokenWithdrawConversionAmount(conversionPath, item.addedMin).then(function(response){
-                let quantity = fromDecimals(response.toString(), item.decimals);
+                
+                console.log("WITHDRAW "+response.toString());
+                
+                let quantity = fromDecimals(response.toString(), currentSelectedPool.decimals);
+                console.log("BB "+quantity);
               return {path: conversionPath, totalAmount: response, conversionAmount: item.addedMin, quantity: quantity, token: item}
               });
            });

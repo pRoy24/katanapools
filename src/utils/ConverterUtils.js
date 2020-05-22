@@ -125,13 +125,14 @@ const Decimal = require('decimal.js');
 
   }
 
-  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, counter = 1, offset = 0.5) {
+  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, decimals = 18, counter = 1, offset = 0.5) {
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
-      const pathAmountDisplay = fromDecimals(pathAmount, 18);
+      const pathAmountDisplay = fromDecimals(pathAmount, decimals);
       const pathAmountDecimals = new Decimal(pathAmountDisplay);
       const amountDecimals = new Decimal(amount);
 
+      
       if (pathAmountDecimals.greaterThanOrEqualTo(amountDecimals)) {
         return {'base': baseReserveAmount, 'reserve': pathAmount};;
       } else {
@@ -140,7 +141,7 @@ const Decimal = require('decimal.js');
           offset = offset * 2;
         } 
         let newAmount = new Decimal(initialBase).add(offset).toString();
-        let newAmountDisplay = toDecimals(newAmount, 18);
+        let newAmountDisplay = toDecimals(newAmount, decimals);
 
         return getExpectedReturn(path, amount, newAmount, newAmountDisplay, counter + 1, offset);
       }
@@ -388,18 +389,18 @@ export function getTokenConversionPath(fromToken, toToken) {
       })
     })
 }
-export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount) {
- let baseAmountDecimals = toDecimals(baseReserveAmount, 18);
+export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount, decimals = 18) {
+ let baseAmountDecimals = toDecimals(baseReserveAmount, decimals);
   let baseAmountNum = new Decimal(baseReserveAmount);
   const offset = getOffsetValue(baseAmountNum);
-  return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, 1, offset).then(function(totalAmount){
+  return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, decimals, 1, offset).then(function(totalAmount){
     return totalAmount;
   });
 }
 
 export function getTokenWithdrawConversionAmount(tokenPath, amount) {
   return getPathReturnValue(tokenPath, amount).then(function(response){
-    return new Decimal(response[0]);
+    return new Decimal(response[0]).add(response[1]);
   })
 }
 

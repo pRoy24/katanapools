@@ -289,7 +289,6 @@ function getUserPoolHoldings(poolRow) {
   if (isEmptyString(senderAddress)) {
     return new Promise((resolve)=>(resolve(poolRow)));
   }
-  console.log(poolRow);
   const poolSmartTokenAddress = poolRow.address;
   const SmartTokenContract = new web3.eth.Contract(SmartToken, poolSmartTokenAddress);
 
