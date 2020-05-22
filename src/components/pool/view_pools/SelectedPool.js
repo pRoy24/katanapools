@@ -156,8 +156,6 @@ export default class SelectedPool extends Component {
         reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: baseApprovalNeededMin, neededDisplay: baseApprovalNeededDisplay}));
         return new Promise((resolve, reject) => (resolve(payload)));
       } else {
-        console.log(reserveItem);
-        
         return getTokenConversionPath(selectedBaseReserve, reserveItem).then(function(conversionPath){
            let usePoolForConversion = false;
            if (conversionPath.indexOf(currentSelectedPool.address) !== -1) {
@@ -311,20 +309,13 @@ export default class SelectedPool extends Component {
 
       let reservesMap = reservesAdded.map(function(item, idx){
         if (item.symbol === singleTokenWithdrawReserveSelection.symbol) {
-          
-          console.log("BB" + item.addedDisplay);
-          
           let payload = {path: null, totalAmount: item.addedMin, conversionAmount: item.addedMin, quantity: item.addedDisplay, token: item};
           return new Promise((resolve, reject) => resolve(payload));
         } else {
           
            return getTokenConversionPath(item, singleTokenWithdrawReserveSelection).then(function(conversionPath){
               return getTokenWithdrawConversionAmount(conversionPath, item.addedMin).then(function(response){
-                
-                console.log("WITHDRAW "+response.toString());
-                
                 let quantity = fromDecimals(response.toString(), currentSelectedPool.decimals);
-                console.log("BB "+quantity);
               return {path: conversionPath, totalAmount: response, conversionAmount: item.addedMin, quantity: quantity, token: item}
               });
            });
