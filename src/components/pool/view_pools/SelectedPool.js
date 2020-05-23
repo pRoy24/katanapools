@@ -156,6 +156,7 @@ export default class SelectedPool extends Component {
         reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: baseApprovalNeededMin, neededDisplay: baseApprovalNeededDisplay}));
         return new Promise((resolve, reject) => (resolve(payload)));
       } else {
+        
         return getTokenConversionPath(selectedBaseReserve, reserveItem).then(function(conversionPath){
            let usePoolForConversion = false;
            if (conversionPath.indexOf(currentSelectedPool.address) !== -1) {
@@ -171,14 +172,21 @@ export default class SelectedPool extends Component {
 
           return getFundAmount(totalSupply, reserveBalance, totalRatio, amount).then(function(reserveNeededMin){
 
-            currentReserveNeededDisplay = new Decimal(fromDecimals(reserveNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
+            
+            currentReserveNeededDisplay = new Decimal(fromDecimals(reserveNeededMin, reserveItem.decimals)).toFixed(4, Decimal.ROUND_UP);
             
             const currentApprovalNeededDisplay = parseFloat(currentReserveNeededDisplay) + 0.05 * currentReserveNeededDisplay;
             const currentApprovalNeededMin = toDecimals(currentApprovalNeededDisplay, reserveItem.decimals);
-
-            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay, reserveItem.decimals).then(function(response){
+            
+            return getTokenFundConversionAmount(conversionPath, currentReserveNeededDisplay, baseApprovalNeededDisplay, selectedBaseReserve.decimals, reserveItem.decimals).then(function(response){
               const responseAmount = fromDecimals(response.base, selectedBaseReserve.decimals);
+
+              const responseReserve = response.reserve;
+              const responseReserveDisplay = fromDecimals(responseReserve, reserveItem.decimals);
+
+              
               reservesNeeded.push(Object.assign({}, reserveItem, {neededMin: currentApprovalNeededMin, neededDisplay: currentReserveNeededDisplay}));
+              
               return {path: conversionPath, totalAmount: response.base, conversionAmount: currentReserveNeededMin, quantity: responseAmount, 
               token: reserveItem, usePoolForConversion: usePoolForConversion}
             });
@@ -350,7 +358,7 @@ export default class SelectedPool extends Component {
       }
       totalReserveAmount = totalReserveAmount.add(new Decimal(item.quantity));
     });
-    
+
     const userBalance = baseReserveItem.token.userBalance;
 
     if (totalReserveAmount.lessThanOrEqualTo(userBalance)) {

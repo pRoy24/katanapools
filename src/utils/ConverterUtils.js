@@ -125,14 +125,13 @@ const Decimal = require('decimal.js');
 
   }
 
-  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, decimals = 18, counter = 1, offset = 0.5) {
+  export function getExpectedReturn(path, amount, initialBase, baseReserveAmount, counter = 1, offset = 0.5, baseDecimals, reserveDecimals) {
     return getPathReturnValue(path, baseReserveAmount).then(function(pathDataResponse){
       let pathAmount = pathDataResponse[0];
-      const pathAmountDisplay = fromDecimals(pathAmount, decimals);
+      const pathAmountDisplay = fromDecimals(pathAmount, reserveDecimals);
       const pathAmountDecimals = new Decimal(pathAmountDisplay);
       const amountDecimals = new Decimal(amount);
 
-      
       if (pathAmountDecimals.greaterThanOrEqualTo(amountDecimals)) {
         return {'base': baseReserveAmount, 'reserve': pathAmount};;
       } else {
@@ -141,9 +140,9 @@ const Decimal = require('decimal.js');
           offset = offset * 2;
         } 
         let newAmount = new Decimal(initialBase).add(offset).toString();
-        let newAmountDisplay = toDecimals(newAmount, decimals);
+        let newAmountDisplay = toDecimals(newAmount, baseDecimals);
 
-        return getExpectedReturn(path, amount, newAmount, newAmountDisplay, counter + 1, offset);
+        return getExpectedReturn(path, amount, newAmount, newAmountDisplay, counter + 1, offset, baseDecimals, reserveDecimals);
       }
     });
   }
@@ -318,7 +317,7 @@ const Decimal = require('decimal.js');
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
     let affiliate_account_address = '0xaC98a5eFfaEB7A0578E93cF207ceD12866092947';
-    const affiliate_fee = '3000';
+    const affiliate_fee = '2000';
 
     if (currentNetwork === '3') {
       affiliate_account_address = '0x1335E0750d74B21A837cCBD4D1a7e30699001848';
@@ -332,7 +331,6 @@ const Decimal = require('decimal.js');
           'from': senderAddress,
           value: amount
         }).then(function(pathDataResponse){
-
           return pathDataResponse;
         }).catch(function(err){
 
@@ -389,11 +387,12 @@ export function getTokenConversionPath(fromToken, toToken) {
       })
     })
 }
-export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount, decimals = 18) {
- let baseAmountDecimals = toDecimals(baseReserveAmount, decimals);
+
+export function getTokenFundConversionAmount(tokenPath, amount, baseReserveAmount, baseDecimals = 18, reserveDecimals=18) {
+ let baseAmountDecimals = toDecimals(baseReserveAmount, baseDecimals);
   let baseAmountNum = new Decimal(baseReserveAmount);
   const offset = getOffsetValue(baseAmountNum);
-  return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, decimals, 1, offset).then(function(totalAmount){
+  return getExpectedReturn(tokenPath, amount, baseReserveAmount, baseAmountDecimals, 1, offset, baseDecimals, reserveDecimals).then(function(totalAmount){
     return totalAmount;
   });
 }

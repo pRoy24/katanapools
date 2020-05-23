@@ -112,7 +112,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       
       Promise.all(tokenTransferMapping).then(function(reserveTokenResolve){
         dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully liquidated pool tokens into chosen reserve.'}));
-       // console.log(reserveTokenResolve)
       })
       }).catch(function(err){
         dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
@@ -313,8 +312,6 @@ function getUserPoolHoldings(poolRow) {
       
       return getAllowanceOfToken(reserveTokenAddress, bnAddress).then(function(swapAllowanceResponse){
         
-    
-  
       const availableUserBalance = fromDecimals(balanceResponse, item.decimals);
       const availableUserAllowance = fromDecimals(allowanceResponse, item.decimals);
       const availableUserSwapAllowance = fromDecimals(swapAllowanceResponse, item.decimals);
@@ -423,10 +420,7 @@ function createBuyWithArguments(args, dispatch) {
 
           // if amount to deposit is > balance then deposit remainder
           return reserveContract.methods.balanceOf(senderAddress).call().then(function(userBalance){
-
-            
             if ((new Decimal(userBalance)).lessThan(new Decimal(reserveAmount))) {
-          
             return reserveContract.methods.deposit().send({from: senderAddress, value: reserveAmount}, function(err, txHash){
                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Depositing Ether into contract.'}));
           }).then(function(response){
@@ -453,7 +447,7 @@ function createBuyWithArguments(args, dispatch) {
       });
 
       Promise.all(resNeededApproval).then(function(approvalResponse){
-        
+
         return  ConverterContract.methods.fund(args.poolTokenProvided).send({
             from: senderAddress
           }, function(err, txHash){
