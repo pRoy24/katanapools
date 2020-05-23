@@ -90,29 +90,27 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
     submitPoolSellWithSingleReserve: (payload) => {
       createSellWithArguments(payload.funding, dispatch).then(function(sellResponse){
-      const args = payload.paths;
-      const baseToken = args.find(function(item){
-        return item.path === null;
-      })
-      dispatch(setPoolTransactionStatus({type: 'pending', message: 'Swapping pool reserves for chosen reserves'}));
-      let tokenTransferMapping = args.map(function(item, idx){
-        if (item.path !== null) {
-          
-          let isEth = false;
-          if (item.token.symbol === 'ETH') {
-            isEth = true;
+
+        const args = payload.paths;
+        dispatch(setPoolTransactionStatus({type: 'pending', message: 'Swapping pool reserves for chosen reserves'}));
+        let tokenTransferMapping = args.map(function(item, idx){
+          if (item.path !== null) {
+            
+            let isEth = false;
+            if (item.token.symbol === 'ETH') {
+              isEth = true;
+            }
+            return submitSwapToken(item.path, item.conversionAmount, item.token.address, isEth).then(function(res){
+              return res;
+            })
+          } else {
+            return new Promise((resolve, reject) => (resolve()));
           }
-          return submitSwapToken(item.path, item.conversionAmount, item.token.address, isEth).then(function(res){
-            return res;
-          })
-        } else {
-          return new Promise((resolve, reject) => (resolve()));
-        }
-      });
-      
-      Promise.all(tokenTransferMapping).then(function(reserveTokenResolve){
-        dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully liquidated pool tokens into chosen reserve.'}));
-      })
+        });
+        
+        Promise.all(tokenTransferMapping).then(function(reserveTokenResolve){
+          dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully liquidated pool tokens into chosen reserve.'}));
+        })
       }).catch(function(err){
         dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
@@ -152,7 +150,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
           dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
         }
       }).catch(function(err){
-                dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
+          dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
 
     },
@@ -392,16 +390,17 @@ function createSellWithArguments(args, dispatch) {
           }
         }).filter(Boolean);
         if (withdrawEth) {
-          Promise.all(withdrawEth).then(function(withdrawEthResponse){
-            dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
+         return Promise.all(withdrawEth).then(function(withdrawEthResponse){
+            //dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
             return;
           })
         } else {
-          dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
+          //dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
           return;
         }
       }).catch(function(err){
-                dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
+        dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
+        throw err;
       });
 }
 

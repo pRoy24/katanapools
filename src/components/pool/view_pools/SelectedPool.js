@@ -115,34 +115,34 @@ export default class SelectedPool extends Component {
 
   calculateFundingAmountWithOneReserve = (inputFund) => {
     if (!isNaN(parseFloat(inputFund))) {
-    this.setState({calculatingFunding: true, fundingCalculateInit: false});
-    const {pool: {currentSelectedPool}} = this.props;  
-    const self = this;
-    const {singleTokenFundReserveSelection} = this.state;
-    const currentReserves = currentSelectedPool.reserves;
-    const singleReserveSelection = singleTokenFundReserveSelection.symbol;
-
-    const totalSupply = currentSelectedPool.totalSupply;
-
-    let totalRatio = 0;
-    currentSelectedPool.reserves.forEach(function(reserve){
-      totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
-    })
-    if (totalRatio === 0) {
-        totalRatio = 1000000 ;
-    }
-    
-    let selectedBaseReserve = currentSelectedPool.reserves.find(function(item){
-      if (item.symbol === singleReserveSelection) {
-        return item;
+      this.setState({calculatingFunding: true, fundingCalculateInit: false});
+      const {pool: {currentSelectedPool}} = this.props;  
+      const self = this;
+      const {singleTokenFundReserveSelection} = this.state;
+      const currentReserves = currentSelectedPool.reserves;
+      const singleReserveSelection = singleTokenFundReserveSelection.symbol;
+  
+      const totalSupply = currentSelectedPool.totalSupply;
+  
+      let totalRatio = 0;
+      currentSelectedPool.reserves.forEach(function(reserve){
+        totalRatio += !isNaN(reserve.reserveRatio) ? parseInt(reserve.reserveRatio) : 0;
+      })
+      if (totalRatio === 0) {
+          totalRatio = 1000000 ;
       }
-    });
+      
+      let selectedBaseReserve = currentSelectedPool.reserves.find(function(item){
+        if (item.symbol === singleReserveSelection) {
+          return item;
+        }
+      });
+  
+      let baseReserveBalance = selectedBaseReserve.reserveBalance;
+      
+      const amount = toDecimals(inputFund, currentSelectedPool.decimals);
 
-    let baseReserveBalance = selectedBaseReserve.reserveBalance;
-    
-    const amount = toDecimals(inputFund, currentSelectedPool.decimals);
-
-   getFundAmount(totalSupply, baseReserveBalance, totalRatio, amount).then(function(baseNeededMin){
+      getFundAmount(totalSupply, baseReserveBalance, totalRatio, amount).then(function(baseNeededMin){
       const baseNeededDisplay = new Decimal(fromDecimals(baseNeededMin, selectedBaseReserve.decimals)).toFixed(4, Decimal.ROUND_UP);
       const baseApprovalNeededDisplay = parseFloat(baseNeededDisplay) + 0.05 * baseNeededDisplay;
       const baseApprovalNeededMin = toDecimals(baseApprovalNeededDisplay, selectedBaseReserve.decimals);
@@ -305,9 +305,9 @@ export default class SelectedPool extends Component {
     const reservesAddedPromise = currentReserves.map(function(item){
       const currentReserveSupply = item.reserveBalance;
       return getLiquidateAmount(totalSupply, currentReserveSupply, totalRatio, inputAmount).then(function(response){
-
+  
         const liquidateBalance = (new Decimal(fromDecimals(response, item.decimals))).toFixed(4);
-          return Object.assign({}, item, {addedMin: response, addedDisplay: liquidateBalance});
+        return Object.assign({}, item, {addedMin: response, addedDisplay: liquidateBalance});
       });
     });
 
