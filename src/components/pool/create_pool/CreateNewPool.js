@@ -311,7 +311,7 @@ export default class CreateNewPool extends Component {
     } else {
       transactionStatusMessage = <span/>;
       currentPage = <TransactioReceiptPage pool={this.props.pool}
-      getConverterAndPoolDetails={this.props.getConverterAndPoolDetails}/>
+      getConverterAndPoolDetails={this.props.getConverterAndPoolDetails} refetchSmartAndConvertibleTokens={this.props.refetchSmartAndConvertibleTokens}/>
     }
 
     return (
@@ -334,6 +334,7 @@ class TransactioReceiptPage extends Component {
       converterAddress: converterContract._address,
     }
     this.props.getConverterAndPoolDetails(args);
+    this.props.refetchSmartAndConvertibleTokens();
   }
   render() {
     const {pool: {poolCreationReceipt, tokenList, converterContract, smartTokenContract}} = this.props;

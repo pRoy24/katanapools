@@ -7,6 +7,7 @@ import {deploySmartTokenInit, deploySmartTokenPending, deploySmartTokenReceipt, 
   deployRelayConverterSuccess, setPoolFundedSuccess, setCurrentPoolStatus, setConverterContract,
   setPoolCreationHeader
 } from '../../../actions/pool';
+import {refetchSmartAndConvertibleTokens, refetchSmartAndConvertibleTokensSuccess, refetchSmartAndConvertibleTokensFailure} from '../../../actions/tokens';
 
 
 import {isNonEmptyObject} from '../../../utils/ObjectUtils';
@@ -285,6 +286,16 @@ const mapDispatchToProps = (dispatch) => {
           })
           })
       })
+      })
+    },
+    
+    refetchSmartAndConvertibleTokens: () => {
+      dispatch(refetchSmartAndConvertibleTokens()).then(function(response){
+        if (response.payload.status === 200) {
+          refetchSmartAndConvertibleTokensSuccess(response.payload.data);  
+        }
+      }).catch(function(err){
+        refetchSmartAndConvertibleTokensFailure(err);
       })
     }
   }

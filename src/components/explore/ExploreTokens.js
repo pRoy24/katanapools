@@ -167,7 +167,9 @@ class ExploreTokensAdvanced extends Component {
         let toTokenSelector = <span/>;
         if (convertibleTokens && convertibleTokens.length > 0) {
         fromTokenSelector = <div>
+        
         <FormControl type="text" placeHolder="Search" value={searchFromToken} onChange={this.searchFromTokenChanged}/>
+         <ListGroup className="token-selector-list">
         {fromConvertibleTokens.map(function(item, idx){
             let itemActive = "";
             if (idx === selectedFromIdx) {
@@ -183,11 +185,13 @@ class ExploreTokensAdvanced extends Component {
                {itemName}
             </div>
             </ListGroupItem>)
-        })}</div>;
+        })}
+        </ListGroup>
+        </div>;
 
          toTokenSelector = <div>
         <FormControl type="text" placeHolder="Search" value={searchToToken} onChange={this.searchToTokenChanged}/>
-        {toConvertibleTokens.map(function(item, idx){
+         <ListGroup className="token-selector-list">{toConvertibleTokens.map(function(item, idx){
             let itemActive = "";
             if (idx === selectedToIdx) {
                 itemActive = "cell-active";
@@ -202,16 +206,16 @@ class ExploreTokensAdvanced extends Component {
                {itemName}
             </div>
             </ListGroupItem>)
-        })}
+        })}</ListGroup>
         </div>
         }
 
         return (
              <Row>
              <Col lg={2} style={{'paddingRight': 0}}>
-               <ListGroup className="token-selector-list">
+              
                {fromTokenSelector}
-               </ListGroup>
+        
              </Col>
              <Col lg={8} className="explore-paths-container">
                <ViewPaths
@@ -221,9 +225,9 @@ class ExploreTokensAdvanced extends Component {
                submitSwap={this.props.submitSwap} setProviderNotification={this.props.setProviderNotification}/>
              </Col>
              <Col lg={2} style={{'paddingLeft': 0}}>
-                 <ListGroup className="token-selector-list">
+                
                     {toTokenSelector}
-                </ListGroup>
+             
              </Col>
             </Row>
             )

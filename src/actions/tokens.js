@@ -37,6 +37,32 @@ export const SET_FROM_PATH_LIST_LOADING = 'SET_FROM_PATH_LIST_LOADING';
 
 export const SET_TO_PATH_LIST_LOADING = 'SET_TO_PATH_LIST_LOADING';
 
+export const REFETCH_SMART_AND_CONVERTIBLE_TOKENS = 'REFETCH_SMART_AND_CONVERTIBLE_TOKENS';
+export const REFETCH_SMART_AND_CONVERTIBLE_TOKENS_SUCCESS = 'REFETCH_SMART_AND_CONVERTIBLE_TOKENS_SUCCESS';
+export const REFETCH_SMART_AND_CONVERTIBLE_TOKENS_FAILURE = 'REFETCH_SMART_AND_CONVERTIBLE_TOKENS_FAILURE';
+
+export function refetchSmartAndConvertibleTokens() {
+    const request = getRequest(`/refetch_all_tokens`, 'GET');
+    return {
+      type: REFETCH_SMART_AND_CONVERTIBLE_TOKENS,
+      payload: request
+    }
+}
+
+export function refetchSmartAndConvertibleTokensSuccess(response) {
+    return {
+        type: REFETCH_SMART_AND_CONVERTIBLE_TOKENS_SUCCESS,
+        payload: response
+    }
+}
+
+export function refetchSmartAndConvertibleTokensFailure(err) {
+    return {
+        type: REFETCH_SMART_AND_CONVERTIBLE_TOKENS_FAILURE,
+        payload: err
+    }
+}
+
 export function setFromPathListLoading() {
     return {
         type: SET_FROM_PATH_LIST_LOADING
