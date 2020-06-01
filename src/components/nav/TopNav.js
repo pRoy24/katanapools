@@ -34,7 +34,7 @@ export default class TopNav extends Component {
       <Navbar  expand="lg" className="app-top-nav">
         <Navbar.Brand href="/">Katana Pools</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
+        <Navbar id="basic-navbar-nav">
           <Nav className="mr-auto">
             <LinkContainer to="/explore">
               <NavItem key={1}>Explore Tokens</NavItem>
@@ -46,7 +46,7 @@ export default class TopNav extends Component {
               <NavItem key={3}>Create Pool</NavItem>
             </LinkContainer>
           </Nav>
-        </Navbar.Collapse>
+        </Navbar>
         <div>
          {currentConnection}
          {addressBar}

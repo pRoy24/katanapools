@@ -54,3 +54,14 @@
     color: #d80000;
     font-weight: 600;
 }
+
+#basic-navbar-nav { 
+  width:80%;
+}
+@media only screen and (max-width: 600px) {
+    #basic-navbar-nav {
+      padding-left: 0px;
+      padding-right: 0px;
+      width: 100%;
+    }
+}

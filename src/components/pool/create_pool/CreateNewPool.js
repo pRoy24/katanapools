@@ -329,8 +329,9 @@ export default class CreateNewPool extends Component {
 class TransactioReceiptPage extends Component {
   componentWillMount() {
     const {pool: { converterContract, smartTokenContract}} = this.props;
+    const smartTokenAddress = smartTokenContract._address;
     const args = {
-      poolTokenAddress: smartTokenContract._address,
+      poolTokenAddress: smartTokenAddress,
       converterAddress: converterContract._address,
     }
     this.props.getConverterAndPoolDetails(args);
