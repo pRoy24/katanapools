@@ -212,22 +212,18 @@ class ExploreTokensAdvanced extends Component {
 
         return (
              <Row>
-             <Col lg={2} style={{'paddingRight': 0}}>
-              
+             <Col lg={2} xs={2} className="left-list-group">
                {fromTokenSelector}
-        
              </Col>
-             <Col lg={8} className="explore-paths-container">
+             <Col lg={8} xs={8} className="explore-paths-container">
                <ViewPaths
                fromToken={fromToken} toToken={toToken} fromPathLoading={fromPathLoading} toPathLoading={toPathLoading}
                fromPathListWithRate={fromPathListWithRate}
                toPathListWithRate={toPathListWithRate} transferAmountChanged={this.transferAmountChanged}
                submitSwap={this.props.submitSwap} setProviderNotification={this.props.setProviderNotification}/>
              </Col>
-             <Col lg={2} style={{'paddingLeft': 0}}>
-                
-                    {toTokenSelector}
-             
+             <Col lg={2} xs={2} style={{'paddingLeft': 0}} className="right-list-group">
+                {toTokenSelector}
              </Col>
             </Row>
             )
