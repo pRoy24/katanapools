@@ -1,13 +1,13 @@
 
 const ContractRegistry = require('../contracts/ContractRegistry.json');
 
-const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
+const BancorConverterRegistry = require('../contracts/ConverterRegistry.json');
 
 const ERC20Token = require('../contracts/ERC20Token.json');
 
-const BancorNetworkPathFinder = require('../contracts/BancorNetworkPathFinder.json');
+const BancorNetworkPathFinder = require('../contracts/ConversionPathFinder.json');
 
-const BancorConverter = require('../contracts/BancorConverter.json');
+const BancorConverter = require('../contracts/ConverterBase.json');
 
 const axios = require('axios');
 
@@ -112,12 +112,13 @@ const axios = require('axios');
   
   export function getContractAddress(contractName) {
     const web3 = window.web3;
+    console.log(web3);
     const currentNetwork = web3.currentProvider.networkVersion;
     let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
     if (currentNetwork && currentNetwork.toString() === '3') {
       CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_ROPSTEN;
     }
-    
+
     let converterRegistry = new web3.eth.Contract(ContractRegistry, CONTRACT_REGISTRY_ADDRESS);
     
     return converterRegistry.methods

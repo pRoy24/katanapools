@@ -13,7 +13,7 @@ import  {toDecimals, fromDecimals} from '../../../utils/eth';
 import moment from 'moment'
 const SmartToken = require('../../../contracts/SmartToken.json');
 
-const BancorConverter = require('../../../contracts/BancorConverter.json');
+const BancorConverter = require('../../../contracts/LiquidityPoolV1Converter.json');
 
 const ERC20Token = require('../../../contracts/ERC20Token.json');
 const EtherToken = require('../../../contracts/EtherToken.json');

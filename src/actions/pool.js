@@ -61,6 +61,14 @@ export const GET_POOL_APPROVAL_FAILURE = 'GET_POOL_APPROVAL_FAILURE';
 export const GET_POOL_REVOCATION = 'GET_POOL_REVOCATION';
 export const GET_POOL_REVOCATION_SUCCESS = 'GET_POOL_REVOCATION_SUCCESS';
 
+export const ACTIVATE_CONVERTER_STATUS = 'ACTIVATE_CONVERTER_STATUS';
+
+export function activateConverterStatus(payload) {
+  return {
+    type: ACTIVATE_CONVERTER_STATUS,
+    payload: payload
+  }
+}
 
 export function getPoolRevocation() {
   return {

@@ -57,6 +57,22 @@ export default class Step2 extends Component {
     this.setState({detailsVisible: !this.state.detailsVisible});
   }
   
+  
+  transferPoolOwnership = () => {
+    const {pool: {relayConverterStatus}} = this.props;
+
+    const converterAddress = relayConverterStatus.message.events["1"].address;
+    console.log('HHHHH');
+    console.log(converterAddress);
+    console.log("HHHHH");
+    const args = {
+      converterAddress: converterAddress
+    };
+    this.props.acceptPoolOwnership(args);
+
+  }
+  
+  
   render() {
     const {tokenAddressList, numPoolTokens, detailsVisible} = this.state;
     const {isCreationStepPending} = this.props;
@@ -98,49 +114,13 @@ function renderFundingTooltipDisplay(props) {
         )
     }
 
+
+
     return (
-        <div className="create-pool-form-container">
+      <div className="create-pool-form-container">
         <Container>
-            <div className={"header left-align-text no-pad-left margin-bottom-10"}>
-            Create initial funding for the pool.
-            <OverlayTrigger
-              placement="right"
-              delay={{ show: 250, hide: 400 }}
-              overlay={renderFundingTooltipDisplay}>
-              <FontAwesomeIcon icon={faQuestionCircle} className="info-tooltip-btn"/>
-            </OverlayTrigger>
-          </div>
-        <Form onSubmit={this.onSubmit}>
-
-        {tokenAmountDisplay}
-
-        <Form.Group controlId="formFundingCenter" className="pool-funding-form-row">
-          <Form.Label>Number of pool tokens to issue</Form.Label>
-          <Form.Control type="text" placeholder="enter amount of token to transfer" value={numPoolTokens}
-          onChange={this.numPoolTokensChanged} />
-          <Form.Text className="text-muted">
-            Recommended to define an amount equal to the total $ value of all the reserves
-          </Form.Text>
-        </Form.Group>
-
-        <Row>
-          <Col lg={4} className="left-align-text">
-          <Button variant="primary" type="submit" className="pool-wizard-submit-btn" disabled={isCreationStepPending}>
-            Next
-          </Button>
-          </Col>
-          <Col lg={8}>
-          <div className="sub-text">
-            <div className="subtext-label">On clicking next you will be required to perform {numTransactions} transactions.</div>
-            <div onClick={this.toggleDetailsBox} className="details-bar">Details <FontAwesomeIcon icon={faChevronDown}/></div>
-            <div>
-              {transactionDetails}
-            </div>
-          </div>
-          </Col>
-        </Row>
-        </Form>
-      </Container>
+          <Button onClick={this.transferPoolOwnership}>Transfer pool ownership</Button>
+        </Container>
       </div>
       )
   }
@@ -170,15 +150,12 @@ class TokenAmountRow extends Component {
   render() {
     const {item} = this.props;
     const {tokenAmount, tokenUSDValue} = this.state;
+
+
     return (
       <div>
         <Form.Group controlId="formFundingCenter" className="pool-funding-form-row">
-          <Form.Label>Amount of {item.symbol} to transfer. 1 {item.symbol} = {item.price} USD.</Form.Label>
-          <Form.Control type="text" placeholder="enter amount of token to transfer" value={tokenAmount}
-          onChange={this.tokenAmountChanged} />
-          <Form.Text className="text-muted">
-            Total USD value = {tokenUSDValue}. Your wallet balance {item.senderBalance}
-          </Form.Text>
+          <Button>Transfer pool ownership</Button>
         </Form.Group>
       </div>
       )

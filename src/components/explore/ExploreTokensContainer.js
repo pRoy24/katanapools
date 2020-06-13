@@ -45,6 +45,10 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
 
     submitSwap: (networkPath, transferAmount, selectedTransferToken) => {
+      console.log(networkPath);
+      console.log(transferAmount);
+      console.log(selectedTransferToken);
+      
       let isEth = false;
       if (selectedTransferToken.symbol === 'ETH') {
         isEth = true;

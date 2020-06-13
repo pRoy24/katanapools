@@ -7,7 +7,7 @@ import {
 } from "react-material-stepper";
 import Step1Container from './steps/step1/Step1Container';
 import Step2Container from './steps/step2/Step2Container';
-import Step3Container from './steps/step3/Step3Container';
+
 import {isEmptyObject, isNonEmptyObject, isEmptyString} from '../../../utils/ObjectUtils';
 import {getWalletAddress} from '../../../utils/eth'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -15,6 +15,7 @@ import {  faPlus, faSpinner, faTimes, faQuestionCircle } from '@fortawesome/free
 import 'react-material-stepper/dist/react-stepper.css';
 import AddressDisplay from '../../common/AddressDisplay';
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
+import PoolReceipt from './PoolReceipt';
 
 export default class CreateNewPool extends Component {
   static contextType = StepperContext;
@@ -22,15 +23,12 @@ export default class CreateNewPool extends Component {
     super(props);
     this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: '',
                   poolName: '', poolSymbol: '', showReceiptPage: false, isError: false, errorMessage: '',
-                  tokenAddressList: [], currentStep: 'step1'};
+                  tokenAddressList: [], currentStep: 'step2'};
     this.appStepper = React.createRef();
   }
+  
   setStepOneReceipt = (val) => {
     this.setState({stepOneReceipt: val});
-  }
-
-  resumePoolCreation = () => {
-    const {pool: {poolStatus}} = this.props;
   }
 
   getAddressList = () => {
@@ -41,8 +39,6 @@ export default class CreateNewPool extends Component {
   deployConverterContract = (vals) => {
     const web3 = window.web3;
     const {pool: {smartTokenStatus, smartTokenContract}} = this.props;
-
-
 
     let isValidationError = false;
     const self = this;
@@ -83,6 +79,14 @@ export default class CreateNewPool extends Component {
        totalWeight += tokenItem.weight;
      }
    });
+   
+   const poolReserves = tokenAddressList.map(function(item){
+     return item.address;
+   });
+   
+   const poolWeights = tokenAddressList.map(function(item){
+     return parseInt(item.weight, 10) * 10000;
+   })
 
    if (totalWeight > 100) {
      this.setState({isError: true, errorMessage: 'Total weight cannot be more than 100'});
@@ -95,8 +99,10 @@ export default class CreateNewPool extends Component {
       reserveFee: parseFloat(vals.reserveFee),
       smartTokenAddress: smartTokenStatus.contractAddress,
       tokenAddressList: tokenAddressList,
+      reserves: poolReserves,
+      weights: poolWeights
     }
-     this.props.deployRelayConverter(args);
+     this.props.deployNewPool(args);
    }
   }
 
@@ -176,17 +182,19 @@ export default class CreateNewPool extends Component {
       this.setState({currentStep: 'step2'})
       this.appStepper.current.resolve();
     }
+    
+    console.log(activationStatus);
+    console.log("HHH");
 
-    if (isNonEmptyObject(poolFundedStatus) && poolFundedStatus.type === 'success' && this.props.pool.poolFundedStatus.type === 'pending') {
-      this.setState({currentStep: 'step3'})
-      this.appStepper.current.resolve();
+    if (isNonEmptyObject(activationStatus) && activationStatus.type === 'success' && this.props.pool.activationStatus.type === 'pending') {
+    console.log(activationStatus);
+    console.log("SHOW FINAL RECEIPT");
+    this.setState({showReceiptPage: true});
+    //  this.setState({currentStep: 'step3'})
+    //  this.appStepper.current.resolve();
     }
 
-    if (isNonEmptyObject(this.props.pool.activationStatus) && activationStatus.type === 'success' &&
-    this.props.pool.activationStatus.type === 'pending') {
-      this.props.getSmartTokensWithSymbols();
-      this.setState({showReceiptPage: true});
-    }
+
   }
 
   setFormError = (errorMessage)  => {
@@ -200,12 +208,14 @@ export default class CreateNewPool extends Component {
   componentWillUnmount() {
     this.props.resetPoolStatus();
   }
+  
+  acceptPoolOwnership = (args) => {
+    this.props.acceptPoolOwnership(args);
+  }
 
   render() {
     const STEP1 = "step-one";
     const STEP2 = "step-two";
-    const STEP3 = "step-three";
-
 
     const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
@@ -291,27 +301,23 @@ export default class CreateNewPool extends Component {
       }
     }
     let currentPage = <span/>;
+
     if (showReceiptPage === false) {
       currentPage = (
-        <Stepper contextRef={this.appStepper} currentStep={currentStep}>
+        <Stepper contextRef={this.appStepper} initialStep={STEP1}>
           <Step stepId={STEP1} data="Step 1 initial state" title="Pool and Converter details" description="Configure convertible token">
               <Step1Container deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail}
               setTokenListRow={this.props.setTokenListRow} setFormError={this.setFormError} resetFormError={this.resetFormError}
               resumePoolCreation={this.resumePoolCreation}/>
           </Step>
-          <Step stepId={STEP2} title="Funding and initial supply" description="Fund pool with initial supply"
-          data={tokenAddressList} tokenAddressList={tokenAddressList}>
-            <Step2Container fundRelayWithSupply={this.fundRelayWithSupply} getAddressList={this.getAddressList}/>
-          </Step>
-          <Step stepId={STEP3} title="Pool Activation" description="Activate your pool">
-            <Step3Container activatePool={this.activatePool} />
+          <Step stepId={STEP2} title="Transfer ownership and activate" description="Transfer pool ownership" data={tokenAddressList} tokenAddressList={tokenAddressList}>
+            <Step2Container fundRelayWithSupply={this.fundRelayWithSupply} getAddressList={this.getAddressList} acceptPoolOwnership={this.acceptPoolOwnership}/>
           </Step>
         </Stepper>
         )
     } else {
       transactionStatusMessage = <span/>;
-      currentPage = <TransactioReceiptPage pool={this.props.pool}
-      getConverterAndPoolDetails={this.props.getConverterAndPoolDetails} refetchSmartAndConvertibleTokens={this.props.refetchSmartAndConvertibleTokens}/>
+      currentPage = <PoolReceipt pool={this.props.pool} fetchPoolAndConverterDetails={this.props.fetchPoolAndConverterDetails}/>
     }
 
     return (
@@ -339,7 +345,6 @@ class TransactioReceiptPage extends Component {
   }
   render() {
     const {pool: {poolCreationReceipt, tokenList, converterContract, smartTokenContract}} = this.props;
-
 
     let receiptObject = <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>;
 

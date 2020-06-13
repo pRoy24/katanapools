@@ -1,10 +1,11 @@
 import {toDecimals, fromDecimals} from './eth';
 var RegistryUtils = require('./RegistryUtils');
-const BancorConverterRegistry = require('../contracts/BancorConverterRegistry.json');
-const BancorConverter = require('../contracts/BancorConverter');
+const BancorConverterRegistry = require('../contracts/ConverterRegistry.json');
+const BancorConverter = require('../contracts/ConverterBase.json');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
 const BancorForumla = require('../contracts/BancorFormula.json');
+const SmartToken = require('../contracts/SmartToken.json');
 const Decimal = require('decimal.js');
 
   export function getConvertibleTokensInRegistry() {
@@ -19,6 +20,47 @@ const Decimal = require('decimal.js');
       })
 
     })
+  }
+  
+  
+  export function getPoolAnchors(converterAddress) {
+     const web3 = window.web3;
+
+     return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(converterRegistryAddress){
+       const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
+
+        ConverterRegistryContract.methods.getAnchorCount().call().then(function(anchorCount){
+          console.log("Anchor count " +anchorCount);
+        })
+        
+        
+        ConverterRegistryContract.methods.isAnchor(converterAddress).call().then(function(response){
+          console.log("In anchor "+response);
+        })
+        ConverterRegistryContract.methods.getConvertibleTokenAnchorCount(converterAddress).call().then(function(acResponse){
+          console.log("Anchors in converter "+acResponse);
+        })
+        
+        
+       return ConverterRegistryContract.methods.getSmartTokens().call().then(function(smartTokens){
+
+       return ConverterRegistryContract.methods.getConvertibleTokenSmartTokens(converterAddress).call().then(function(response){
+         let smartTokenData = response.map(function(item){
+           const CurrentSmartToken = new web3.eth.Contract(SmartToken, item);
+           return CurrentSmartToken.methods.symbol.call().then(function(symbol){
+             return symbol;
+           })
+         })
+         
+         Promise.all(smartTokenData).then(function(symbols){
+           console.log(symbols);
+         })
+         
+         return response;
+       })
+       
+       })
+     });
   }
 
   export function getSmartTokensInRegistry() {
@@ -313,6 +355,12 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
+    console.log("SUBMIT SWAP");
+    
+    console.log(path);
+    console.log(amount);
+    console.log(fromAddress);
+    console.log("SUBMIT SWAP");
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
