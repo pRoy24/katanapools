@@ -22,6 +22,19 @@ const Decimal = require('decimal.js');
     })
   }
   
+  export function fetchPoolDetails(poolAddress) {
+    const web3 = window.web3;
+    const PoolTokenContract = new web3.eth.Contract(SmartToken, poolAddress);
+    return PoolTokenContract.methods.name().call().then(function(poolTokenName){
+      return PoolTokenContract.methods.symbol().call().then(function(poolTokenSymbol){
+        return PoolTokenContract.methods.totalSupply().call().then(function(poolSupplyResponse){
+          
+       
+        return {'name': poolTokenName, 'symbol': poolTokenSymbol, 'supply': poolSupplyResponse}
+        });
+      })
+    });
+  }
   
   export function getPoolAnchors(converterAddress) {
      const web3 = window.web3;
@@ -355,12 +368,6 @@ const Decimal = require('decimal.js');
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
-    console.log("SUBMIT SWAP");
-    
-    console.log(path);
-    console.log(amount);
-    console.log(fromAddress);
-    console.log("SUBMIT SWAP");
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
     const currentNetwork = web3.currentProvider.networkVersion;
@@ -403,8 +410,12 @@ const Decimal = require('decimal.js');
         })
       }
     });
-
-
+  }
+  
+  export function getContractApproval(TokenContract, spenderAddress, amount) {
+    return getApprovalBasedOnAllowance(TokenContract, spenderAddress, amount).then(function(approvalResponse){
+      return approvalResponse;
+    });
   }
 
   export function getConvertibleTokensBySmartTokens() {

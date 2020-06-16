@@ -391,27 +391,6 @@ function renderConvertibleTokenTooltip(props) {
         </Row>
         <Row>
         <Col lg={6} xs={12}>
-          <Form.Group controlId="formBasicEmail">
-          <Form.Label>Conversion fees&nbsp;
-            <OverlayTrigger
-              placement="top"
-              delay={{ show: 250, hide: 400 }}
-              overlay={renderFeeTooltip}>
-              <FontAwesomeIcon icon={faQuestionCircle} className="info-tooltip-btn"/>
-            </OverlayTrigger>
-          </Form.Label>
-            <InputGroup>
-            <Form.Control type="text" placeholder="reserve fee" value={reserveFee} onChange={this.reserveFeeChanged}/>
-            <InputGroup.Append>
-              <InputGroup.Text id="inputGroupPrepend">%</InputGroup.Text>
-            </InputGroup.Append>
-          </InputGroup>
-          <Form.Text className="text-muted">
-            Enter the conversion fees when using this reserve (Maximum 3%)
-          </Form.Text>
-        </Form.Group>
-        </Col>
-        <Col lg={6} xs={12}>
         <Form.Group controlId="formBasicPassword">
           <Form.Label>Pool Decimals
             <OverlayTrigger
@@ -429,7 +408,7 @@ function renderConvertibleTokenTooltip(props) {
         <Col lg={4}>
         {isError ?
 
-        <Button className="pool-wizard-submit-btn" variant="primary">
+        <Button className="pool-wizard-submit-btn" type="submit" variant="primary">
           Resume
         </Button>
         :

@@ -2,7 +2,7 @@ import CreateNewPool from './CreateNewPool';
 
 import {connect} from 'react-redux';
 import { deployRelayConverterStatus, setPoolFundedStatus,
-     setTokenListDetails, resetPoolStatus, setPoolFundedSuccess,activateConverterStatus
+     setTokenListDetails, resetPoolStatus, setPoolFundedSuccess,activateConverterStatus, setCreatePool
 } from '../../../actions/pool';
 import {refetchSmartAndConvertibleTokens, refetchSmartAndConvertibleTokensSuccess, refetchSmartAndConvertibleTokensFailure} from '../../../actions/tokens';
 
@@ -75,6 +75,17 @@ const mapDispatchToProps = (dispatch) => {
        })
      })
    },
+   
+   fetchPoolDetails: (poolData) => {
+     const poolAddress = poolData.pool;
+     const reserves = poolData.reserves;
+     ConverterUtils.fetchPoolDetails(poolAddress).then(function(response){
+       getReserveDetails(reserves).then(function(reserveDetails){
+         const responseData = Object.assign({}, response, {'reserves': reserveDetails});
+         dispatch(setCreatePool(responseData));
+       });
+     })
+   },
 
    acceptPoolOwnership: (args) => {
       const web3 = window.web3;
@@ -95,22 +106,17 @@ const mapDispatchToProps = (dispatch) => {
       })
     },
 
-   fetchPoolAndConverterDetails: (address) => {
-
-       ConverterUtils.getPoolAnchors(address).then(function(poolAnchors){
-         console.log(poolAnchors);
-       });
-       
-     
-   },
-
-    getTokenDetailFromAddress: (val, idx) => {
+   getTokenDetailFromAddress: (val, idx) => {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
       const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
       if (val && val.length > 0) {
 
       ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+        
+        ERC20TokenContract.methods.decimals().call().then(function(decimals){
+          
+      
         let isEth = false;
         if (tokenSymbol === 'ETH') {
           isEth = true;
@@ -123,45 +129,60 @@ const mapDispatchToProps = (dispatch) => {
           if (dataResponse.data && dataResponse.data.USD) {
             tokenPrice = dataResponse.data.USD;
           }
-          const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice}};
+          const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice, "decimals": decimals}};
          dispatch(setTokenListDetails(poolData));
         })
         })
+        });
+        
         });
       })
       }
 
     },
-
-    fundRelayWithSupply: (args) => {
-
+    
+    setConversionFee: (converterAddress, value) => {
       const web3 = window.web3;
+      const ConverterContract = new web3.eth.Contract(LiquidityPoolConverter, converterAddress);
+      const feeValue = parseInt(Number(value) * 10000, 10);
 
-      const smartTokenAddress = args.smartTokenAddress;
-
-      const bancorConverterAddress = args.converterAddress;
-
-      const smartTokenContract = new web3.eth.Contract(SmartToken, smartTokenAddress);
-
-      const senderAddress = web3.currentProvider.selectedAddress;
-
-      const supplyAmount = toDecimals(args.initialSupply, 18);
-
-      const convertibleTokens = args.convertibleTokens;
-      dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Waiting for user approval of pool supply"}));
-      smartTokenContract.methods.issue(senderAddress, supplyAmount).send({from: senderAddress}, function(err, txHash){
-
-      dispatch(setPoolFundedStatus({'type': 'pending', 'message': "Creating initial pool supply"}));
+      const walletAddress = web3.currentProvider.selectedAddress;
+      
+      ConverterContract.methods.setConversionFee(feeValue).send({
+        from: walletAddress
       }).then(function(response){
-        (async () => {
-        let totalConversions = convertibleTokens.length - 1;
-        for (let job of convertibleTokens.map((x, idx) => () =>
-          approveAndFundPool(x, bancorConverterAddress, dispatch, idx, totalConversions)
-        ))
-        await job();
-        dispatch(setPoolFundedSuccess());
-        })();
+        console.log(response);
+      })
+    },
+    
+    approveAndFundPool: (reserveList, amountList, converterAddress) => {
+      const web3 = window.web3;
+      const ConverterContract = new web3.eth.Contract(LiquidityPoolConverter, converterAddress);
+      const walletAddress = web3.currentProvider.selectedAddress;
+
+      let poolApprovals = reserveList.map(function(item, idx){
+        const ReserveTokenContract = new web3.eth.Contract(ERC20Token, item);
+        return ConverterUtils.getContractApproval(ReserveTokenContract, converterAddress, amountList[idx]).then(function(approval){
+          return approval;
+        })
       });
+      console.log("&&&");
+      console.log(reserveList);
+      console.log(amountList);
+      console.log(walletAddress);
+      Promise.all(poolApprovals).then(function(approvalResponse){
+
+        ConverterContract.methods.addLiquidity(reserveList, ['100000000000000000', '100000000000000000'] , 1).send({
+          from: walletAddress
+          }).then(function(fundingResponse){
+          console.log("Finished funding");
+          console.log(fundingResponse);
+        }).catch(function(err){
+          console.log(err);
+        })
+        
+      })
+      
     },
 
     activatePool: (args) => {
@@ -172,12 +193,6 @@ const mapDispatchToProps = (dispatch) => {
 
     },
 
-    getConverterAndPoolDetails: (args) => {
-      const web3 = window.web3;
-
-
-    },
-    
     refetchSmartAndConvertibleTokens: () => {
       dispatch(refetchSmartAndConvertibleTokens()).then(function(response){
         if (response.payload.status === 200) {
@@ -291,45 +306,46 @@ function getPoolDepositStatus(contractAddress, value, isEth, dispatch) {
   });
 }
 
-function getTokenListData(tokenList) {
+
+function getReserveDetails(reserveList) {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
-      let tokenDetailList = tokenList.map(function(item){
-      const val = item.address;
-      const ERC20TokenContract = new web3.eth.Contract(ERC20Token, val);
-
-      return  ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
-
-     return ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
-        let isEth = false;
-        if (tokenSymbol === 'ETH') {
-          isEth = true;
-        }
-      return  ERC20TokenContract.methods.decimals().call().then(function(decimals){
-      return  getFullBalanceOfToken(val, isEth).then(function(senderBalance){
-          let senderDecimalBalance = fromDecimals(senderBalance, decimals);
-          return  axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
-            let tokenPrice = "";
-            if (dataResponse.data && dataResponse.data.USD) {
-              tokenPrice = dataResponse.data.USD;
-            }
-            let returnData = Object.assign({}, item, {'symbol': tokenSymbol, 'price': tokenPrice, 'senderBalance': senderDecimalBalance});
-            return returnData;
-          })
-        })
-      });
+    
+      
+     let reserveListData = reserveList.map(function(item, idx){
+         const ERC20TokenContract = new web3.eth.Contract(ERC20Token, item);
+         let isEth = false;
+         if (item === '0x00000') {
+           isEth = true;
+         }
+        return ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
+          return  ERC20TokenContract.methods.decimals().call().then(function(decimals){
+          return getFullBalanceOfToken(item, isEth).then(function(senderBalance){
+            return axios.get(`https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`).then(function(dataResponse){
+              let tokenPrice = "";
+              if (dataResponse.data && dataResponse.data.USD) {
+                  tokenPrice = dataResponse.data.USD;
+              }
+              const reserveData = {'idx': idx, 'data': {'address': item, 'symbol': tokenSymbol, 'price': tokenPrice, 
+                'decimals': decimals
+              }};
+              return reserveData;
+            }).catch(function(err){
+                   const reserveData = {'idx': idx, 'data': {'address': item, 'symbol': tokenSymbol, 'price': 0,
+                          'decimals': decimals
+                   }};
+                   return reserveData;
+            })            
+          });
+          
+          });
         });
-
-      });
-
-      });
-
-      return Promise.all(tokenDetailList).then(function(detailListData){
-        return detailListData.filter(Boolean);
-      });
+     });
+     
+     return Promise.all(reserveListData).then(function(reserveDataResponse){
+       return reserveDataResponse;
+     })  
 }
-
-
 
 export default connect(
     mapStateToProps,

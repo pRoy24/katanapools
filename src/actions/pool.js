@@ -63,6 +63,15 @@ export const GET_POOL_REVOCATION_SUCCESS = 'GET_POOL_REVOCATION_SUCCESS';
 
 export const ACTIVATE_CONVERTER_STATUS = 'ACTIVATE_CONVERTER_STATUS';
 
+export const SET_CREATE_POOL = 'SET_CREATE_POOL';
+
+export function setCreatePool(payload) {
+  return {
+    type: SET_CREATE_POOL,
+    payload: payload
+  }
+}
+
 export function activateConverterStatus(payload) {
   return {
     type: ACTIVATE_CONVERTER_STATUS,

@@ -280,6 +280,8 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 
 function getUserPoolHoldings(poolRow) {
+  console.log(poolRow);
+  console.log("***");
   const web3 = window.web3;
   if (web3 && web3.currentProvider) {
   const senderAddress = web3.currentProvider.selectedAddress;

@@ -182,19 +182,10 @@ export default class CreateNewPool extends Component {
       this.setState({currentStep: 'step2'})
       this.appStepper.current.resolve();
     }
-    
-    console.log(activationStatus);
-    console.log("HHH");
 
     if (isNonEmptyObject(activationStatus) && activationStatus.type === 'success' && this.props.pool.activationStatus.type === 'pending') {
-    console.log(activationStatus);
-    console.log("SHOW FINAL RECEIPT");
     this.setState({showReceiptPage: true});
-    //  this.setState({currentStep: 'step3'})
-    //  this.appStepper.current.resolve();
     }
-
-
   }
 
   setFormError = (errorMessage)  => {
@@ -302,7 +293,7 @@ export default class CreateNewPool extends Component {
     }
     let currentPage = <span/>;
 
-    if (showReceiptPage === false) {
+    if (showReceiptPage === true) {
       currentPage = (
         <Stepper contextRef={this.appStepper} initialStep={STEP1}>
           <Step stepId={STEP1} data="Step 1 initial state" title="Pool and Converter details" description="Configure convertible token">
@@ -317,7 +308,8 @@ export default class CreateNewPool extends Component {
         )
     } else {
       transactionStatusMessage = <span/>;
-      currentPage = <PoolReceipt pool={this.props.pool} fetchPoolAndConverterDetails={this.props.fetchPoolAndConverterDetails}/>
+      currentPage = <PoolReceipt pool={this.props.pool} fetchPoolAndConverterDetails={this.props.fetchPoolAndConverterDetails}
+      fetchPoolDetails={this.props.fetchPoolDetails} setConversionFee={this.props.setConversionFee} approveAndFundPool={this.props.approveAndFundPool}/>
     }
 
     return (
@@ -331,102 +323,4 @@ export default class CreateNewPool extends Component {
       )
   }
 }
-
-class TransactioReceiptPage extends Component {
-  componentWillMount() {
-    const {pool: { converterContract, smartTokenContract}} = this.props;
-    const smartTokenAddress = smartTokenContract._address;
-    const args = {
-      poolTokenAddress: smartTokenAddress,
-      converterAddress: converterContract._address,
-    }
-    this.props.getConverterAndPoolDetails(args);
-    this.props.refetchSmartAndConvertibleTokens();
-  }
-  render() {
-    const {pool: {poolCreationReceipt, tokenList, converterContract, smartTokenContract}} = this.props;
-
-    let receiptObject = <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>;
-
-    let poolConvertibleTokens = tokenList.map(function(item, idx){
-      return (<ListGroupItem>
-        <div>Symbol: {item.symbol} Address: {item.address}</div>
-        <div>Amount: {item.amount}</div>
-      </ListGroupItem>)
-    })
-
-    if (isNonEmptyObject(poolCreationReceipt)) {
-      receiptObject = (
-        <div className="create-pool-form-container">
-        <Container>
-          <div className="h6">Pool Details.</div>
-          <div className="pool-details-block">
-            <Row>
-            <Col lg={3} xs={6}>
-            <div className="cell-label">
-              Name:
-            </div>
-            <div className="cell-value">
-              {poolCreationReceipt.poolName}
-            </div>
-            </Col>
-            <Col lg={3} xs={6}>
-            <div className="cell-label">
-              Symbol:
-            </div>
-            <div className="cell-value">
-              {poolCreationReceipt.poolSymbol}
-            </div>
-            </Col>
-            <Col lg={3} xs={6}>
-            <div className="cell-label">
-              Supply:
-            </div>
-            <div className="cell-value">
-            {poolCreationReceipt.poolSupply}
-            </div>
-            </Col>
-            <Col lg={3} xs={6}>
-            <div className="cell-label">
-              Decimals:
-            </div>
-            <div className="cell-value">
-            {poolCreationReceipt.decimals}
-            </div>
-            </Col>
-            </Row>
-            <Row>
-              <Col lg={6} xs={12}>
-            <div className="cell-label">Pool Token Address: </div>
-            <div className="cell-value">
-              {smartTokenContract._address}
-            </div>
-            </Col>
-            <Col lg={6} xs={12}>
-            <div className="cell-label">Pool Converter Address: </div>
-            <div className="cell-value">
-              {converterContract._address}
-            </div>
-            </Col>
-            </Row>
-          </div>
-          <div>
-          <div className="h6">Reserves</div>
-          </div>
-          <ListGroup>
-          {poolConvertibleTokens}
-          </ListGroup>
-        </Container>
-        </div>
-        )
-    }
-    return (
-      <div className="receipt-page-container">
-        {receiptObject}
-      </div>
-
-      )
-  }
-}
-
 
