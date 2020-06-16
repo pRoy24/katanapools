@@ -67,6 +67,12 @@ export default class Landing extends Component {
   render() {
 
     let appHome = <span/>;
+    return (
+      <div className="placeholder-text">
+      Katanapools will be back shortly.
+      <div>We are actively developing changes required to support contract v0.6</div>
+      </div>
+      )
     if (this.state.currentView === 'home') {
       appHome = <AppHome {...this.props}/>
     } else if (this.state.currentView === 'prompt'){
