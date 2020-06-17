@@ -481,6 +481,10 @@ export default class SelectedPool extends Component {
   
   render() {
     const {pool: {currentSelectedPool, currentSelectedPoolError}} = this.props;
+    console.log(currentSelectedPool);
+    console.log("&&&");
+    console.log(this.props);
+    console.log("DDD");
     const {reservesNeeded, reservesAdded, fundAllReservesActive, fundOneReserveActive, singleTokenFundConversionPaths,
       withdrawAllReservesActive, withdrawOneReserveActive, singleTokenWithdrawReserveSelection, singleTokenFundReserveSelection,
       singleTokenWithdrawConversionPaths, calculatingFunding, calculatingWithdraw, submitFundingEnabled, fundingCalculateInit, withdrawCalculateInit,

@@ -53,7 +53,7 @@ class ViewPool extends Component {
   getPoolDetailsPage = (selectedPool) => {
     const {history} = this.props;
     history.replace(`/pool/view/${selectedPool.symbol}`);
-   this.props.getPoolDetails(selectedPool);
+    this.props.getPoolDetails(selectedPool);
   }
   render() {
     const {poolData, poolSymbol} = this.state;
@@ -170,7 +170,11 @@ class ViewPoolWidget extends Component {
                           <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
                         </div>
                         )
+    console.log("&&&&");
+    console.log(currentSelectedPool);
+    
     if (isNonEmptyObject(currentSelectedPool)) {
+      console.log("GETTING SELECTED POOL");
       selectedPool =  <SelectedPool {...this.props} setErrorMessage={this.setErrorMessage} resetErrorMessage={this.resetErrorMessage}/>
     }
     let transactionStatusMessage = <span/>;

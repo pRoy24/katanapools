@@ -30,6 +30,11 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
     
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
+      console.log(fromToken);
+      console.log(toToken);
+      console.log(type);
+      console.log(amount);
+      console.log("****");
       dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
         if (response.payload.status  === 200) {
           if (type === 'from') {
