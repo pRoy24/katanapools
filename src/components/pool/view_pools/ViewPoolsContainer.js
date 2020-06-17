@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
   setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure,
-  getPoolApproval, getPoolApprovalSuccess, getPoolRevocation, getPoolRevocationSuccess,
+  getPoolApproval, getPoolApprovalSuccess, getPoolRevocation, getPoolRevocationSuccess, setUpdatePool
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken, getAllowanceOfToken, setTokenAllowance, revokeTokenAllowance, submitSwapToken} from '../../../utils/ConverterUtils';
 import {isEmptyString} from '../../../utils/ObjectUtils';
@@ -21,7 +21,7 @@ const EtherToken = require('../../../contracts/EtherToken.json');
 const BigNumber = require('bignumber.js');
 const Decimal = require('decimal.js');
 
-
+var ConverterUtils = require('../../../utils/ConverterUtils');
 var RegistryUtils =require('../../../utils/RegistryUtils');
 
 const mapStateToProps = state => {
@@ -52,8 +52,30 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       })
     },
 
-    submitPoolBuy: (args) => {
-      createBuyWithArguments(args, dispatch);
+    submitPoolBuy: (reserveList, amountList, converter) => {
+      const web3 = window.web3;
+      const ConverterContract = new web3.eth.Contract(BancorConverter, converter);
+      const walletAddress = web3.currentProvider.selectedAddress;
+
+      let poolApprovals = reserveList.map(function(item, idx){
+        const ReserveTokenContract = new web3.eth.Contract(ERC20Token, item);
+        return ConverterUtils.getContractApproval(ReserveTokenContract, converter, amountList[idx]).then(function(approval){
+          return approval;
+        })
+      });
+
+      Promise.all(poolApprovals).then(function(approvalResponse){
+          dispatch(setUpdatePool({'type': 'pending', 'message': 'Waiting for user approval for pool funding'}));
+        ConverterContract.methods.addLiquidity(reserveList, amountList , 1).send({
+          from: walletAddress
+          }).then(function(fundingResponse){
+          dispatch(setUpdatePool({'type': 'success', 'message': 'Successfully finished funding the pool'}));
+        }).catch(function(err){
+          dispatch(setUpdatePool({'type': 'failure', 'message': err.toString()}))
+          console.log(err);
+        })
+        
+      })
     },
 
     submitPoolBuyWithSingleReserve: (payload) => {
@@ -116,39 +138,23 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       })
     },
     
-    submitPoolSell: (args) => {
+    submitPoolSell: (amount, reserves, minReserveAmounts, converter) => {
       const web3 = window.web3;
       const senderAddress = web3.currentProvider.selectedAddress;
 
-      const ConverterContract = new web3.eth.Contract(BancorConverter, args.converterAddress);
+      const ConverterContract = new web3.eth.Contract(BancorConverter, converter);
       dispatch(setPoolTransactionStatus({type: 'pending', message: 'Waiting for user approval'}));
 
-      ConverterContract.methods.liquidate(args.poolTokenSold).send({
+      console.log(amount);
+      console.log(reserves);
+      console.log(minReserveAmounts);
+      
+      ConverterContract.methods.removeLiquidity(amount, reserves, minReserveAmounts).send({
         from: senderAddress
       }, function(err, txHash){
         dispatch(setPoolTransactionStatus({type: 'pending', message: 'Liquidating pool tokens into reserve tokens.'}));
       }).then(function(sendResponse){
-
-        let withdrawEth = args.reservesAdded.map(function(reserve){
-          if (reserve.symbol === 'ETH') {
-            // withdraw from ether token to wallet
-            const reserveContract = new web3.eth.Contract(EtherToken, reserve.address);
-           return reserveContract.methods.withdraw(reserve.addedMin).send({from: senderAddress}, function(err, txHash){
-                   dispatch(setPoolTransactionStatus({type: 'pending', message: 'Withdrawing Ether from contract.'}));
-           }).then(function(response){
-              return response;
-            });
-          } else {
-            return null;
-          }
-        }).filter(Boolean);
-        if (withdrawEth) {
-          Promise.all(withdrawEth).then(function(withdrawEthResponse){
-            dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
-          })
-        } else {
-          dispatch(setPoolTransactionStatus({type: 'success', message: 'Successfully Liquidated pool tokens for reserve tokens'}));
-        }
+        dispatch(setPoolTransactionStatus({type: 'success', message: 'successfully liquidated pool tokens into reserve tokens.'}));
       }).catch(function(err){
           dispatch(setPoolTransactionStatus({type: 'error', message: err.message}));
       })
