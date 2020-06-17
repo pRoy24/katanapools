@@ -280,8 +280,6 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 
 function getUserPoolHoldings(poolRow) {
-  console.log(poolRow);
-  console.log("***");
   const web3 = window.web3;
   if (web3 && web3.currentProvider) {
   const senderAddress = web3.currentProvider.selectedAddress;
@@ -359,7 +357,7 @@ function getSenderBalanceOfToken(SmartTokenContract, senderAddress) {
 }
 
 function getReserveBalance(BancorConverterContract, reserveTokenAddress) {
-  return  BancorConverterContract.methods.getReserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
+  return  BancorConverterContract.methods.reserveBalance(reserveTokenAddress).call().then(function(reserveTokenBalance){
     return reserveTokenBalance;
   }).catch(function(err){
     return 0;

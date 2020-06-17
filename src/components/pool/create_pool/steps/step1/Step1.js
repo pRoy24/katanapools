@@ -156,13 +156,15 @@ export default class Step1 extends Component {
 
   render() {
 
-    const {baseReserveWeight, reserveFee, tokenArrayList, poolType, pool, poolSymbolDefault, poolNameDefault, detailsVisible} = this.state;
-    const {getTokenDetail, isFetching, isCreationStepPending, isError} = this.props;
+    const {baseReserveWeight, tokenArrayList, poolType, poolSymbolDefault, detailsVisible} = this.state;
+    const { isError, pool: {relayConverterStatus}} = this.props;
     const {poolName, poolSymbol, poolDecimals} = this.state;
 
-    let weightPromptMessage = <span/>;
     const self = this;
-
+    let isCreationStepPending = false;
+    if (relayConverterStatus && relayConverterStatus.type === 'pending') {
+      isCreationStepPending = true;
+    }
     let relaySelectButton = '';
     let ercSelectButton = '';
 
@@ -418,13 +420,7 @@ function renderConvertibleTokenTooltip(props) {
         }
         </Col>
         <Col lg={8}>
-          <div className="sub-text">
-            <div className="subtext-label">On clicking next you will be required to perform {numTransactions} transactions.</div>
-            <div onClick={this.toggleDetailsBox} className="details-bar">Details <FontAwesomeIcon icon={faChevronDown}/></div>
-            <div>
-              {transactionDetails}
-            </div>
-          </div>
+
         </Col>
         </Row>
       </Form>

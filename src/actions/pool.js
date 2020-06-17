@@ -65,6 +65,15 @@ export const ACTIVATE_CONVERTER_STATUS = 'ACTIVATE_CONVERTER_STATUS';
 
 export const SET_CREATE_POOL = 'SET_CREATE_POOL';
 
+export const SET_UPDATE_POOL = 'SET_UPDATE_POOL';
+
+export function setUpdatePool(payload) {
+  return {
+    type: SET_UPDATE_POOL,
+    payload: payload
+  }
+}
+
 export function setCreatePool(payload) {
   return {
     type: SET_CREATE_POOL,

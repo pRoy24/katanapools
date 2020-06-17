@@ -2,7 +2,8 @@ import CreateNewPool from './CreateNewPool';
 
 import {connect} from 'react-redux';
 import { deployRelayConverterStatus, setPoolFundedStatus,
-     setTokenListDetails, resetPoolStatus, setPoolFundedSuccess,activateConverterStatus, setCreatePool
+     setTokenListDetails, resetPoolStatus, setPoolFundedSuccess,activateConverterStatus, setCreatePool,
+     setUpdatePool
 } from '../../../actions/pool';
 import {refetchSmartAndConvertibleTokens, refetchSmartAndConvertibleTokensSuccess, refetchSmartAndConvertibleTokensFailure} from '../../../actions/tokens';
 
@@ -46,6 +47,8 @@ const mapDispatchToProps = (dispatch) => {
     const walletAddress = web3.currentProvider.selectedAddress;     
 
      RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(converterRegistryAddress){
+       console.log(converterRegistryAddress);
+       
        const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
        const poolTokenName = args.poolName;
        const poolTokenSymbol = args.poolSymbol;
@@ -91,7 +94,6 @@ const mapDispatchToProps = (dispatch) => {
       const web3 = window.web3;
       const walletAddress = web3.currentProvider.selectedAddress;     
       const {converterAddress} = args;
-      console.log("Converter address" +converterAddress);
       const ConverterContract = new web3.eth.Contract(LiquidityPoolConverter, converterAddress);
     
       ConverterContract.methods.acceptOwnership().send({
@@ -166,18 +168,15 @@ const mapDispatchToProps = (dispatch) => {
           return approval;
         })
       });
-      console.log("&&&");
-      console.log(reserveList);
-      console.log(amountList);
-      console.log(walletAddress);
-      Promise.all(poolApprovals).then(function(approvalResponse){
 
-        ConverterContract.methods.addLiquidity(reserveList, ['100000000000000000', '100000000000000000'] , 1).send({
+      Promise.all(poolApprovals).then(function(approvalResponse){
+          dispatch(setUpdatePool({'type': 'pending', 'message': 'Waiting for user approval for pool funding'}));
+        ConverterContract.methods.addLiquidity(reserveList, amountList , 1).send({
           from: walletAddress
           }).then(function(fundingResponse){
-          console.log("Finished funding");
-          console.log(fundingResponse);
+          dispatch(setUpdatePool({'type': 'success', 'message': 'Successfully finished funding the pool'}));
         }).catch(function(err){
+          dispatch(setUpdatePool({'type': 'failure', 'message': err.toString()}))
           console.log(err);
         })
         

@@ -210,7 +210,7 @@ export default class CreateNewPool extends Component {
 
     const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
-    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, isCreationStepPending, activationStatus, poolCreationHeader}} = this.props;
+    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, activationStatus, poolCreationHeader}} = this.props;
 
     let transactionStatusMessage = <span/>;
 
@@ -293,7 +293,7 @@ export default class CreateNewPool extends Component {
     }
     let currentPage = <span/>;
 
-    if (showReceiptPage === true) {
+    if (showReceiptPage === false) {
       currentPage = (
         <Stepper contextRef={this.appStepper} initialStep={STEP1}>
           <Step stepId={STEP1} data="Step 1 initial state" title="Pool and Converter details" description="Configure convertible token">
