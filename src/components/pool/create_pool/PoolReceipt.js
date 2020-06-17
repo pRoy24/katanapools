@@ -37,14 +37,12 @@ export default class PoolReceipt extends Component {
     const converterAddress = relayConverterStatus.message.events["1"].address;
     const smartTokenAddress = relayConverterStatus.message.events.SmartTokenAdded.returnValues._smartToken;
 
-        const convertibleTokens = relayConverterStatus.message.events.ConvertibleTokenAdded.map(function(item){
-          return item.returnValues._convertibleToken;
-        })
+    const convertibleTokens = relayConverterStatus.message.events.ConvertibleTokenAdded.map(function(item){
+      return item.returnValues._convertibleToken;
+    })
         
-    setTimeout(function(){
-       self.props.fetchPoolDetails({'pool': smartTokenAddress, 'converter': converterAddress, 'reserves': convertibleTokens})
-       
-    }, 4000);
+    self.props.fetchPoolDetails({'pool': smartTokenAddress, 'converter': converterAddress, 'reserves': convertibleTokens})
+
   }
     
     toggleExpandSetConversionFee = () => {
@@ -76,12 +74,17 @@ export default class PoolReceipt extends Component {
         return item.data.address;
       });
       const amountMap = reserves.map(function(item){
-        console.log(item)
         return toDecimals(item.amount, item.data.decimals);
       });
-      console.log(reserveMap);
-      console.log(amountMap);
       this.props.approveAndFundPool(reserveMap, amountMap, converterAddress);
+    }
+    
+    openPoolTab = () => {
+      const {pool: {createPool, relayConverterStatus}} = this.props;
+      if (createPool && createPool.symbol) {
+        var win = window.open(`https://katanapools.com/pool/view/${createPool.symbol}`, '_blank');
+        win.focus();
+      }
     }
     
     render() {
@@ -131,8 +134,11 @@ export default class PoolReceipt extends Component {
             </Row>            
             )
         }
+        let transactionStatus = <span/>;
+        
         return (
         <div className="create-pool-form-container app-toolbar-container">
+        {transactionStatus}
         <Container>
               <div className="header">
                 Congratulations !! Your pool has been deployed successfully.
@@ -214,7 +220,7 @@ export default class PoolReceipt extends Component {
                 </Col>
                 <Col lg={12} className="app-next-step-col">
                   <div onClick={this.gotoPoolPage}>
-                  View your pool <FontAwesomeIcon icon={faChevronRight}/>
+                  View your pool <FontAwesomeIcon icon={faChevronRight} onClick={this.openPoolTab}/>
                   </div>
                 </Col>
               </Row>
