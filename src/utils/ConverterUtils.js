@@ -1,7 +1,7 @@
 import {toDecimals, fromDecimals} from './eth';
 var RegistryUtils = require('./RegistryUtils');
 const BancorConverterRegistry = require('../contracts/ConverterRegistry.json');
-const BancorConverter = require('../contracts/ConverterBase.json');
+const BancorConverter = require('../contracts/LiquidityPoolV1Converter.json');
 const BancorNetwork = require('../contracts/BancorNetwork');
 const ERC20Token = require('../contracts/ERC20Token.json');
 const BancorForumla = require('../contracts/BancorFormula.json');

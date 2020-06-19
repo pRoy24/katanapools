@@ -7,7 +7,7 @@ const ERC20Token = require('../contracts/ERC20Token.json');
 
 const BancorNetworkPathFinder = require('../contracts/ConversionPathFinder.json');
 
-const BancorConverter = require('../contracts/ConverterBase.json');
+const BancorConverter = require('../contracts/LiquidityPoolV1Converter.json');
 
 const axios = require('axios');
 
