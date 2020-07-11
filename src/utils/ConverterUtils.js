@@ -78,7 +78,7 @@ const Decimal = require('decimal.js');
 
   export function getSmartTokensInRegistry() {
     let web3 = window.web3;
-    return RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(registryAddress){
+    return RegistryUtils.getContractAddress('ConverterRegistry').then(function(registryAddress){
       let converterRegistry = new web3.eth.Contract(BancorConverterRegistry, registryAddress);
       return converterRegistry.methods.getSmartTokens().call()
       .then(function(data){

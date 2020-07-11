@@ -11,7 +11,6 @@ export default class ViewPaths extends Component {
     render() {
         const {fromPathListWithRate, toPathListWithRate, fromToken, toToken, fromPathLoading, toPathLoading, setProviderNotification} = this.props;
 
-        let paths = <span/>;
         let fromPathListItems = <span/>;
         let toPathListItems = <span/>;
         if (isNonEmptyArray(fromPathListWithRate)) {
@@ -204,6 +203,7 @@ class ConversionPathList extends Component {
         let {fromToken, toToken, pathList} = this.props;
         const {showMain, transferAmount} = this.state;
         const self = this;
+
         if (pathList.length === 0) {
             return <span/>;
         }
@@ -214,7 +214,8 @@ class ConversionPathList extends Component {
          if (pathList.length > 2) {
              viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
          }
-
+         console.log(pathList);
+         
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>
@@ -233,15 +234,21 @@ class ConversionPathList extends Component {
             </Row>
             </div>
             {
+          
+            
             pathList.slice(0, 2).map(function(item, idx){
                 let isBestPath = "";
                 if (idx === 0) {
                     isBestPath = "best-path";
                 }
+                console.log(item);
+                
                 return (<ListGroupItem key={`frompath-${idx}`} className={`path-row ${isBestPath}`}>
                 <Row>
                 <Col lg={10} className="token-path-display">
                 {item.path.map(function(cell, idx){
+
+                
                 let pointerArrow = <span/>;
                 if (idx < item.path.length - 1) {
                       pointerArrow =
