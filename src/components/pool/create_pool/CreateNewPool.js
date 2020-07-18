@@ -23,12 +23,16 @@ export default class CreateNewPool extends Component {
     super(props);
     this.state = {stepOneReceipt: {}, tokenName: '', isResolved: false, converibleTokenAddress: '',
                   poolName: '', poolSymbol: '', showReceiptPage: false, isError: false, errorMessage: '',
-                  tokenAddressList: [], currentStep: 'step2'};
+                  tokenAddressList: [], currentStep: 'step2', poolView: 'v1'};
     this.appStepper = React.createRef();
   }
-  
+
   setStepOneReceipt = (val) => {
     this.setState({stepOneReceipt: val});
+  }
+  
+  setCurrentPoolView = (type) => {
+    this.setState({'poolView': type});
   }
 
   getAddressList = () => {
@@ -139,9 +143,12 @@ export default class CreateNewPool extends Component {
   fundRelayWithSupply = (vals) => {
     const self = this;
     const {pool, pool: {relayContractReceipt, converterContractReceipt, smartTokenContract}} = this.props;
-    const {relayTokenAddress, convertibleTokenAddress} = this.state;
+    const {relayTokenAddress, convertibleTokenAddress, poolView} = this.state;
     const tokenList = vals.tokenAddressList;
 
+    if (poolView === 'v2') {
+      return <div>Bancor V2 pools are coming soon</div>
+    }
     let isValidationError = false;
     tokenList.forEach(function(tokenItem, idx){
       if (parseFloat(tokenItem.amount) > parseFloat(tokenItem.senderBalance)) {
@@ -314,7 +321,7 @@ export default class CreateNewPool extends Component {
 
     return (
       <div>
-        <CreateNewPoolToolbar poolCreationHeader={poolCreationHeader}/>
+        <CreateNewPoolToolbar poolCreationHeader={poolCreationHeader} setCurrentPoolView={this.setCurrentPoolView}/>
         <div className="create-pool-wizard-container">
            {transactionStatusMessage}
            {currentPage}

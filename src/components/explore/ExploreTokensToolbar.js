@@ -21,20 +21,21 @@ export default class ExploreTokensToolbar extends Component {
         const {isAdvancedActive, isBasicActive} = this.state;
         return (
             <div>
-                <Row className="toolbar-row">
-        <Col lg={4} xs={4}>
-              <div className="h5 page-header left-align-text">Explore and Swap Tokens</div>
-        </Col>
-        <Col lg={8} xs={8}>
-         <ButtonGroup className={`explore-tokens-toolbar-btngroup`}>
-          <Button className={`explore-toolbar-btn ${isAdvancedActive}`} onClick={this.advancedViewSelected}>
-          Advanced
-          </Button>
-          <Button className={`explore-toolbar-btn ${isBasicActive}`} onClick={this.basicViewSelected}>
-          Basic</Button>
-         </ButtonGroup>
-        </Col>
-                </Row>
+              <Row className="toolbar-row">
+                <Col lg={4} xs={4}>
+                  <div className="h5 page-header left-align-text">Explore and Swap Tokens</div>
+                </Col>
+                <Col lg={8} xs={8}>
+                 <ButtonGroup className={`explore-tokens-toolbar-btngroup`}>
+                  <Button className={`explore-toolbar-btn ${isAdvancedActive}`} onClick={this.advancedViewSelected}>
+                    Advanced
+                  </Button>
+                  <Button className={`explore-toolbar-btn ${isBasicActive}`} onClick={this.basicViewSelected}>
+                    Basic
+                  </Button>
+                 </ButtonGroup>
+                </Col>
+              </Row>
             </div>
             )
     }

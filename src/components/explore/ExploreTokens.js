@@ -82,6 +82,7 @@ class ExploreTokensAdvanced extends Component {
     }
 
     fetchTokenPathsWithRates(fromToken, toToken, type, amount) {
+        
         if (fromToken.symbol !== toToken.symbol) {
          this.props.fetchTokenPathsWithRates(fromToken, toToken, type, amount);
         } else {

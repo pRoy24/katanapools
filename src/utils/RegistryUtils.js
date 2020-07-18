@@ -112,7 +112,6 @@ const axios = require('axios');
   
   export function getContractAddress(contractName) {
     const web3 = window.web3;
-    console.log(web3);
     const currentNetwork = web3.currentProvider.networkVersion;
     let CONTRACT_REGISTRY_ADDRESS = process.env.REACT_APP_BANCOR_CONTRACT_REGISTRY_MAINNET;
     if (currentNetwork && currentNetwork.toString() === '3') {
@@ -132,7 +131,6 @@ const axios = require('axios');
     let converterRegistry = new web3.eth.Contract(BancorConverter, pathAddress);
     
     return converterRegistry.methods.getReturn(from, to, amount).call().then(function(dataRes){
-      console.log(dataRes);
       return dataRes;
     })
   }

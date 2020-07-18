@@ -214,8 +214,7 @@ class ConversionPathList extends Component {
          if (pathList.length > 2) {
              viewAllPaths = <div className="view-toggle-container" onClick={this.toggleHidePath}>{pathList.length - 2} more paths. View All <FontAwesomeIcon icon={faChevronDown}/></div>;
          }
-         console.log(pathList);
-         
+
          return  (<div>
             <div className="h6 conversion-path-header">
             <Row>
@@ -241,8 +240,7 @@ class ConversionPathList extends Component {
                 if (idx === 0) {
                     isBestPath = "best-path";
                 }
-                console.log(item);
-                
+
                 return (<ListGroupItem key={`frompath-${idx}`} className={`path-row ${isBestPath}`}>
                 <Row>
                 <Col lg={10} className="token-path-display">

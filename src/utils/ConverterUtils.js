@@ -360,11 +360,15 @@ const Decimal = require('decimal.js');
   }
 
   export function getDecimalsOfToken(tokenAddress) {
+    if (tokenAddress === process.env.REACT_APP_ETHER_ID_MAINNET) {
+     return new Promise((resolve, reject) => (resolve("18"))) 
+    } else {
       const web3 = window.web3;
       const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
       return erc20Contract.methods.decimals().call().then(function(decimals){
         return decimals;
       })
+    }
   }
 
   export function  submitSwapToken(path, amount, fromAddress, isEth) {
@@ -380,35 +384,23 @@ const Decimal = require('decimal.js');
 
     return RegistryUtils.getContractAddress('BancorNetwork').then(function(bnAddress){
       const bancorNetworkContract = new web3.eth.Contract(BancorNetwork, bnAddress);
-      if (isEth) {
-      return bancorNetworkContract.methods.convert2(path, amount, 1, affiliate_account_address, affiliate_fee)
-        .send({
-          'from': senderAddress,
-          value: amount
-        }).then(function(pathDataResponse){
-          return pathDataResponse;
-        }).catch(function(err){
 
-        });
-      } else {
         let erc20Contract = new web3.eth.Contract(ERC20Token, fromAddress);
-
-        return getApprovalBasedOnAllowance(erc20Contract, bnAddress, amount).then(function(approvalResponse){
-
-          return bancorNetworkContract.methods.claimAndConvert2(path, amount, 1, affiliate_account_address, affiliate_fee)
-            .send({
-              'from': senderAddress,
-            }).catch(function(err){
-
-              // Handle error
-            }).then(function(pathDataResponse){
+      
+        return getApprovalBasedOnAllowance(erc20Contract, bnAddress, amount, isEth).then(function(approvalResponse){
+          const transferAmount = fromAddress === process.env.REACT_APP_ETHER_ID_MAINNET ? amount : 0;
+          console.log(transferAmount);
+          
+          return bancorNetworkContract.methods.convertByPath(path, amount, 1, 
+          '0x0000000000000000000000000000000000000000', affiliate_account_address, affiliate_fee).
+                send({from: senderAddress, value: transferAmount}).then(function(pathDataResponse){
               return pathDataResponse;
             }).catch(function(err){
-
+              console.log(err);
 
             });
         })
-      }
+
     });
   }
   
@@ -575,10 +567,12 @@ function getTokenListMeta(tokenList) {
   })
 }
 
-function getApprovalBasedOnAllowance(contract, spender, amount) {
+function getApprovalBasedOnAllowance(contract, spender, amount, isEth = false) {
   const web3 = window.web3;
   const owner = web3.currentProvider.selectedAddress;
-
+  if (isEth) {
+          return new Promise((resolve, reject)=>(resolve(null)));
+  }
   return contract.methods.decimals().call().then(function(amountDecimals){
   return contract.methods.allowance(owner, spender).call().then(function(allowance) {
 
@@ -619,7 +613,7 @@ function getApprovalBasedOnAllowance(contract, spender, amount) {
           return allowanceResponse;
         })
     } else {
-      return null;
+      return new Promise((resolve, reject)=>(resolve(null)));
     }
   });
   });

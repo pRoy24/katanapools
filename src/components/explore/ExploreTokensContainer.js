@@ -30,6 +30,14 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     },
     
     fetchTokenPathsWithRates: (fromToken, toToken, type, amount) => {
+      if (fromToken.symbol.toLowerCase() === 'eth') {
+        fromToken.address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+      }
+      if (toToken.symbol.toLowerCase() === 'eth') {
+        toToken.address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+      }      
+
+      
       dispatch(getTokenPathsWithRate(fromToken.address, toToken.address, type, amount)).then(function(response){
         if (response.payload.status  === 200) {
           if (type === 'from') {
@@ -56,12 +64,11 @@ const mapDispatchToProps = (dispatch, ownProps) => {
         const availableBalance = new Decimal(fromDecimals(balanceResponse,tokenDecimals));
         const requiredBalance = new Decimal(transferAmount)
         if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
-
           submitSwapToken(networkPath, fromAmount, selectedTransferToken.address, isEth).then(function(response){
-
+            dispatch(swapTokenStatus({type: 'success', 'message': `Successfully completed transaction`}));
           }).catch(function(err){
             if (err.message) {
-
+              dispatch(swapTokenStatus({type: 'error', 'message': err.message}));
             }
           })
         } else {
