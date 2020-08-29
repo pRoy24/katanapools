@@ -4,6 +4,7 @@ import { faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import {ListGroupItem, ListGroup, Row, Col, Alert} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SelectedPool from './SelectedPool';
+import SelectedV2PoolContainer from './SelectedV2PoolContainer';
 import {withRouter} from 'react-router-dom'
 import {isNonEmptyObject, isEmptyArray, isNonEmptyArray, isEmptyObject} from '../../../utils/ObjectUtils';
 
@@ -131,7 +132,7 @@ class ViewPoolWidget extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const {pool: {poolTransactionStatus}, poolData} = this.props;
+    const {pool: {poolTransactionStatus}, poolData, pool} = this.props;
     const {selectedPoolIndex} = this.state;
     const currentPoolRow = poolData[selectedPoolIndex];
     if (prevProps.pool.poolTransactionStatus.type === 'pending' && poolTransactionStatus.type === 'success') {
@@ -140,7 +141,7 @@ class ViewPoolWidget extends Component {
   }
 
   render() {
-    const { pool: {currentSelectedPool, poolTransactionStatus}, poolData, } = this.props;
+    const { pool: {currentSelectedPool, poolTransactionStatus}, poolData, pool} = this.props;
 
     const {selectedPoolIndex, isError, errorMessage} = this.state;
     const self = this;
@@ -170,10 +171,11 @@ class ViewPoolWidget extends Component {
                           <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>
                         </div>
                         )
-
+    
     if (isNonEmptyObject(currentSelectedPool)) {
-      selectedPool =  <SelectedPool {...this.props} currentSelectedPool={currentSelectedPool} setErrorMessage={this.setErrorMessage} resetErrorMessage={this.resetErrorMessage}/>
+      selectedPool  =  <SelectedPool {...this.props} currentSelectedPool={currentSelectedPool} setErrorMessage={this.setErrorMessage} resetErrorMessage={this.resetErrorMessage}/>
     }
+
     let transactionStatusMessage = <span/>;
     if (isError) {
       transactionStatusMessage = <Alert  variant={"danger"}>

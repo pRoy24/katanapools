@@ -563,3 +563,28 @@ margin-bottom: 10px;
   font-weight: 500;
   margin-top: 24px;
 }
+
+
+
+// New CSS
+.step-header {
+  text-align: left;
+  padding-left: 0px;
+  padding-top: 0px;
+  padding-bottom: 10px;
+  .h4 {
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+  .label-text {
+    line-height: 1em;
+    font-size: 12px;
+  }
+}
+
+.active-select-btn {
+  -webkit-box-shadow: inset 0px 2px 5px 2px #d3d3d3;
+  -moz-box-shadow: inset 0px 2px 5px 2px #d3d3d3;
+  box-shadow: inset 0px 2px 5px 2px #d3d3d3;
+}

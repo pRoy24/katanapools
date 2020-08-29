@@ -43,12 +43,3 @@ class SelectBase extends Component {
   }
 }
 
-class SelectReserve extends Component {
-  render() {
-    return (
-      <div>
-      
-      </div>
-      )
-  }
-}

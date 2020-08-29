@@ -5,6 +5,7 @@ import {toDecimals, fromDecimals} from '../../../utils/eth';
 import {isEmptyString, isEmptyArray, isNonEmptyArray} from '../../../utils/ObjectUtils';
 import {VictoryChart, VictoryLine, VictoryAxis} from 'victory';
 import moment from 'moment';
+import SelectedV2PoolContainer from './SelectedV2PoolContainer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import {getTokenConversionPath, getTokenFundConversionAmount, getTokenWithdrawConversionAmount, getFundAmount, getLiquidateAmount} from '../../../utils/ConverterUtils';
@@ -519,10 +520,7 @@ export default class SelectedPool extends Component {
     const self = this;
     
     let isPurchaseBtnDisabled = false;
-    let isPurchaseSubmitBtnDisabled = false;
-    
-    let allInputPurchasedDisabled = false;
-    let allInputWithdrawDisabled = false;
+
     
     let isFundingLoading = <span/>;
     let isWithdrawLoading = <span/>;
@@ -533,23 +531,13 @@ export default class SelectedPool extends Component {
     if (calculatingWithdraw && !withdrawCalculateInit) {
       isWithdrawLoading = <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>;
     }
-    
-    if (calculatingAllInputFunding) {
-      allInputPurchasedDisabled = true;
-    }
-    if (calculatingAllInputWithdraw) {
-      allInputWithdrawDisabled = true;
-    }
-    
+
     let isWithdrawBtnDisabled = false;
     
     if (calculatingFunding) {
      // isPurchaseBtnDisabled = true;
     }
-    
-    if (calculatingFunding && !submitFundingEnabled) {
-      isPurchaseSubmitBtnDisabled = true;
-    }
+
     if (calculatingWithdraw) {
       isWithdrawBtnDisabled = true;
     }
@@ -804,6 +792,29 @@ export default class SelectedPool extends Component {
         <div>Set allowances for BancorConverter for faster pool funding and liquidation and save on Gas costs</div>
         </Tooltip>;
     }
+    
+    let currentPoolTransactions = <span/>;
+
+    if (currentSelectedPool.poolVersion === '1') {
+      currentPoolTransactions = (
+          <div>
+          <Col lg={6}>
+            <div className="allowance-label">Fund Pool Holdings</div>
+            {poolFundAction}
+          </Col>
+          <Col lg={6}>
+            <div className="allowance-label">Liquitate Pool Holdings</div>
+            {poolLiquidateAction}
+          </Col>
+          </div>
+        )
+    } else {
+      currentPoolTransactions = (
+        <div>
+          <SelectedV2PoolContainer pool={this.props.pool}/>
+        </div>
+        )
+    }
 
     return (
       <div>
@@ -870,29 +881,8 @@ export default class SelectedPool extends Component {
         </Row>
         
         <Row className="selected-pool-buy-sell-row">
-          <Col lg={6}>
-            <div className="allowance-label">Fund Pool Holdings</div>
-            <ButtonGroup className="reserve-toggle-btn-group">
-              <Button className={`reserve-toggle-btn ${fundAllReservesActive}`} onClick={self.fundReserveToggle.bind(self, 'all')}>
-                Fund with all reserve tokens
-              </Button>
-              <Button className={`reserve-toggle-btn ${fundOneReserveActive}`} onClick={self.fundReserveToggle.bind(self, 'one')}>
-                Fund with one reserve token
-              </Button>
-            </ButtonGroup>
-            {poolFundAction}
-          </Col>
-          <Col lg={6}>
-            <div className="allowance-label">Liquitate Pool Holdings</div>
-            <ButtonGroup className="reserve-toggle-btn-group">
-              <Button className={`reserve-toggle-btn ${withdrawAllReservesActive}`} onClick={self.withdrawReserveToggle.bind(self, 'all')}>
-                Liquidate to all reserve tokens
-              </Button>
-              <Button className={`reserve-toggle-btn ${withdrawOneReserveActive}`} onClick={self.withdrawReserveToggle.bind(self, 'one')}>
-                Liquidate to one reserve token
-              </Button>
-            </ButtonGroup>
-            {poolLiquidateAction}
+          <Col lg={12}>
+          {currentPoolTransactions}
           </Col>
         </Row>
         

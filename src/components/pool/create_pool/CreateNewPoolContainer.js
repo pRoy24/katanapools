@@ -3,9 +3,10 @@ import CreateNewPool from './CreateNewPool';
 import {connect} from 'react-redux';
 import { deployRelayConverterStatus, setPoolFundedStatus,
      setTokenListDetails, resetPoolStatus, setPoolFundedSuccess,activateConverterStatus, setCreatePool,
-     setUpdatePool
+     setUpdatePool, setCurrentPoolView
 } from '../../../actions/pool';
-import {refetchSmartAndConvertibleTokens, refetchSmartAndConvertibleTokensSuccess, refetchSmartAndConvertibleTokensFailure} from '../../../actions/tokens';
+import {refetchSmartAndConvertibleTokens, refetchSmartAndConvertibleTokensSuccess,
+        refetchSmartAndConvertibleTokensFailure} from '../../../actions/tokens';
 
 
 import {isNonEmptyObject} from '../../../utils/ObjectUtils';
@@ -14,6 +15,8 @@ import {getFullBalanceOfToken} from '../../../utils/ConverterUtils';
 
 const SmartToken = require('../../../contracts/SmartToken.json');
 const LiquidityPoolConverter = require('../../../contracts/LiquidityPoolV1Converter.json');
+
+const LiquidityPoolV2Converter = require('../../../contracts/LiquidityPoolV2Converter.json');
 const RegistryUtils = require('../../../utils/RegistryUtils');
 
 const ConverterUtils = require('../../../utils/ConverterUtils');
@@ -37,6 +40,9 @@ const mapStateToProps = state => {
 const mapDispatchToProps = (dispatch) => {
   return {
 
+   setCurrentPoolView: (poolType) => {
+     dispatch(setCurrentPoolView(poolType));
+   },
    resetPoolStatus: () => {
      dispatch(resetPoolStatus());
    },
@@ -47,8 +53,6 @@ const mapDispatchToProps = (dispatch) => {
     const walletAddress = web3.currentProvider.selectedAddress;     
 
      RegistryUtils.getContractAddress('BancorConverterRegistry').then(function(converterRegistryAddress){
-       console.log(converterRegistryAddress);
-       
        const ConverterRegistryContract = new web3.eth.Contract(BancorConverterRegistry, converterRegistryAddress);
        const poolTokenName = args.poolName;
        const poolTokenSymbol = args.poolSymbol;
@@ -56,7 +60,7 @@ const mapDispatchToProps = (dispatch) => {
        const poolTokenReserves = args.reserves;
        const poolTokenWeights = args.weights;
        const maxConversionFee = 3 * 10000;
-       const poolType = 1;
+       const poolType = args.poolType;
 
        ConverterRegistryContract.methods.newConverter(
            poolType,
@@ -78,6 +82,11 @@ const mapDispatchToProps = (dispatch) => {
        })
      })
    },
+   
+   activatePoolOwnership: (args) => {
+     
+   },
+   
    
    fetchPoolDetails: (poolData) => {
      const poolAddress = poolData.pool;
@@ -107,6 +116,18 @@ const mapDispatchToProps = (dispatch) => {
         dispatch(activateConverterStatus({type: 'failure', message: err}))
       })
     },
+    
+    activateV2Pool: (args) => {
+      console.log(args);
+      const web3 = window.web3;
+      const walletAddress = web3.currentProvider.selectedAddress;         
+      const ConverterV2Contract = new web3.eth.Contract(LiquidityPoolV2Converter, args.converterAddress);
+      ConverterV2Contract.methods.activate(args.primaryReserveToken, args.primaryReserveOracle, args.secondaryReserveOracle).send({
+        from: walletAddress
+      }).then(function(response){
+        console.log(response);
+      })
+    },
 
    getTokenDetailFromAddress: (val, idx) => {
       const web3 = window.web3;
@@ -115,7 +136,7 @@ const mapDispatchToProps = (dispatch) => {
       if (val && val.length > 0) {
 
       ERC20TokenContract.methods.symbol().call().then(function(tokenSymbol){
-        
+        ERC20TokenContract.methods.name().call().then(function(tokenName){
         ERC20TokenContract.methods.decimals().call().then(function(decimals){
           
       
@@ -131,10 +152,11 @@ const mapDispatchToProps = (dispatch) => {
           if (dataResponse.data && dataResponse.data.USD) {
             tokenPrice = dataResponse.data.USD;
           }
-          const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice, "decimals": decimals}};
+          const poolData = {'idx': idx, 'data': {'address': val, 'symbol': tokenSymbol, 'price': tokenPrice, "decimals": decimals, 'name': tokenName}};
          dispatch(setTokenListDetails(poolData));
         })
         })
+        });
         });
         
         });

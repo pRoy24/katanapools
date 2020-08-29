@@ -16,6 +16,9 @@ import 'react-material-stepper/dist/react-stepper.css';
 import AddressDisplay from '../../common/AddressDisplay';
 import CreateNewPoolToolbar from './CreateNewPoolToolbar';
 import PoolReceipt from './PoolReceipt';
+import CreateV1Pool from './v1/CreateV1Pool';
+import CreateV2Pool from './v2/CreateV2Pool';
+
 
 export default class CreateNewPool extends Component {
   static contextType = StepperContext;
@@ -183,16 +186,7 @@ export default class CreateNewPool extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {pool: {smartTokenContract, relayConverterStatus, poolFundedStatus, activationStatus}} = nextProps;
 
-    if (isNonEmptyObject(relayConverterStatus) && relayConverterStatus.type === 'success' && this.props.pool.relayConverterStatus.type === 'pending') {
-      this.setState({currentStep: 'step2'})
-      this.appStepper.current.resolve();
-    }
-
-    if (isNonEmptyObject(activationStatus) && activationStatus.type === 'success' && this.props.pool.activationStatus.type === 'pending') {
-    this.setState({showReceiptPage: true});
-    }
   }
 
   setFormError = (errorMessage)  => {
@@ -212,116 +206,29 @@ export default class CreateNewPool extends Component {
   }
 
   render() {
-    const STEP1 = "step-one";
-    const STEP2 = "step-two";
+
+    
+
 
     const {poolSymbol, isResolved, showReceiptPage, isError, errorMessage, tokenAddressList, currentStep} = this.state;
 
-    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, activationStatus, poolCreationHeader}} = this.props;
-
+    const {pool: {smartTokenStatus, relayConverterStatus, poolFundedStatus, activationStatus, poolCreationHeader, currentPoolType}} = this.props;
+    let currentPage = <span/>;
     let transactionStatusMessage = <span/>;
 
-    if (isError) {
-      transactionStatusMessage = (
-            <Alert  variant={"danger"}>
-              {errorMessage}
-            </Alert>)
+    
+    if (currentPoolType === 'v2') {
+      currentPage = <CreateV2Pool {...this.props}/>
+    } else if (currentPoolType === 'v1') {
+      currentPage = <CreateV1Pool {...this.props}/>
     } else {
-
-    if (smartTokenStatus) {
-        let message = <span/>;
-        if (smartTokenStatus.message) {
-          message = smartTokenStatus.message;
-        }
-
-
-        if (smartTokenStatus.type === 'pending') {
-          if (smartTokenStatus.transactionHash) {
-            message = <div className="broadcast-container">Deploying pool contract <AddressDisplay address={smartTokenStatus.transactionHash}/></div>;
-          }
-          transactionStatusMessage = (
-              <Alert  variant={"info"}>
-                <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-                {message}
-              </Alert>
-            )
-        } else if (smartTokenStatus.type === 'error') {
-
-          transactionStatusMessage = (
-              <Alert  variant={"danger"}>
-                {smartTokenStatus.message}
-                Fix errors and click Resume to continue.
-              </Alert>
-            )
-        }
-
-      } else {
-        transactionStatusMessage = <span/>;
-      }
-
-      if (isNonEmptyObject(relayConverterStatus)) {
-        if (relayConverterStatus.type === 'pending') {
-        transactionStatusMessage = (
-            <Alert  variant={"info"}>
-              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-              {relayConverterStatus.message}
-            </Alert>
-          )
-        } else if (relayConverterStatus.type === 'success') {
-          transactionStatusMessage = <span/>;
-        }
-      }
-
-      if (isNonEmptyObject(poolFundedStatus)) {
-      if (poolFundedStatus.type === 'pending') {
-        transactionStatusMessage = (
-            <Alert  variant={"info"}>
-              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-              {poolFundedStatus.message}
-            </Alert>
-          )
-      } else {
-        transactionStatusMessage = <span/>;
-      }
-      }
-
-      if (isNonEmptyObject(activationStatus)) {
-      if (activationStatus.type === 'pending') {
-        transactionStatusMessage = (
-            <Alert  variant={"info"}>
-              <FontAwesomeIcon icon={faSpinner} size="lg" rotation={270} pulse/>&nbsp;
-              {activationStatus.message}
-            </Alert>
-          )
-      } else {
-        transactionStatusMessage = <span/>;
-      }
-      }
-    }
-    let currentPage = <span/>;
-
-    if (showReceiptPage === false) {
-      currentPage = (
-        <Stepper contextRef={this.appStepper} initialStep={STEP1}>
-          <Step stepId={STEP1} data="Step 1 initial state" title="Pool and Converter details" description="Configure convertible token">
-              <Step1Container deployContract={this.deployConverterContract} getTokenDetail={this.getTokenDetail}
-              setTokenListRow={this.props.setTokenListRow} setFormError={this.setFormError} resetFormError={this.resetFormError}
-              resumePoolCreation={this.resumePoolCreation}/>
-          </Step>
-          <Step stepId={STEP2} title="Transfer ownership and activate" description="Transfer pool ownership" data={tokenAddressList} tokenAddressList={tokenAddressList}>
-            <Step2Container fundRelayWithSupply={this.fundRelayWithSupply} getAddressList={this.getAddressList} acceptPoolOwnership={this.acceptPoolOwnership}/>
-          </Step>
-        </Stepper>
-        )
-    } else {
-      transactionStatusMessage = <span/>;
-      currentPage = <PoolReceipt pool={this.props.pool} fetchPoolAndConverterDetails={this.props.fetchPoolAndConverterDetails}
-      fetchPoolDetails={this.props.fetchPoolDetails} setConversionFee={this.props.setConversionFee} approveAndFundPool={this.props.approveAndFundPool}/>
+      currentPage = <div>Invalid pool type</div>
     }
 
     return (
       <div>
-        <CreateNewPoolToolbar poolCreationHeader={poolCreationHeader} setCurrentPoolView={this.setCurrentPoolView}/>
+        <CreateNewPoolToolbar poolCreationHeader={poolCreationHeader} setCurrentPoolView={this.setCurrentPoolView}
+          setCurrentPoolView={this.props.setCurrentPoolView}/>
         <div className="create-pool-wizard-container">
            {transactionStatusMessage}
            {currentPage}

@@ -262,7 +262,6 @@ const Decimal = require('decimal.js');
    export function  getBalanceOfToken(tokenAddress, isEth) {
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
-
     if (senderAddress === undefined || senderAddress === null) {
       return new Promise((resolve)=>(resolve('0')));
     }
@@ -284,11 +283,15 @@ const Decimal = require('decimal.js');
   };
   
   export function getAllowanceOfToken(tokenAddress, spenderAddress) {
+    
     const web3 = window.web3;
     const senderAddress = web3.currentProvider.selectedAddress;
 
     if (senderAddress === undefined || senderAddress === null) {
       return new Promise((resolve)=>(resolve('0')));
+    }
+    if (tokenAddress === process.env.REACT_APP_ETHER_ID_MAINNET) {
+      return new Promise((resolve) => (resolve(Number.POSITIVE_INFINITY)));
     }
       const erc20Contract = new web3.eth.Contract(ERC20Token, tokenAddress);
       return erc20Contract.methods.allowance(senderAddress, spenderAddress).call().then(function(addressAllowanceResponse){
