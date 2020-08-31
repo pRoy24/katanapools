@@ -51,6 +51,14 @@ class ViewPool extends Component {
     }
   }
 
+  getPoolDataByView = (smartTokenList) => {
+    const {pool: {currentViewPoolType}} = this.props;
+    console.log(smartTokenList);
+    console.log('&&&&');
+    if (currentViewPoolType === 'all') {
+      return smartTokenList;
+    }
+  }
   getPoolDetailsPage = (selectedPool) => {
     const {history} = this.props;
     history.replace(`/pool/view/${selectedPool.symbol}`);
@@ -58,9 +66,11 @@ class ViewPool extends Component {
   }
   render() {
     const {poolData, poolSymbol} = this.state;
+    const {pool: {currentViewPoolType}} = this.props;
     return (
       <div>
-        <ViewPoolToolbar filterInputList={this.filterInputList}/>
+        <ViewPoolToolbar filterInputList={this.filterInputList} setPoolTypeSelected={this.props.setPoolTypeSelected}
+        currentViewPoolType={currentViewPoolType}/>
         <ViewPoolWidget {...this.props} poolData={poolData} poolSymbol={poolSymbol} getPoolDetailsPage={this.getPoolDetailsPage}/>
       </div>
       )
@@ -141,12 +151,20 @@ class ViewPoolWidget extends Component {
   }
 
   render() {
-    const { pool: {currentSelectedPool, poolTransactionStatus}, poolData, pool} = this.props;
-
+    const { pool: {currentSelectedPool, poolTransactionStatus, currentViewPoolType}, poolData} = this.props;
+     let poolSelectionView = poolData;
+     
+     if (currentViewPoolType === 'all') {
+       poolSelectionView = poolData;
+     } else if (currentViewPoolType === 'v1') {
+       poolSelectionView = poolData.filter((pool) => (pool.poolVersion === '1'));
+     } else {
+       poolSelectionView = poolData.filter((pool) => (pool.poolVersion === '2'));
+     }
     const {selectedPoolIndex, isError, errorMessage} = this.state;
     const self = this;
     let poolDataList = <span/>;
-    if (poolData.length === 0) {
+    if (poolSelectionView.length === 0) {
       poolDataList =  <span/>;
     } else {
       poolDataList =
@@ -155,7 +173,7 @@ class ViewPoolWidget extends Component {
           Symbol
         </ListGroupItem>
        {
-         poolData.map(function(poolRow, idx){
+         poolSelectionView.map(function(poolRow, idx){
          let cellActive = '';
          if (idx === selectedPoolIndex) {
            cellActive = 'cell-active';

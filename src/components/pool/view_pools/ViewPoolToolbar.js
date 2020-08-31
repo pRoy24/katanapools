@@ -7,7 +7,7 @@ export default class ViewPoolToolbar extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      searchInput: '', isAllActive: 'active-btn', isV1Active: '', isV2Active: ''
+      searchInput: '', isAllActive: 'active-toolbar-btn', isV1Active: '', isV2Active: ''
     }
   }
   searchInputChanged  = (evt) => {
@@ -15,8 +15,37 @@ export default class ViewPoolToolbar extends Component {
     this.props.filterInputList(searchVal);
     this.setState({searchInput: searchVal});
   }
+  
+  componentWillReceiveProps(nextProps) {
+    const {currentViewPoolType} = nextProps;
+    if (this.props.currentViewPoolType !== currentViewPoolType) {
+      let isAllActive = '';
+      let isV1Active = '';
+      let isV2Active = '';
+      if (currentViewPoolType === 'all') {
+        isAllActive = 'active-toolbar-btn';
+      }
+      if (currentViewPoolType === 'v1') {
+        isV1Active = 'active-toolbar-btn';
+      }
+      if (currentViewPoolType === 'v2') {
+        isV2Active = 'active-toolbar-btn';
+      }
+      this.setState({
+        'isAllActive': isAllActive,
+        'isV1Active': isV1Active,
+        'isV2Active': isV2Active
+      })
+    }
+  }
+  
+  setPoolTypeSelected = (type) => {
+    this.props.setPoolTypeSelected(type);
+  }
   render() {
-    const {searchInput,isAllActive, isV1Active, isV2Active, } = this.state;
+    const {searchInput, isAllActive, isV1Active, isV2Active, } = this.state;
+    const {currentViewPoolType} = this.props;
+
     return (
       <div>
       <Row className="toolbar-row">
@@ -29,10 +58,10 @@ export default class ViewPoolToolbar extends Component {
         </Col>
         <Col lg={4}>
           <ButtonGroup aria-label="Basic example">
-  <Button className={`explore-toolbar-btn ${isAllActive}`}>All Pools</Button>
-  <Button className={`explore-toolbar-btn ${isV1Active}`}>V1 Pools</Button>
-  <Button className={`explore-toolbar-btn ${isV2Active}`}>V2 Pools</Button>
-</ButtonGroup>
+              <Button className={`explore-toolbar-btn ${isAllActive}`} onClick={()=>this.setPoolTypeSelected('all')}>All Pools</Button>
+              <Button className={`explore-toolbar-btn ${isV1Active}`} onClick={()=>this.setPoolTypeSelected('v1')}>V1 Pools</Button>
+              <Button className={`explore-toolbar-btn ${isV2Active}`} onClick={()=>this.setPoolTypeSelected('v2')}>V2 Pools</Button>
+            </ButtonGroup>
         </Col>
       </Row>
       </div>

@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 
 import {setCurrentSelectedPool, setCurrentSelectedPoolError, setPoolHistory,
   setPoolTransactionStatus, resetPoolHistory, getPoolDetails, getPoolDetailsSuccess, getPoolDetailsFailure,
-  getPoolApproval, getPoolApprovalSuccess, getPoolRevocation, getPoolRevocationSuccess, setUpdatePool
+  getPoolApproval, getPoolApprovalSuccess, getPoolRevocation, getPoolRevocationSuccess, setUpdatePool,
+  setPoolTypeSelected
 } from '../../../actions/pool';
 import {getConvertibleTokensBySmartTokens, getBalanceOfToken, getAllowanceOfToken, setTokenAllowance, revokeTokenAllowance, submitSwapToken} from '../../../utils/ConverterUtils';
 import {isEmptyString} from '../../../utils/ObjectUtils';
@@ -53,6 +54,10 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       getUserPoolHoldings(poolRow).then(function(updatePoolRowResponse){
         dispatch(setCurrentSelectedPool(updatePoolRowResponse))
       })
+    },
+
+    setPoolTypeSelected: (poolType) => {
+      dispatch(setPoolTypeSelected(poolType));
     },
 
     submitPoolBuy: (reserveList, amountList, converter) => {
@@ -285,10 +290,6 @@ function getApproval(contract, owner, spender, amount, dispatch) {
 
 
 function getUserPoolHoldings(poolRow) {
-
-    console.log(poolRow);
-    console.log('YYYY');
-    
     if (poolRow.poolVersion === '2') {
       
       return getV2PoolDetails(poolRow).then(function(response){
@@ -394,16 +395,10 @@ function getV2PoolDetails(poolRow) {
       isEth = true;
       item.decimals = 18;
     }
-    const BancorConverterContract = getPoolConverterContract(poolRow.poolVersion, poolRow.converter)
    
-      let PoolSmartTokenData =poolRow.reserves.map(function(reserve){
-        return BancorConverterContract.methods.poolToken(reserve.address).call().then(function(response){
-          return Object.assign({}, reserve, {'anchorTokenAddress': response});
-        });
-      });
-      
-     return Promise.all(PoolSmartTokenData).then(function(promiseResponse){
+   
 
+const BancorConverterContract = getPoolConverterContract(poolRow.poolVersion, poolRow.converter);
    
     return  getBalanceOfToken(reserveTokenAddress, isEth).then(function(balanceResponse){
 
@@ -429,11 +424,22 @@ function getV2PoolDetails(poolRow) {
           return item;
         })
     
-      });
+
   });
+  
+  
    return Promise.all(poolReserveHoldingsRequest).then(function(response){
 
-
+      let PoolSmartTokenData =poolRow.reserves.map(function(reserve){
+         const BancorConverterContract = getPoolConverterContract(poolRow.poolVersion, poolRow.converter);
+         
+        return BancorConverterContract.methods.poolToken(reserve.address).call().then(function(response){
+          return Object.assign({}, reserve, {'anchorTokenAddress': response});
+        });
+      });
+      
+     return Promise.all(PoolSmartTokenData).then(function(poolTokenData){
+       
     return getSenderBalanceOfToken(SmartTokenContract, senderAddress).then(function(balanceData){
 
       return getPoolTotalSypply(SmartTokenContract).then(function(totalSupply){
@@ -441,7 +447,10 @@ function getV2PoolDetails(poolRow) {
         poolRow.reserves = response;
         poolRow.senderBalance = balanceData;
         poolRow.totalSupply = totalSupply;
+        poolRow.poolTokens = poolTokenData;
         return poolRow;
+    });
+    
     });
   });
    });

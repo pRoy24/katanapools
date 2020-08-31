@@ -5,7 +5,7 @@ SET_POOL_FUNDED_STATUS, SET_ACTIVATION_STATUS, SET_POOL_CREATION_RECEIPT, SET_CU
   DEPLOY_RELAY_CONVERTER_SUCCESS, SET_POOL_FUNDED_SUCCESS, SET_ACTIVATION_SUCCESS, SET_CURRENT_POOL_STATUS, RESET_POOL_HISTORY,
   SET_CONVERTER_CONTRACT, SET_POOL_CREATION_HEADER, GET_POOL_DETAILS, GET_POOL_DETAILS_SUCCESS, GET_POOL_DETAILS_FAILURE,
   GET_POOL_APPROVAL, GET_POOL_APPROVAL_SUCCESS, GET_POOL_REVOCATION, GET_POOL_REVOCATION_SUCCESS, ACTIVATE_CONVERTER_STATUS,
-  SET_CREATE_POOL, SET_UPDATE_POOL, SET_CURRENT_POOL_VIEW
+  SET_CREATE_POOL, SET_UPDATE_POOL, SET_CURRENT_POOL_VIEW, SET_POOL_TYPE_SELECTED
 } from '../actions/pool';
 
 const initialState = {
@@ -32,7 +32,8 @@ const initialState = {
   poolRevocation: '',
   createPool: {},
   updatePool: {},
-  currentPoolType: 'v2'
+  currentPoolType: 'v2',
+  currentViewPoolType: 'all'
 }
 
 const deploy_steps = [
@@ -47,6 +48,8 @@ const deploy_steps = [
 export default function poolReducer (state = initialState, action) {
   let currentTokenList;
   switch (action.type) {
+    case SET_POOL_TYPE_SELECTED:
+      return {...state, currentViewPoolType: action.payload}
     case SET_UPDATE_POOL:
       return {...state, updatePool: action.payload}
     case SET_CURRENT_POOL_VIEW:

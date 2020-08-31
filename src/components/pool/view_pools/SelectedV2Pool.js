@@ -10,7 +10,7 @@ export default class SelectedV2Pool extends Component {
   componentWillMount() {
     const {pool: {currentSelectedPool}} = this.props;
     console.log(currentSelectedPool);
-    if (currentSelectedPool && currentSelectedPool.reserves.length > 0) {
+    if (currentSelectedPool.reserves && currentSelectedPool.reserves.length > 0) {
     this.setState({
       selectedTokenToAdd: currentSelectedPool.reserves[0],
       selectedTokenToLiquidate: currentSelectedPool.reserves[0]
@@ -19,7 +19,6 @@ export default class SelectedV2Pool extends Component {
   }
   addPoolLiquidity = () => {
     const {selectedTokenToAdd, amountTokenToAdd, selectedTokenToLiquidate, amountTokenToLiquidate } = this.state;
-    console.log(this.props);
     const {pool: {currentSelectedPool}} = this.props;
     
     const payload = {
@@ -32,7 +31,18 @@ export default class SelectedV2Pool extends Component {
   }
   
   removePoolLiquidity = () => {
-    
+    const {selectedTokenToLiquidate, amountTokenToLiquidate, } = this.state;
+    const {pool: {currentSelectedPool}} =  this.props;
+    const liquidateTokenAddress = selectedTokenToLiquidate.address;
+    const poolTokenData = currentSelectedPool.poolTokens.find((poolToken) => poolToken.address === liquidateTokenAddress);
+    const poolTokenAddress = poolTokenData.anchorTokenAddress;
+    const payload = {
+      'address': poolTokenAddress,
+      'decimals': selectedTokenToLiquidate.decimals,
+      'amount': amountTokenToLiquidate,
+      'converterAddress': currentSelectedPool.address
+    };
+    this.props.submitRemoveLiquidity(payload);
   }
   
   removeLiquidityTokenSelected = (item) => {
@@ -101,7 +111,7 @@ export default class SelectedV2Pool extends Component {
         <InputGroup.Text id="btnGroupAddon2">{selectedTokenToLiquidate.symbol}</InputGroup.Text>
       </InputGroup.Append>
     </InputGroup>
-    <Button>Remove</Button>
+    <Button onClick={this.removePoolLiquidity}>Remove</Button>
     </div>;
     
     return (

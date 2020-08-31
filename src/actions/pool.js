@@ -69,6 +69,15 @@ export const SET_UPDATE_POOL = 'SET_UPDATE_POOL';
 
 export const SET_CURRENT_POOL_VIEW = 'SET_CURRENT_POOL_VIEW';
 
+export const SET_POOL_TYPE_SELECTED = 'SET_POOL_TYPE_SELECTED';
+
+export function setPoolTypeSelected(poolType) {
+  return {
+    type: SET_POOL_TYPE_SELECTED,
+    payload: poolType
+  }
+}
+
 export function setCurrentPoolView(poolType) {
   return {
     type: SET_CURRENT_POOL_VIEW

@@ -588,3 +588,11 @@ margin-bottom: 10px;
   -moz-box-shadow: inset 0px 2px 5px 2px #d3d3d3;
   box-shadow: inset 0px 2px 5px 2px #d3d3d3;
 }
+
+.active-toolbar-btn {
+box-shadow: inset 0px 2px 5px 2px #d3d3d3;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #a9a9a9 !important;
+    margin-left: 10px;  
+}
