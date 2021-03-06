@@ -54,13 +54,14 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
     submitSwap: (networkPath, transferAmount, selectedTransferToken) => {
       let isEth = false;
-      if (selectedTransferToken.symbol === 'ETH') {
+      if (selectedTransferToken.symbol.toLowerCase() === 'eth') {
         isEth = true;
       }
       getDecimalsOfToken(selectedTransferToken.address).then(function(tokenDecimals){
 
       const fromAmount = toDecimals(transferAmount, tokenDecimals);
       getBalanceOfToken(selectedTransferToken.address, isEth).then(function(balanceResponse){
+        console.log(balanceResponse);
         const availableBalance = new Decimal(fromDecimals(balanceResponse,tokenDecimals));
         const requiredBalance = new Decimal(transferAmount)
         if (requiredBalance.lessThanOrEqualTo(availableBalance)) {
