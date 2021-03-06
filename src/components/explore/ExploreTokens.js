@@ -212,7 +212,7 @@ class ExploreTokensAdvanced extends Component {
         }
 
         return (
-             <Row>
+             <Row className="explore-token-container">
              <Col lg={2} xs={2} className="left-list-group">
                {fromTokenSelector}
              </Col>
