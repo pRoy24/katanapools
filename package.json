@@ -15,7 +15,7 @@
     "bignumber.js": "^9.0.0",
     "bootstrap": "^4.4.1",
     "decimal.js": "^10.2.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "node-sass": "^4.13.1",
